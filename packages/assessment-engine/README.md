@@ -1,5 +1,5 @@
 # @skillprove/assessment-engine
 
-Assessment and scoring logic shared across the platform.
+Pure assessment logic with no I/O: the question codec (author-facing kinds to database rows), skill weight distribution, publish-readiness checks, checks of generated content against its request, and a content-safety screen.
 
-**Status: not implemented.** This package only reserves its place in the monorepo. Its code arrives with the assessment milestone.
+It never scores candidates and holds no evaluation or verified-score logic. That belongs to a later milestone.

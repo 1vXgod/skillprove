@@ -21,4 +21,12 @@ describe("permissions", () => {
     expect(hasCompanyRole("REVIEWER", COMPANY_ROLE_SETS.evaluate)).toBe(true);
     expect(hasCompanyRole("VIEWER", COMPANY_ROLE_SETS.evaluate)).toBe(false);
   });
+  it("lets every member read assessments, only recruiting roles author them, and only owners and admins delete", () => {
+    for (const role of ["OWNER", "ADMIN", "RECRUITER", "REVIEWER", "VIEWER"] as const) expect(hasCompanyRole(role, COMPANY_ROLE_SETS.readAssessments)).toBe(true);
+    expect(hasCompanyRole("RECRUITER", COMPANY_ROLE_SETS.authorAssessments)).toBe(true);
+    expect(hasCompanyRole("REVIEWER", COMPANY_ROLE_SETS.authorAssessments)).toBe(false);
+    expect(hasCompanyRole("VIEWER", COMPANY_ROLE_SETS.authorAssessments)).toBe(false);
+    expect(hasCompanyRole("RECRUITER", COMPANY_ROLE_SETS.deleteAssessments)).toBe(false);
+    expect(hasCompanyRole("ADMIN", COMPANY_ROLE_SETS.deleteAssessments)).toBe(true);
+  });
 });

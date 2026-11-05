@@ -13,6 +13,8 @@
   },
   "dependencies": {
     "@clerk/backend": "3.26.5",
+    "@skillprove/ai": "workspace:*",
+    "@skillprove/assessment-engine": "workspace:*",
     "@skillprove/database": "workspace:*",
     "@skillprove/permissions": "workspace:*",
     "@skillprove/shared": "workspace:*",

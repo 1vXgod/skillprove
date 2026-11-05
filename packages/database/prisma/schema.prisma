@@ -137,6 +137,12 @@ enum AssessmentFormat {
   MIXED
 }
 
+enum AssessmentType {
+  KNOWLEDGE
+  PRACTICAL
+  SCENARIO_BASED
+}
+
 enum AssessmentVersionStatus {
   DRAFT
   PUBLISHED
@@ -573,13 +579,15 @@ model Skill {
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  category          SkillCategory                   @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  translations      SkillTranslation[]
-  aliases           SkillAlias[]
-  userSkills        UserSkill[]
-  verifiedScores    VerifiedSkillScore[]
-  scoreCalculations VerifiedSkillScoreCalculation[]
-  assessmentSkills  AssessmentSkill[]
+  category            SkillCategory                   @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  translations        SkillTranslation[]
+  aliases             SkillAlias[]
+  userSkills          UserSkill[]
+  verifiedScores      VerifiedSkillScore[]
+  scoreCalculations   VerifiedSkillScoreCalculation[]
+  assessmentSkills    AssessmentSkill[]
+  assessmentQuestions AssessmentQuestion[]
+  rubricCriteria      AssessmentRubricCriterion[]
 
   @@index([categoryId])
   @@map("skills")
@@ -712,6 +720,7 @@ model Assessment {
   ownerCompany Company?            @relation(fields: [ownerCompanyId], references: [id], onDelete: Restrict)
   createdBy    User?               @relation(fields: [createdById], references: [id], onDelete: SetNull)
   versions     AssessmentVersion[]
+  aiJobs       AIJob[]
 
   @@index([ownerCompanyId])
   @@index([ownerType, visibility])
@@ -730,6 +739,10 @@ model AssessmentVersion {
   format          AssessmentFormat
   difficulty      DifficultyLevel
   durationMinutes Int?                    @map("duration_minutes")
+  /// Null for versions created before assessment types existed.
+  assessmentType  AssessmentType?         @map("assessment_type")
+  /// The generation job that produced this draft, if any.
+  aiJobId         String?                 @map("ai_job_id") @db.Uuid
   maxAttempts     Int                     @default(1) @map("max_attempts")
   /// How long a started attempt stays open.
   attemptTtlHours Int?                    @map("attempt_ttl_hours")
@@ -740,6 +753,7 @@ model AssessmentVersion {
   updatedAt       DateTime                @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   assessment Assessment                @relation(fields: [assessmentId], references: [id], onDelete: Restrict)
+  aiJob      AIJob?                    @relation(fields: [aiJobId], references: [id], onDelete: SetNull)
   questions  AssessmentQuestion[]
   skills     AssessmentSkill[]
   rubrics    AssessmentRubricVersion[]
@@ -751,18 +765,24 @@ model AssessmentVersion {
 }
 
 model AssessmentQuestion {
-  id                  String       @id @default(uuid()) @db.Uuid
-  assessmentVersionId String       @map("assessment_version_id") @db.Uuid
+  id                  String           @id @default(uuid()) @db.Uuid
+  assessmentVersionId String           @map("assessment_version_id") @db.Uuid
   position            Int
   type                QuestionType
   prompt              String
   /// Choices shown to the candidate.
   options             Json?
   /// Private. API responses to candidates must never include this.
-  answerKey           Json?        @map("answer_key")
-  createdAt           DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  answerKey           Json?            @map("answer_key")
+  /// Shown to the author after the fact, never to a candidate while taking the assessment.
+  explanation         String?
+  skillId             String?          @map("skill_id") @db.Uuid
+  difficulty          DifficultyLevel?
+  estimatedMinutes    Int?             @map("estimated_minutes")
+  createdAt           DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
 
   assessmentVersion AssessmentVersion @relation(fields: [assessmentVersionId], references: [id], onDelete: Cascade)
+  skill             Skill?            @relation(fields: [skillId], references: [id], onDelete: SetNull)
 
   @@unique([assessmentVersionId, position])
   @@map("assessment_questions")
@@ -801,14 +821,18 @@ model AssessmentRubricVersion {
 }
 
 model AssessmentRubricCriterion {
-  id              String  @id @default(uuid()) @db.Uuid
-  rubricVersionId String  @map("rubric_version_id") @db.Uuid
+  id              String   @id @default(uuid()) @db.Uuid
+  rubricVersionId String   @map("rubric_version_id") @db.Uuid
   key             String
   title           String
   description     String?
   /// Share of the overall score, from 0 to 100.
-  weight          Decimal @db.Decimal(5, 2)
+  weight          Decimal  @db.Decimal(5, 2)
+  maxScore        Decimal? @map("max_score") @db.Decimal(5, 2)
+  scoringGuidance String?  @map("scoring_guidance")
+  skillId         String?  @map("skill_id") @db.Uuid
 
+  skill         Skill?                     @relation(fields: [skillId], references: [id], onDelete: SetNull)
   rubricVersion AssessmentRubricVersion    @relation(fields: [rubricVersionId], references: [id], onDelete: Cascade)
   scores        EvaluationCriterionScore[]
 
@@ -997,6 +1021,10 @@ model AIJob {
   requestedById  String?     @map("requested_by_id") @db.Uuid
   companyId      String?     @map("company_id") @db.Uuid
   submissionId   String?     @map("submission_id") @db.Uuid
+  /// The validated generation request. Bounded in size by a CHECK constraint.
+  input          Json?
+  /// The assessment draft this job produced.
+  assessmentId   String?     @map("assessment_id") @db.Uuid
   inputTokens    Int?        @map("input_tokens")
   outputTokens   Int?        @map("output_tokens")
   estimatedCost  Decimal?    @map("estimated_cost") @db.Decimal(12, 6)
@@ -1014,9 +1042,12 @@ model AIJob {
   company     Company?              @relation(fields: [companyId], references: [id], onDelete: Restrict)
   submission  AssessmentSubmission? @relation(fields: [submissionId], references: [id], onDelete: Restrict)
   evaluations Evaluation[]
+  assessment  Assessment?           @relation(fields: [assessmentId], references: [id], onDelete: SetNull)
+  versions    AssessmentVersion[]
 
   @@index([status, createdAt])
-  @@index([companyId])
+  @@index([requestedById, createdAt])
+  @@index([companyId, createdAt])
   @@map("ai_jobs")
 }
 

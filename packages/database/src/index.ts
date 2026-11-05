@@ -67,3 +67,7 @@ export function getSharedPrismaClient(connectionString: string): PrismaClient {
 export async function checkDatabaseConnection(client: PrismaClient): Promise<void> {
   await client.$queryRaw`SELECT 1`;
 }
+
+export { AssessmentDataError, type AssessmentDataErrorReason } from "./repositories/assessment-errors";
+export * from "./repositories/assessments";
+export * from "./repositories/ai-jobs";

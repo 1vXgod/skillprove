@@ -57,6 +57,36 @@ function fromCandidateDataError(error: unknown): ApiError | null {
   }
 }
 
+/** Expected assessment failures, recognised by shape for the same reason. Messages are fixed text; nothing from the request or a provider is echoed. */
+function fromAssessmentDataError(error: unknown): ApiError | null {
+  if (!(error instanceof Error) || error.name !== "AssessmentDataError" || !("reason" in error)) return null;
+  const field = "field" in error && typeof error.field === "string" ? error.field : undefined;
+  switch (error.reason) {
+    case "not_found":
+      return notFound();
+    case "stale":
+      return new ApiError("CONFLICT", "This was changed elsewhere. Reload and try again.", 409);
+    case "immutable":
+      return new ApiError("CONFLICT", "This version is published and cannot be changed. Create a draft to edit it.", 409);
+    case "draft_exists":
+      return new ApiError("CONFLICT", "A draft is already open for this assessment.", 409);
+    case "job_conflict":
+      return new ApiError("CONFLICT", "This request key was already used with different details.", 409);
+    case "job_state":
+      return new ApiError("CONFLICT", "This job cannot be changed in its current state.", 409);
+    case "not_ready":
+      return new ApiError("BAD_REQUEST", "The assessment is not ready to publish.", 400, Object.fromEntries((field ?? "").split(",").filter(Boolean).map((key) => [key, "notReady"])));
+    case "invalid_reference":
+      return badRequest(field ? { [field]: "invalidChoice" } : undefined);
+    case "limit":
+      return badRequest(field ? { [field]: "tooMany" } : undefined);
+    case "rate_limited":
+      return new ApiError("RATE_LIMITED", "Generation limit reached. Try again later.", 429);
+    default:
+      return null;
+  }
+}
+
 const REDACTIONS: [RegExp, string][] = [
   [/[a-z][a-z0-9+.-]*:\/\/\S+/gi, "<url>"],
   [/\bBearer\s+\S+/gi, "Bearer <redacted>"],
@@ -96,7 +126,7 @@ export function withErrorHandling<Args extends unknown[]>(
     try {
       return await handler(...args);
     } catch (error) {
-      const expected = error instanceof ApiError ? error : fromCandidateDataError(error);
+      const expected = error instanceof ApiError ? error : (fromCandidateDataError(error) ?? fromAssessmentDataError(error));
       if (expected) return fail(expected.code, expected.message, expected.status, expected.fields);
       console.error("Unhandled API error", JSON.stringify(describeError(error)));
       return fail("INTERNAL_ERROR", "Something went wrong.", 500);

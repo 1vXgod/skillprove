@@ -46,3 +46,4 @@ export type Health = z.infer<typeof healthSchema>;
 export type Readiness = z.infer<typeof readinessSchema>;
 
 export * from "./candidate";
+export * from "./assessment";

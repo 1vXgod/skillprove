@@ -13,6 +13,11 @@ export function useApiClient(): ApiClient {
 }
 
 export const queryKeys = {
+  me: ["me"] as const,
+  assessments: (companyId: string) => ["assessments", companyId] as const,
+  assessment: (id: string, locale: string) => ["assessment", id, locale] as const,
+  versions: (id: string) => ["assessment-versions", id] as const,
+  job: (id: string) => ["ai-job", id] as const,
   ownProfile: ["own-profile"] as const,
   passport: (locale: string) => ["skill-passport", locale] as const,
   preview: (locale: string) => ["profile-preview", locale] as const,

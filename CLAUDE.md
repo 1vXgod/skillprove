@@ -2,7 +2,7 @@
 
 AI-powered skills verification and recruitment. Candidates use a React Native app, companies use a Next.js dashboard, and both call one versioned REST API. The first market is Kosovo, in Albanian and English.
 
-Decisions and their reasons: [docs/decisions/README.md](docs/decisions/README.md). Database workflow: [docs/database.md](docs/database.md). UI: [docs/design-system.md](docs/design-system.md). Candidate API: [docs/candidate-profiles.md](docs/candidate-profiles.md).
+Decisions and their reasons: [docs/decisions/README.md](docs/decisions/README.md). Database workflow: [docs/database.md](docs/database.md). UI: [docs/design-system.md](docs/design-system.md). Candidate API: [docs/candidate-profiles.md](docs/candidate-profiles.md). Assessments and AI generation: [docs/assessments.md](docs/assessments.md).
 
 ## Layout
 
@@ -17,7 +17,8 @@ Decisions and their reasons: [docs/decisions/README.md](docs/decisions/README.md
 | `packages/api-client` | Typed API client used by web and mobile |
 | `packages/config` | Shared TypeScript and ESLint config |
 | `packages/permissions` | Pure role rules. The API's guards apply them |
-| `packages/ai`, `assessment-engine` | Empty placeholders. Not implemented |
+| `packages/ai` | Provider-independent AI generation: `AiProvider`, the Gemini adapter, prompts, the validate-and-repair runner, and a mock in `/testing` |
+| `packages/assessment-engine` | Pure assessment logic: question codec, weights, publish readiness, content-safety screen. No scoring |
 
 ## Commands
 
