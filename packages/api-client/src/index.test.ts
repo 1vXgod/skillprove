@@ -1,0 +1,170 @@
+import { describe, expect, it, vi } from "vitest";
+import { ApiClientError, createApiClient } from "./index";
+
+const health = {
+  status: "ok",
+  service: "skillprove-api",
+  apiVersion: "v1",
+  timestamp: "2026-11-02T10:00:00.000Z",
+};
+
+function clientReturning(body: unknown, status = 200) {
+  const fetch = vi.fn(async () => new Response(JSON.stringify(body), { status }));
+  return { fetch, client: createApiClient({ baseUrl: "http://api.test/", fetch }) };
+}
+
+describe("createApiClient", () => {
+  it("calls the versioned path and returns parsed data", async () => {
+    const { client, fetch } = clientReturning({ success: true, data: health });
+
+    await expect(client.getHealth()).resolves.toEqual(health);
+    expect(fetch.mock.calls[0]).toEqual([
+      "http://api.test/api/v1/health",
+      { method: "GET", headers: { Accept: "application/json" } },
+    ]);
+  });
+
+  it("sends the current token on authenticated calls only", async () => {
+    const fetch = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            success: true,
+            data: {
+              id: "7f0a4a5e-3f7a-4c58-9d9b-0d5b8f7a1c11",
+              email: null,
+              status: "ACTIVE",
+              locale: "sq",
+              hasCandidateProfile: false,
+              isPlatformAdmin: false,
+              companies: [],
+            },
+          }),
+        ),
+    );
+    const client = createApiClient({ baseUrl: "http://api.test", fetch, getToken: async () => "abc" });
+
+    await client.getCurrentUser();
+    expect(fetch.mock.calls[0]).toEqual([
+      "http://api.test/api/v1/me",
+      { method: "GET", headers: { Accept: "application/json", Authorization: "Bearer abc" } },
+    ]);
+  });
+
+  it("does not call the API when there is no session token", async () => {
+    const fetch = vi.fn();
+    const client = createApiClient({ baseUrl: "http://api.test", fetch, getToken: async () => null });
+
+    await expect(client.getCurrentUser()).rejects.toMatchObject({ code: "UNAUTHENTICATED" });
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("surfaces API errors with their code and status", async () => {
+    const { client } = clientReturning(
+      { success: false, error: { code: "SERVICE_UNAVAILABLE", message: "Database unavailable." } },
+      503,
+    );
+
+    await expect(client.getReadiness()).rejects.toMatchObject({
+      code: "SERVICE_UNAVAILABLE",
+      status: 503,
+    });
+  });
+
+  it("reports a network failure as NETWORK_ERROR", async () => {
+    const fetch = vi.fn(async () => {
+      throw new TypeError("Failed to fetch");
+    });
+    const client = createApiClient({ baseUrl: "http://api.test", fetch });
+
+    await expect(client.getHealth()).rejects.toMatchObject({ code: "NETWORK_ERROR" });
+  });
+
+  it.each([
+    ["a malformed body", { unexpected: true }, 200],
+    ["success data with an error status", { success: true, data: health }, 500],
+  ])("rejects %s as INVALID_RESPONSE", async (_name, body, status) => {
+    const { client } = clientReturning(body, status);
+
+    const error = await client.getHealth().catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(ApiClientError);
+    expect(error).toMatchObject({ code: "INVALID_RESPONSE", status });
+  });
+
+  it("rejects a non-JSON body as INVALID_RESPONSE", async () => {
+    const fetch = vi.fn(async () => new Response("<html></html>", { status: 502 }));
+    const client = createApiClient({ baseUrl: "http://api.test", fetch });
+
+    await expect(client.getHealth()).rejects.toMatchObject({ code: "INVALID_RESPONSE" });
+  });
+});
+
+describe("candidate endpoints", () => {
+  const experience = {
+    id: "6c0b7c5e-1a7a-4c6f-9d6e-3c1b2a4d5e6f",
+    title: "Dev",
+    companyName: "Co",
+    employmentType: null,
+    location: null,
+    description: null,
+    startDate: "2021-01-01",
+    endDate: null,
+    isCurrent: true,
+    updatedAt: "2026-11-04T10:00:00.000Z",
+  };
+
+  function authedClient(body: unknown, status = 200) {
+    const fetch = vi.fn(async () => new Response(JSON.stringify(body), { status }));
+    return { fetch, client: createApiClient({ baseUrl: "http://api.test", fetch, getToken: async () => "abc", locale: "en" }) };
+  }
+
+  it("sends JSON bodies with the method, token and language", async () => {
+    const { client, fetch } = authedClient({ success: true, data: experience }, 201);
+    await client.sections.experiences.update(experience.id, { title: "Dev", companyName: "Co", startDate: "2021-01-01", isCurrent: true, expectedUpdatedAt: experience.updatedAt });
+
+    const [url, init] = fetch.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe(`http://api.test/api/v1/me/profile/experiences/${experience.id}?locale=en`);
+    expect(init.method).toBe("PUT");
+    expect(init.headers).toMatchObject({ Authorization: "Bearer abc", "Content-Type": "application/json" });
+    expect(JSON.parse(String(init.body))).toMatchObject({ title: "Dev", expectedUpdatedAt: experience.updatedAt });
+  });
+
+  it("encodes IDs so they cannot change the path", async () => {
+    const { client, fetch } = authedClient({ success: true, data: { deleted: true } });
+    await client.sections.languages.remove("../../me");
+    expect((fetch.mock.calls[0] as unknown as [string])[0]).toBe("http://api.test/api/v1/me/profile/languages/..%2F..%2Fme?locale=en");
+  });
+
+  it("returns field errors from a rejected request", async () => {
+    const { client } = authedClient(
+      { success: false, error: { code: "BAD_REQUEST", message: "Invalid.", fields: { endDate: "endBeforeStart" } } },
+      400,
+    );
+    const error = await client.sections.experiences.add({ title: "Dev", companyName: "Co", startDate: "2022-01-01", endDate: "2021-01-01" }).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(ApiClientError);
+    expect(error).toMatchObject({ code: "BAD_REQUEST", status: 400, fields: { endDate: "endBeforeStart" } });
+  });
+
+  it("treats a missing profile as null, and other failures as errors", async () => {
+    await expect(authedClient({ success: false, error: { code: "NOT_FOUND", message: "Not found." } }, 404).client.getOwnProfile()).resolves.toBeNull();
+    await expect(authedClient({ success: false, error: { code: "FORBIDDEN", message: "No." } }, 403).client.getOwnProfile()).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("rejects a passport response that does not match the contract", async () => {
+    const { client } = authedClient({ success: true, data: { verified: [{ score: "high" }], inAssessment: [], selfReported: [] } });
+    await expect(client.getSkillPassport()).rejects.toMatchObject({ code: "INVALID_RESPONSE" });
+  });
+});
+
+describe("error message keys", () => {
+  it("maps API failures to the same translation keys on web and mobile", async () => {
+    const { errorMessageKey, validationMessageKey } = await import("./index");
+    expect(errorMessageKey(new ApiClientError("CONFLICT", "x", 409))).toBe("errors.conflict");
+    expect(errorMessageKey(new ApiClientError("CONFLICT", "x", 409, { languageCode: "duplicate" }))).toBe("validation.duplicate");
+    expect(errorMessageKey(new ApiClientError("NETWORK_ERROR", "x"))).toBe("errors.network");
+    expect(errorMessageKey(new ApiClientError("BAD_REQUEST", "x", 400, { x: "made-up" }))).toBe("errors.generic");
+    expect(errorMessageKey(new Error("boom"))).toBe("errors.generic");
+    expect(validationMessageKey("endBeforeStart")).toBe("validation.endBeforeStart");
+    expect(validationMessageKey("<script>")).toBeUndefined();
+  });
+});

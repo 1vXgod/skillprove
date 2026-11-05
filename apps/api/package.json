@@ -1,0 +1,33 @@
+{
+  "name": "@skillprove/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev -H 0.0.0.0 -p 4000",
+    "build": "next build",
+    "start": "next start -H 0.0.0.0 -p 4000",
+    "typecheck": "next typegen && tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@clerk/backend": "3.26.5",
+    "@skillprove/database": "workspace:*",
+    "@skillprove/permissions": "workspace:*",
+    "@skillprove/shared": "workspace:*",
+    "@skillprove/validation": "workspace:*",
+    "next": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@skillprove/config": "workspace:*",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

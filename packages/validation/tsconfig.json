@@ -1,0 +1,1 @@
+{ "extends": "@skillprove/config/tsconfig/base.json", "include": ["src"] }

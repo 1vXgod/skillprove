@@ -1,0 +1,1111 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// CHECK constraints, triggers and partial indexes live in the migration SQL, because Prisma
+// cannot express them. See docs/database.md for the full list.
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETION_REQUESTED
+  ANONYMIZED
+}
+
+enum PlatformRole {
+  SUPER_ADMIN
+  ADMIN
+  SUPPORT
+  CONTENT_REVIEWER
+}
+
+enum CompanyVerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum CompanyRole {
+  OWNER
+  ADMIN
+  RECRUITER
+  REVIEWER
+  VIEWER
+}
+
+enum CompanyMemberStatus {
+  ACTIVE
+  SUSPENDED
+  REMOVED
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+  EXPIRED
+}
+
+enum ProfileVisibility {
+  PRIVATE
+  VERIFIED_COMPANIES
+  ALL_COMPANIES
+  PUBLIC
+}
+
+enum AvailabilityStatus {
+  NOT_LOOKING
+  OPEN_TO_OFFERS
+  ACTIVELY_LOOKING
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  FREELANCE
+  INTERNSHIP
+}
+
+enum WorkMode {
+  ONSITE
+  HYBRID
+  REMOTE
+}
+
+enum PayPeriod {
+  HOUR
+  MONTH
+  YEAR
+}
+
+enum LanguageProficiency {
+  A1
+  A2
+  B1
+  B2
+  C1
+  C2
+  NATIVE
+}
+
+enum SelfReportedLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+enum DifficultyLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+enum AssessmentOwnerType {
+  PLATFORM
+  COMPANY
+}
+
+enum AssessmentCreationSource {
+  HUMAN
+  AI_GENERATED
+}
+
+enum AssessmentVisibility {
+  PUBLIC
+  INVITE_ONLY
+}
+
+enum AssessmentFormat {
+  MULTIPLE_CHOICE
+  WRITTEN
+  PRACTICAL_TASK
+  CODING
+  FILE_SUBMISSION
+  MIXED
+}
+
+enum AssessmentVersionStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum QuestionType {
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
+  SHORT_TEXT
+  LONG_TEXT
+  CODE
+  FILE_UPLOAD
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+  EXPIRED
+  ABANDONED
+}
+
+enum EvaluatorType {
+  AI
+  HUMAN
+}
+
+enum EvaluationStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum EvaluationReviewStatus {
+  NOT_REQUIRED
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ReviewDecision {
+  APPROVED
+  REJECTED
+  CHANGES_REQUESTED
+}
+
+enum AIJobType {
+  ASSESSMENT_GENERATION
+  SUBMISSION_EVALUATION
+}
+
+enum AIJobStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+}
+
+enum ActorType {
+  USER
+  PLATFORM_ADMIN
+  SYSTEM
+}
+
+enum NotificationType {
+  COMPANY_INVITATION
+  ASSESSMENT_INVITATION
+  EVALUATION_READY
+  SYSTEM
+}
+
+enum DevicePlatform {
+  IOS
+  ANDROID
+}
+
+enum FilePurpose {
+  PROFILE_IMAGE
+  COMPANY_LOGO
+  CERTIFICATE
+  PORTFOLIO
+  SUBMISSION
+}
+
+enum FileStatus {
+  PENDING_UPLOAD
+  AVAILABLE
+  QUARANTINED
+  DELETED
+}
+
+// ---------------------------------------------------------------------------
+// Identity
+// ---------------------------------------------------------------------------
+
+model User {
+  id                  String     @id @default(uuid()) @db.Uuid
+  /// Stable subject from the authentication provider. Null once anonymized.
+  authSubject         String?    @unique @map("auth_subject")
+  /// Always lowercase. Null once anonymized.
+  email               String?    @unique
+  status              UserStatus @default(ACTIVE)
+  locale              String     @default("sq") @db.VarChar(10)
+  timezone            String     @default("Europe/Belgrade")
+  deletionRequestedAt DateTime?  @map("deletion_requested_at") @db.Timestamptz(3)
+  anonymizedAt        DateTime?  @map("anonymized_at") @db.Timestamptz(3)
+  createdAt           DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  candidateProfile     CandidateProfile?
+  platformAdmin        PlatformAdmin?                  @relation("PlatformAdminUser")
+  platformAdminGrants  PlatformAdmin[]                 @relation("PlatformAdminGrantedBy")
+  companyMemberships   CompanyMember[]
+  invitationsSent      CompanyInvitation[]             @relation("InvitationSender")
+  invitationsAccepted  CompanyInvitation[]             @relation("InvitationAcceptor")
+  skills               UserSkill[]
+  verifiedSkillScores  VerifiedSkillScore[]
+  scoreCalculations    VerifiedSkillScoreCalculation[]
+  assessmentsCreated   Assessment[]
+  attempts             AssessmentAttempt[]
+  evaluationsPerformed Evaluation[]
+  evaluationReviews    EvaluationReview[]
+  aiJobsRequested      AIJob[]
+  notifications        Notification[]
+  devices              UserDevice[]
+  filesOwned           FileAsset[]
+
+  @@index([status])
+  @@map("users")
+}
+
+/// Platform staff permissions. Deliberately separate from company roles and from `User`.
+model PlatformAdmin {
+  id          String       @id @default(uuid()) @db.Uuid
+  userId      String       @unique @map("user_id") @db.Uuid
+  role        PlatformRole
+  grantedById String?      @map("granted_by_id") @db.Uuid
+  revokedAt   DateTime?    @map("revoked_at") @db.Timestamptz(3)
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user      User  @relation("PlatformAdminUser", fields: [userId], references: [id], onDelete: Restrict)
+  grantedBy User? @relation("PlatformAdminGrantedBy", fields: [grantedById], references: [id], onDelete: SetNull)
+
+  @@map("platform_admins")
+}
+
+model Company {
+  id                 String                    @id @default(uuid()) @db.Uuid
+  name               String
+  slug               String                    @unique
+  legalName          String?                   @map("legal_name")
+  registrationNumber String?                   @map("registration_number")
+  countryCode        String                    @default("XK") @map("country_code") @db.Char(2)
+  websiteUrl         String?                   @map("website_url")
+  description        String?
+  logoFileId         String?                   @map("logo_file_id") @db.Uuid
+  verificationStatus CompanyVerificationStatus @default(UNVERIFIED) @map("verification_status")
+  verifiedAt         DateTime?                 @map("verified_at") @db.Timestamptz(3)
+  deletedAt          DateTime?                 @map("deleted_at") @db.Timestamptz(3)
+  createdAt          DateTime                  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  logoFile    FileAsset?          @relation("CompanyLogo", fields: [logoFileId], references: [id], onDelete: SetNull)
+  members     CompanyMember[]
+  invitations CompanyInvitation[]
+  assessments Assessment[]
+  aiJobs      AIJob[]
+  files       FileAsset[]         @relation("CompanyFiles")
+
+  @@index([verificationStatus])
+  @@map("companies")
+}
+
+/// Company roles live here, never on `User`, so one person can hold different roles per company.
+model CompanyMember {
+  id        String              @id @default(uuid()) @db.Uuid
+  companyId String              @map("company_id") @db.Uuid
+  userId    String              @map("user_id") @db.Uuid
+  role      CompanyRole
+  status    CompanyMemberStatus @default(ACTIVE)
+  removedAt DateTime?           @map("removed_at") @db.Timestamptz(3)
+  createdAt DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@unique([companyId, userId])
+  @@index([userId])
+  @@map("company_members")
+}
+
+model CompanyInvitation {
+  id           String           @id @default(uuid()) @db.Uuid
+  companyId    String           @map("company_id") @db.Uuid
+  /// Always lowercase.
+  email        String
+  role         CompanyRole
+  /// SHA-256 of the invitation token. The token itself is never stored.
+  tokenHash    String           @unique @map("token_hash")
+  status       InvitationStatus @default(PENDING)
+  invitedById  String?          @map("invited_by_id") @db.Uuid
+  acceptedById String?          @map("accepted_by_id") @db.Uuid
+  expiresAt    DateTime         @map("expires_at") @db.Timestamptz(3)
+  acceptedAt   DateTime?        @map("accepted_at") @db.Timestamptz(3)
+  revokedAt    DateTime?        @map("revoked_at") @db.Timestamptz(3)
+  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  company    Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  invitedBy  User?   @relation("InvitationSender", fields: [invitedById], references: [id], onDelete: SetNull)
+  acceptedBy User?   @relation("InvitationAcceptor", fields: [acceptedById], references: [id], onDelete: SetNull)
+
+  @@index([companyId, status])
+  @@index([email])
+  @@map("company_invitations")
+}
+
+// ---------------------------------------------------------------------------
+// Candidate profile
+// ---------------------------------------------------------------------------
+
+model CandidateProfile {
+  id                 String   @id @default(uuid()) @db.Uuid
+  userId             String   @unique @map("user_id") @db.Uuid
+  fullName           String   @map("full_name")
+  headline           String?
+  biography          String?
+  profileImageFileId String?  @map("profile_image_file_id") @db.Uuid
+  city               String?
+  countryCode        String   @default("XK") @map("country_code") @db.Char(2)
+  /// E.164, for example +38344123456.
+  phoneNumber        String?  @map("phone_number")
+  contactEmail       String?  @map("contact_email")
+  linkedinUrl        String?  @map("linkedin_url")
+  githubUrl          String?  @map("github_url")
+  websiteUrl         String?  @map("website_url")
+  /// Professional interests in the candidate's own words. A CHECK caps the count.
+  interests          String[] @default([])
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user            User                      @relation(fields: [userId], references: [id], onDelete: Restrict)
+  profileImage    FileAsset?                @relation("ProfileImage", fields: [profileImageFileId], references: [id], onDelete: SetNull)
+  experiences     CandidateExperience[]
+  education       CandidateEducation[]
+  certificates    CandidateCertificate[]
+  portfolioItems  CandidatePortfolioItem[]
+  languages       CandidateLanguage[]
+  availability    CandidateAvailability?
+  privacySettings CandidatePrivacySettings?
+
+  @@index([countryCode])
+  @@map("candidate_profiles")
+}
+
+model CandidateExperience {
+  id             String          @id @default(uuid()) @db.Uuid
+  profileId      String          @map("profile_id") @db.Uuid
+  companyName    String          @map("company_name")
+  title          String
+  employmentType EmploymentType? @map("employment_type")
+  location       String?
+  description    String?
+  startDate      DateTime        @map("start_date") @db.Date
+  endDate        DateTime?       @map("end_date") @db.Date
+  isCurrent      Boolean         @default(false) @map("is_current")
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  profile CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@map("candidate_experiences")
+}
+
+model CandidateEducation {
+  id           String    @id @default(uuid()) @db.Uuid
+  profileId    String    @map("profile_id") @db.Uuid
+  institution  String
+  degree       String?
+  fieldOfStudy String?   @map("field_of_study")
+  description  String?
+  startDate    DateTime? @map("start_date") @db.Date
+  endDate      DateTime? @map("end_date") @db.Date
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  profile CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@map("candidate_education")
+}
+
+model CandidateCertificate {
+  id            String    @id @default(uuid()) @db.Uuid
+  profileId     String    @map("profile_id") @db.Uuid
+  name          String
+  issuer        String?
+  credentialId  String?   @map("credential_id")
+  credentialUrl String?   @map("credential_url")
+  fileId        String?   @map("file_id") @db.Uuid
+  issuedOn      DateTime? @map("issued_on") @db.Date
+  expiresOn     DateTime? @map("expires_on") @db.Date
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  profile CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  file    FileAsset?       @relation("CertificateFile", fields: [fileId], references: [id], onDelete: SetNull)
+
+  @@index([profileId])
+  @@map("candidate_certificates")
+}
+
+model CandidatePortfolioItem {
+  id            String    @id @default(uuid()) @db.Uuid
+  profileId     String    @map("profile_id") @db.Uuid
+  title         String
+  description   String?
+  projectUrl    String?   @map("project_url")
+  repositoryUrl String?   @map("repository_url")
+  /// Free-text technology names, such as "TypeScript". A CHECK caps the count.
+  technologies  String[]  @default([])
+  fileId        String?   @map("file_id") @db.Uuid
+  isVisible     Boolean   @default(false) @map("is_visible")
+  completedOn   DateTime? @map("completed_on") @db.Date
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  profile CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  file    FileAsset?       @relation("PortfolioFile", fields: [fileId], references: [id], onDelete: SetNull)
+
+  @@index([profileId])
+  @@map("candidate_portfolio_items")
+}
+
+model CandidateLanguage {
+  id           String              @id @default(uuid()) @db.Uuid
+  profileId    String              @map("profile_id") @db.Uuid
+  languageCode String              @map("language_code") @db.VarChar(10)
+  proficiency  LanguageProficiency
+  createdAt    DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  profile CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, languageCode])
+  @@map("candidate_languages")
+}
+
+model CandidateAvailability {
+  id              String             @id @default(uuid()) @db.Uuid
+  profileId       String             @unique @map("profile_id") @db.Uuid
+  status          AvailabilityStatus @default(NOT_LOOKING)
+  employmentTypes EmploymentType[]   @map("employment_types")
+  workModes       WorkMode[]         @map("work_modes")
+  availableFrom   DateTime?          @map("available_from") @db.Date
+  salaryMin       Decimal?           @map("salary_min") @db.Decimal(12, 2)
+  salaryMax       Decimal?           @map("salary_max") @db.Decimal(12, 2)
+  salaryCurrency  String             @default("EUR") @map("salary_currency") @db.Char(3)
+  salaryPeriod    PayPeriod          @default(MONTH) @map("salary_period")
+  createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  profile CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@map("candidate_availability")
+}
+
+/// Every default is the most private option. Candidates opt in.
+model CandidatePrivacySettings {
+  id                 String            @id @default(uuid()) @db.Uuid
+  profileId          String            @unique @map("profile_id") @db.Uuid
+  visibility         ProfileVisibility @default(PRIVATE)
+  isDiscoverable     Boolean           @default(false) @map("is_discoverable")
+  showContactEmail   Boolean           @default(false) @map("show_contact_email")
+  showPhoneNumber    Boolean           @default(false) @map("show_phone_number")
+  showLocation       Boolean           @default(false) @map("show_location")
+  showExperience     Boolean           @default(false) @map("show_experience")
+  showEducation      Boolean           @default(false) @map("show_education")
+  showVerifiedSkills Boolean           @default(false) @map("show_verified_skills")
+  createdAt          DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  profile CandidateProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([isDiscoverable, visibility])
+  @@map("candidate_privacy_settings")
+}
+
+// ---------------------------------------------------------------------------
+// Skills
+// ---------------------------------------------------------------------------
+
+model SkillCategory {
+  id        String   @id @default(uuid()) @db.Uuid
+  slug      String   @unique
+  parentId  String?  @map("parent_id") @db.Uuid
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  parent       SkillCategory?             @relation("SkillCategoryTree", fields: [parentId], references: [id], onDelete: Restrict)
+  children     SkillCategory[]            @relation("SkillCategoryTree")
+  translations SkillCategoryTranslation[]
+  skills       Skill[]
+
+  @@index([parentId])
+  @@map("skill_categories")
+}
+
+model SkillCategoryTranslation {
+  id          String  @id @default(uuid()) @db.Uuid
+  categoryId  String  @map("category_id") @db.Uuid
+  locale      String  @db.VarChar(10)
+  name        String
+  description String?
+
+  category SkillCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, locale])
+  @@map("skill_category_translations")
+}
+
+model Skill {
+  id         String   @id @default(uuid()) @db.Uuid
+  slug       String   @unique
+  categoryId String   @map("category_id") @db.Uuid
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  category          SkillCategory                   @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  translations      SkillTranslation[]
+  aliases           SkillAlias[]
+  userSkills        UserSkill[]
+  verifiedScores    VerifiedSkillScore[]
+  scoreCalculations VerifiedSkillScoreCalculation[]
+  assessmentSkills  AssessmentSkill[]
+
+  @@index([categoryId])
+  @@map("skills")
+}
+
+model SkillTranslation {
+  id          String  @id @default(uuid()) @db.Uuid
+  skillId     String  @map("skill_id") @db.Uuid
+  locale      String  @db.VarChar(10)
+  name        String
+  description String?
+
+  skill Skill @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@unique([skillId, locale])
+  @@map("skill_translations")
+}
+
+model SkillAlias {
+  id              String  @id @default(uuid()) @db.Uuid
+  skillId         String  @map("skill_id") @db.Uuid
+  alias           String
+  /// Lowercase and trimmed. Unique so that a search term resolves to one skill.
+  normalizedAlias String  @unique @map("normalized_alias")
+  locale          String? @db.VarChar(10)
+
+  skill Skill @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@index([skillId])
+  @@map("skill_aliases")
+}
+
+/// Only what the candidate claims. Verified results live in `VerifiedSkillScore`.
+model UserSkill {
+  id                String            @id @default(uuid()) @db.Uuid
+  userId            String            @map("user_id") @db.Uuid
+  skillId           String            @map("skill_id") @db.Uuid
+  selfReportedLevel SelfReportedLevel @map("self_reported_level")
+  yearsOfExperience Decimal?          @map("years_of_experience") @db.Decimal(4, 1)
+  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skill Skill @relation(fields: [skillId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, skillId])
+  @@index([skillId])
+  @@map("user_skills")
+}
+
+/// Current verified result. A trigger copies every value from `calculation`, so values
+/// written directly to this table are discarded.
+model VerifiedSkillScore {
+  id                String          @id @default(uuid()) @db.Uuid
+  userId            String          @map("user_id") @db.Uuid
+  skillId           String          @map("skill_id") @db.Uuid
+  calculationId     String          @map("calculation_id") @db.Uuid
+  score             Decimal         @db.Decimal(5, 2)
+  confidence        Decimal         @db.Decimal(5, 2)
+  assessmentCount   Int             @map("assessment_count")
+  highestDifficulty DifficultyLevel @map("highest_difficulty")
+  lastVerifiedAt    DateTime        @map("last_verified_at") @db.Timestamptz(3)
+  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user        User                          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  skill       Skill                         @relation(fields: [skillId], references: [id], onDelete: Restrict)
+  calculation VerifiedSkillScoreCalculation @relation(fields: [calculationId, userId, skillId], references: [id, userId, skillId], onDelete: Restrict)
+
+  @@unique([userId, skillId])
+  @@unique([calculationId, userId, skillId])
+  @@index([skillId, score])
+  @@map("verified_skill_scores")
+}
+
+/// Append-only history of how each verified score was produced.
+model VerifiedSkillScoreCalculation {
+  id                String          @id @default(uuid()) @db.Uuid
+  userId            String          @map("user_id") @db.Uuid
+  skillId           String          @map("skill_id") @db.Uuid
+  score             Decimal         @db.Decimal(5, 2)
+  confidence        Decimal         @db.Decimal(5, 2)
+  assessmentCount   Int             @map("assessment_count")
+  highestDifficulty DifficultyLevel @map("highest_difficulty")
+  /// Version of the scoring formula, so old results stay explainable.
+  formulaVersion    String          @map("formula_version")
+  calculatedAt      DateTime        @default(now()) @map("calculated_at") @db.Timestamptz(3)
+
+  user    User                                 @relation(fields: [userId], references: [id], onDelete: Restrict)
+  skill   Skill                                @relation(fields: [skillId], references: [id], onDelete: Restrict)
+  inputs  VerifiedSkillScoreCalculationInput[]
+  current VerifiedSkillScore?
+
+  @@unique([id, userId, skillId])
+  @@index([userId, skillId, calculatedAt])
+  @@map("verified_skill_score_calculations")
+}
+
+/// One completed evaluation that fed a calculation, and how much it counted.
+model VerifiedSkillScoreCalculationInput {
+  id            String  @id @default(uuid()) @db.Uuid
+  calculationId String  @map("calculation_id") @db.Uuid
+  evaluationId  String  @map("evaluation_id") @db.Uuid
+  weight        Decimal @db.Decimal(5, 2)
+
+  calculation VerifiedSkillScoreCalculation @relation(fields: [calculationId], references: [id], onDelete: Restrict)
+  evaluation  Evaluation                    @relation(fields: [evaluationId], references: [id], onDelete: Restrict)
+
+  @@unique([calculationId, evaluationId])
+  @@index([evaluationId])
+  @@map("verified_skill_score_calculation_inputs")
+}
+
+// ---------------------------------------------------------------------------
+// Assessments
+// ---------------------------------------------------------------------------
+
+/// The stable identity and owner. Content lives in `AssessmentVersion`.
+model Assessment {
+  id             String                   @id @default(uuid()) @db.Uuid
+  ownerType      AssessmentOwnerType      @map("owner_type")
+  ownerCompanyId String?                  @map("owner_company_id") @db.Uuid
+  creationSource AssessmentCreationSource @default(HUMAN) @map("creation_source")
+  visibility     AssessmentVisibility     @default(INVITE_ONLY)
+  createdById    String?                  @map("created_by_id") @db.Uuid
+  deletedAt      DateTime?                @map("deleted_at") @db.Timestamptz(3)
+  createdAt      DateTime                 @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  ownerCompany Company?            @relation(fields: [ownerCompanyId], references: [id], onDelete: Restrict)
+  createdBy    User?               @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  versions     AssessmentVersion[]
+
+  @@index([ownerCompanyId])
+  @@index([ownerType, visibility])
+  @@map("assessments")
+}
+
+/// Published versions are immutable, so old attempts always show what was actually taken.
+model AssessmentVersion {
+  id              String                  @id @default(uuid()) @db.Uuid
+  assessmentId    String                  @map("assessment_id") @db.Uuid
+  version         Int
+  title           String
+  description     String?
+  instructions    String?
+  language        String                  @default("sq") @db.VarChar(10)
+  format          AssessmentFormat
+  difficulty      DifficultyLevel
+  durationMinutes Int?                    @map("duration_minutes")
+  maxAttempts     Int                     @default(1) @map("max_attempts")
+  /// How long a started attempt stays open.
+  attemptTtlHours Int?                    @map("attempt_ttl_hours")
+  status          AssessmentVersionStatus @default(DRAFT)
+  publishedAt     DateTime?               @map("published_at") @db.Timestamptz(3)
+  archivedAt      DateTime?               @map("archived_at") @db.Timestamptz(3)
+  createdAt       DateTime                @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime                @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  assessment Assessment                @relation(fields: [assessmentId], references: [id], onDelete: Restrict)
+  questions  AssessmentQuestion[]
+  skills     AssessmentSkill[]
+  rubrics    AssessmentRubricVersion[]
+  attempts   AssessmentAttempt[]
+
+  @@unique([assessmentId, version])
+  @@index([status])
+  @@map("assessment_versions")
+}
+
+model AssessmentQuestion {
+  id                  String       @id @default(uuid()) @db.Uuid
+  assessmentVersionId String       @map("assessment_version_id") @db.Uuid
+  position            Int
+  type                QuestionType
+  prompt              String
+  /// Choices shown to the candidate.
+  options             Json?
+  /// Private. API responses to candidates must never include this.
+  answerKey           Json?        @map("answer_key")
+  createdAt           DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  assessmentVersion AssessmentVersion @relation(fields: [assessmentVersionId], references: [id], onDelete: Cascade)
+
+  @@unique([assessmentVersionId, position])
+  @@map("assessment_questions")
+}
+
+model AssessmentSkill {
+  id                  String  @id @default(uuid()) @db.Uuid
+  assessmentVersionId String  @map("assessment_version_id") @db.Uuid
+  skillId             String  @map("skill_id") @db.Uuid
+  /// Share of the assessment that measures this skill, from 0 to 100.
+  weight              Decimal @db.Decimal(5, 2)
+
+  assessmentVersion AssessmentVersion @relation(fields: [assessmentVersionId], references: [id], onDelete: Cascade)
+  skill             Skill             @relation(fields: [skillId], references: [id], onDelete: Restrict)
+
+  @@unique([assessmentVersionId, skillId])
+  @@index([skillId])
+  @@map("assessment_skills")
+}
+
+model AssessmentRubricVersion {
+  id                  String    @id @default(uuid()) @db.Uuid
+  assessmentVersionId String    @map("assessment_version_id") @db.Uuid
+  version             Int
+  /// Once set, the rubric and its criteria can no longer change.
+  publishedAt         DateTime? @map("published_at") @db.Timestamptz(3)
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  assessmentVersion AssessmentVersion           @relation(fields: [assessmentVersionId], references: [id], onDelete: Cascade)
+  criteria          AssessmentRubricCriterion[]
+  attempts          AssessmentAttempt[]
+
+  @@unique([assessmentVersionId, version])
+  @@unique([id, assessmentVersionId])
+  @@map("assessment_rubric_versions")
+}
+
+model AssessmentRubricCriterion {
+  id              String  @id @default(uuid()) @db.Uuid
+  rubricVersionId String  @map("rubric_version_id") @db.Uuid
+  key             String
+  title           String
+  description     String?
+  /// Share of the overall score, from 0 to 100.
+  weight          Decimal @db.Decimal(5, 2)
+
+  rubricVersion AssessmentRubricVersion    @relation(fields: [rubricVersionId], references: [id], onDelete: Cascade)
+  scores        EvaluationCriterionScore[]
+
+  @@unique([rubricVersionId, key])
+  @@unique([id, rubricVersionId])
+  @@map("assessment_rubric_criteria")
+}
+
+model AssessmentAttempt {
+  id                  String        @id @default(uuid()) @db.Uuid
+  assessmentVersionId String        @map("assessment_version_id") @db.Uuid
+  rubricVersionId     String        @map("rubric_version_id") @db.Uuid
+  candidateUserId     String        @map("candidate_user_id") @db.Uuid
+  attemptNumber       Int           @map("attempt_number")
+  status              AttemptStatus @default(IN_PROGRESS)
+  startedAt           DateTime      @default(now()) @map("started_at") @db.Timestamptz(3)
+  expiresAt           DateTime?     @map("expires_at") @db.Timestamptz(3)
+  submittedAt         DateTime?     @map("submitted_at") @db.Timestamptz(3)
+  createdAt           DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  assessmentVersion AssessmentVersion       @relation(fields: [assessmentVersionId], references: [id], onDelete: Restrict)
+  /// Composite key: the rubric must belong to the same assessment version.
+  rubricVersion     AssessmentRubricVersion @relation(fields: [rubricVersionId, assessmentVersionId], references: [id, assessmentVersionId], onDelete: Restrict)
+  candidate         User                    @relation(fields: [candidateUserId], references: [id], onDelete: Restrict)
+  submissions       AssessmentSubmission[]
+  evaluations       Evaluation[]
+
+  @@unique([assessmentVersionId, candidateUserId, attemptNumber])
+  @@unique([id, rubricVersionId])
+  @@index([candidateUserId, status])
+  @@map("assessment_attempts")
+}
+
+/// Immutable once stored. Only the content can be erased for an account deletion.
+model AssessmentSubmission {
+  id              String    @id @default(uuid()) @db.Uuid
+  attemptId       String    @map("attempt_id") @db.Uuid
+  revision        Int       @default(1)
+  /// Answers keyed by question ID. Null once erased.
+  responses       Json?
+  contentErasedAt DateTime? @map("content_erased_at") @db.Timestamptz(3)
+  submittedAt     DateTime  @default(now()) @map("submitted_at") @db.Timestamptz(3)
+
+  attempt     AssessmentAttempt          @relation(fields: [attemptId], references: [id], onDelete: Restrict)
+  files       AssessmentSubmissionFile[]
+  evaluations Evaluation[]
+  aiJobs      AIJob[]
+
+  @@unique([attemptId, revision])
+  @@unique([id, attemptId])
+  @@map("assessment_submissions")
+}
+
+model AssessmentSubmissionFile {
+  id           String   @id @default(uuid()) @db.Uuid
+  submissionId String   @map("submission_id") @db.Uuid
+  fileId       String   @map("file_id") @db.Uuid
+  questionId   String?  @map("question_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  submission AssessmentSubmission @relation(fields: [submissionId], references: [id], onDelete: Restrict)
+  file       FileAsset            @relation(fields: [fileId], references: [id], onDelete: Restrict)
+  evidence   EvaluationEvidence[]
+
+  @@unique([submissionId, fileId])
+  @@index([fileId])
+  @@map("assessment_submission_files")
+}
+
+// ---------------------------------------------------------------------------
+// Evaluation
+// ---------------------------------------------------------------------------
+
+/// Never overwritten: once COMPLETED only `reviewStatus` can change. A correction is a new
+/// row that points at the old one through `supersedesEvaluationId`.
+model Evaluation {
+  id                     String                 @id @default(uuid()) @db.Uuid
+  attemptId              String                 @map("attempt_id") @db.Uuid
+  submissionId           String                 @map("submission_id") @db.Uuid
+  rubricVersionId        String                 @map("rubric_version_id") @db.Uuid
+  evaluatorType          EvaluatorType          @map("evaluator_type")
+  evaluatorUserId        String?                @map("evaluator_user_id") @db.Uuid
+  provider               String?
+  modelName              String?                @map("model_name")
+  promptVersion          String?                @map("prompt_version")
+  aiJobId                String?                @map("ai_job_id") @db.Uuid
+  status                 EvaluationStatus       @default(PENDING)
+  overallScore           Decimal?               @map("overall_score") @db.Decimal(5, 2)
+  confidence             Decimal?               @db.Decimal(5, 2)
+  summary                String?
+  reviewStatus           EvaluationReviewStatus @default(PENDING) @map("review_status")
+  supersedesEvaluationId String?                @unique @map("supersedes_evaluation_id") @db.Uuid
+  completedAt            DateTime?              @map("completed_at") @db.Timestamptz(3)
+  createdAt              DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt              DateTime               @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  /// Composite keys: the submission must belong to this attempt, and the rubric must be
+  /// the one the attempt was taken under.
+  submission      AssessmentSubmission                 @relation(fields: [submissionId, attemptId], references: [id, attemptId], onDelete: Restrict)
+  attempt         AssessmentAttempt                    @relation(fields: [attemptId, rubricVersionId], references: [id, rubricVersionId], onDelete: Restrict)
+  evaluator       User?                                @relation(fields: [evaluatorUserId], references: [id], onDelete: Restrict)
+  aiJob           AIJob?                               @relation(fields: [aiJobId], references: [id], onDelete: Restrict)
+  supersedes      Evaluation?                          @relation("EvaluationHistory", fields: [supersedesEvaluationId], references: [id], onDelete: Restrict)
+  supersededBy    Evaluation?                          @relation("EvaluationHistory")
+  criterionScores EvaluationCriterionScore[]
+  evidence        EvaluationEvidence[]
+  reviews         EvaluationReview[]
+  scoreInputs     VerifiedSkillScoreCalculationInput[]
+
+  @@unique([id, rubricVersionId])
+  @@index([attemptId])
+  @@index([submissionId])
+  @@index([reviewStatus])
+  @@map("evaluations")
+}
+
+model EvaluationCriterionScore {
+  id              String  @id @default(uuid()) @db.Uuid
+  evaluationId    String  @map("evaluation_id") @db.Uuid
+  rubricVersionId String  @map("rubric_version_id") @db.Uuid
+  criterionId     String  @map("criterion_id") @db.Uuid
+  score           Decimal @db.Decimal(5, 2)
+  rationale       String?
+
+  /// Composite keys: the criterion must belong to the rubric this evaluation used.
+  evaluation Evaluation                @relation(fields: [evaluationId, rubricVersionId], references: [id, rubricVersionId], onDelete: Restrict)
+  criterion  AssessmentRubricCriterion @relation(fields: [criterionId, rubricVersionId], references: [id, rubricVersionId], onDelete: Restrict)
+  evidence   EvaluationEvidence[]
+
+  @@unique([evaluationId, criterionId])
+  @@index([criterionId])
+  @@map("evaluation_criterion_scores")
+}
+
+model EvaluationEvidence {
+  id               String    @id @default(uuid()) @db.Uuid
+  evaluationId     String    @map("evaluation_id") @db.Uuid
+  criterionScoreId String?   @map("criterion_score_id") @db.Uuid
+  submissionFileId String?   @map("submission_file_id") @db.Uuid
+  questionId       String?   @map("question_id") @db.Uuid
+  /// Quoted candidate work. Null once erased.
+  excerpt          String?
+  /// Where in the submission this came from, such as a line range.
+  locator          Json?
+  contentErasedAt  DateTime? @map("content_erased_at") @db.Timestamptz(3)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  evaluation     Evaluation                @relation(fields: [evaluationId], references: [id], onDelete: Restrict)
+  criterionScore EvaluationCriterionScore? @relation(fields: [criterionScoreId], references: [id], onDelete: Restrict)
+  submissionFile AssessmentSubmissionFile? @relation(fields: [submissionFileId], references: [id], onDelete: Restrict)
+
+  @@index([evaluationId])
+  @@index([criterionScoreId])
+  @@map("evaluation_evidence")
+}
+
+/// Append-only record of human reviews.
+model EvaluationReview {
+  id           String         @id @default(uuid()) @db.Uuid
+  evaluationId String         @map("evaluation_id") @db.Uuid
+  reviewerId   String?        @map("reviewer_id") @db.Uuid
+  decision     ReviewDecision
+  notes        String?
+  createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  evaluation Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Restrict)
+  reviewer   User?      @relation(fields: [reviewerId], references: [id], onDelete: Restrict)
+
+  @@index([evaluationId, createdAt])
+  @@map("evaluation_reviews")
+}
+
+// ---------------------------------------------------------------------------
+// Supporting infrastructure
+// ---------------------------------------------------------------------------
+
+model AIJob {
+  id             String      @id @default(uuid()) @db.Uuid
+  type           AIJobType
+  status         AIJobStatus @default(QUEUED)
+  /// Prevents the same job from being queued and billed twice.
+  idempotencyKey String?     @unique @map("idempotency_key")
+  provider       String
+  modelName      String      @map("model_name")
+  requestedById  String?     @map("requested_by_id") @db.Uuid
+  companyId      String?     @map("company_id") @db.Uuid
+  submissionId   String?     @map("submission_id") @db.Uuid
+  inputTokens    Int?        @map("input_tokens")
+  outputTokens   Int?        @map("output_tokens")
+  estimatedCost  Decimal?    @map("estimated_cost") @db.Decimal(12, 6)
+  costCurrency   String      @default("USD") @map("cost_currency") @db.Char(3)
+  retryCount     Int         @default(0) @map("retry_count")
+  /// Safe to store: must not contain prompts, candidate content or provider secrets.
+  errorCode      String?     @map("error_code")
+  errorMessage   String?     @map("error_message")
+  startedAt      DateTime?   @map("started_at") @db.Timestamptz(3)
+  finishedAt     DateTime?   @map("finished_at") @db.Timestamptz(3)
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  requestedBy User?                 @relation(fields: [requestedById], references: [id], onDelete: SetNull)
+  company     Company?              @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  submission  AssessmentSubmission? @relation(fields: [submissionId], references: [id], onDelete: Restrict)
+  evaluations Evaluation[]
+
+  @@index([status, createdAt])
+  @@index([companyId])
+  @@map("ai_jobs")
+}
+
+/// Append-only record of administrative and security actions.
+/// `actorId` and `companyId` have no foreign keys on purpose: records must outlive what they name.
+model AuditLog {
+  id         String    @id @default(uuid()) @db.Uuid
+  action     String
+  actorType  ActorType @default(SYSTEM) @map("actor_type")
+  actorId    String?   @map("actor_id")
+  companyId  String?   @map("company_id") @db.Uuid
+  targetType String?   @map("target_type")
+  targetId   String?   @map("target_id")
+  requestId  String?   @map("request_id")
+  /// IDs and counts only. No names, emails, submission text or tokens.
+  metadata   Json?
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([actorId, createdAt])
+  @@index([targetType, targetId, createdAt])
+  @@index([companyId, createdAt])
+  @@index([action, createdAt])
+  @@map("audit_logs")
+}
+
+model Notification {
+  id        String           @id @default(uuid()) @db.Uuid
+  userId    String           @map("user_id") @db.Uuid
+  type      NotificationType
+  /// Translation key for the message, so that text is not stored per row.
+  template  String
+  /// IDs needed to open the right screen. No scores, names or submission text.
+  payload   Json?
+  readAt    DateTime?        @map("read_at") @db.Timestamptz(3)
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt, createdAt])
+  @@map("notifications")
+}
+
+model UserDevice {
+  id              String         @id @default(uuid()) @db.Uuid
+  userId          String         @map("user_id") @db.Uuid
+  platform        DevicePlatform
+  /// Encrypted by the API before storage. The plain token is never stored.
+  tokenCiphertext String         @map("token_ciphertext")
+  /// SHA-256 of the token, for finding duplicates without decrypting.
+  tokenHash       String         @unique @map("token_hash")
+  lastSeenAt      DateTime?      @map("last_seen_at") @db.Timestamptz(3)
+  revokedAt       DateTime?      @map("revoked_at") @db.Timestamptz(3)
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("user_devices")
+}
+
+/// Metadata and a private storage reference. Access is through short-lived signed URLs.
+model FileAsset {
+  id              String      @id @default(uuid()) @db.Uuid
+  ownerUserId     String?     @map("owner_user_id") @db.Uuid
+  ownerCompanyId  String?     @map("owner_company_id") @db.Uuid
+  purpose         FilePurpose
+  status          FileStatus  @default(PENDING_UPLOAD)
+  storageProvider String      @default("r2") @map("storage_provider")
+  bucket          String
+  objectKey       String      @map("object_key")
+  originalName    String?     @map("original_name")
+  mimeType        String      @map("mime_type")
+  sizeBytes       Int         @map("size_bytes")
+  sha256          String?
+  deletedAt       DateTime?   @map("deleted_at") @db.Timestamptz(3)
+  createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  ownerUser       User?                      @relation(fields: [ownerUserId], references: [id], onDelete: Restrict)
+  ownerCompany    Company?                   @relation("CompanyFiles", fields: [ownerCompanyId], references: [id], onDelete: Restrict)
+  companyLogos    Company[]                  @relation("CompanyLogo")
+  profileImages   CandidateProfile[]         @relation("ProfileImage")
+  certificates    CandidateCertificate[]     @relation("CertificateFile")
+  portfolioItems  CandidatePortfolioItem[]   @relation("PortfolioFile")
+  submissionFiles AssessmentSubmissionFile[]
+
+  @@unique([bucket, objectKey])
+  @@index([ownerUserId])
+  @@index([ownerCompanyId])
+  @@map("file_assets")
+}

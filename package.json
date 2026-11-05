@@ -1,0 +1,24 @@
+{
+  "name": "skillprove",
+  "private": true,
+  "packageManager": "pnpm@12.16.1",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "test:e2e": "pnpm --filter @skillprove/web test:e2e",
+    "db:generate": "pnpm --filter @skillprove/database db:generate",
+    "db:migrate:dev": "pnpm --filter @skillprove/database db:migrate:dev",
+    "db:migrate:deploy": "pnpm --filter @skillprove/database db:migrate:deploy",
+    "db:migrate:status": "pnpm --filter @skillprove/database db:migrate:status",
+    "db:seed": "pnpm --filter @skillprove/database db:seed"
+  },
+  "devDependencies": {
+    "turbo": "^2.11.10"
+  }
+}

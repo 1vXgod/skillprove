@@ -1,0 +1,43 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "ui": "stream",
+  "globalEnv": ["NODE_ENV", "CI"],
+  "tasks": {
+    "db:generate": {
+      "inputs": ["prisma/schema.prisma", "prisma.config.ts"],
+      "outputs": ["src/generated/**"]
+    },
+    "build": {
+      "dependsOn": ["^db:generate", "^build"],
+      "env": [
+        "NEXT_PUBLIC_API_URL",
+        "EXPO_PUBLIC_API_URL",
+        "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY"
+      ],
+      "passThroughEnv": ["CLERK_SECRET_KEY"],
+      "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**", "dist/**"]
+    },
+    "typecheck": {
+      "dependsOn": ["^db:generate", "db:generate"]
+    },
+    "lint": {
+      "dependsOn": ["^db:generate", "db:generate"]
+    },
+    "test": {
+      "dependsOn": ["^db:generate", "db:generate"],
+      "env": ["TEST_DATABASE_URL", "TEST_NEON_BRANCH_ID"],
+      "passThroughEnv": ["DATABASE_URL", "DIRECT_URL"]
+    },
+    "@skillprove/api#test": {
+      "dependsOn": ["^db:generate", "@skillprove/database#test"],
+      "env": ["TEST_DATABASE_URL", "TEST_NEON_BRANCH_ID"],
+      "passThroughEnv": ["DATABASE_URL", "DIRECT_URL"]
+    },
+    "dev": {
+      "dependsOn": ["^db:generate"],
+      "cache": false,
+      "persistent": true
+    }
+  }
+}

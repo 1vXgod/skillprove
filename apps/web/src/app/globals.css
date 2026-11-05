@@ -1,0 +1,108 @@
+@import "tailwindcss";
+
+/*
+ * Values come from @skillprove/shared/design, injected by the root layout as --sp-* variables.
+ * This file only maps them to Tailwind names, so classes like bg-primary follow the theme.
+ * Breakpoints are Tailwind's defaults, which the shared tokens match.
+ */
+@theme inline {
+  --color-background: var(--sp-background);
+  --color-surface: var(--sp-surface);
+  --color-surface-raised: var(--sp-surface-raised);
+  --color-foreground: var(--sp-foreground);
+  --color-muted-foreground: var(--sp-muted-foreground);
+  --color-muted: var(--sp-muted);
+  --color-border: var(--sp-border);
+  --color-input: var(--sp-input);
+  --color-ring: var(--sp-ring);
+  --color-primary: var(--sp-primary);
+  --color-primary-foreground: var(--sp-primary-foreground);
+  --color-primary-hover: var(--sp-primary-hover);
+  --color-secondary: var(--sp-secondary);
+  --color-secondary-foreground: var(--sp-secondary-foreground);
+  --color-accent: var(--sp-accent);
+  --color-accent-foreground: var(--sp-accent-foreground);
+  --color-success: var(--sp-success);
+  --color-success-subtle: var(--sp-success-subtle);
+  --color-warning: var(--sp-warning);
+  --color-warning-subtle: var(--sp-warning-subtle);
+  --color-destructive: var(--sp-destructive);
+  --color-destructive-foreground: var(--sp-destructive-foreground);
+  --color-destructive-subtle: var(--sp-destructive-subtle);
+  --color-info: var(--sp-info);
+  --color-info-subtle: var(--sp-info-subtle);
+  --color-overlay: var(--sp-overlay);
+
+  --radius-sm: var(--sp-radius-sm);
+  --radius-md: var(--sp-radius-md);
+  --radius-lg: var(--sp-radius-lg);
+  --radius-xl: var(--sp-radius-xl);
+
+  --shadow-sm: var(--sp-shadow-sm);
+  --shadow-md: var(--sp-shadow-md);
+  --shadow-lg: var(--sp-shadow-lg);
+
+  --font-sans: var(--sp-font-sans);
+  --font-mono: var(--sp-font-mono);
+
+  --ease-standard: var(--sp-ease-standard);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background: var(--sp-background);
+    color: var(--sp-foreground);
+    font-family: var(--sp-font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--sp-ring);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--sp-secondary);
+    color: var(--sp-secondary-foreground);
+  }
+}
+
+/* Native dialogs: a short fade and lift, skipped when the user prefers reduced motion. */
+dialog.sp-dialog {
+  opacity: 0;
+  transform: translateY(8px) scale(0.98);
+  transition:
+    opacity var(--sp-duration-normal) var(--sp-ease-standard),
+    transform var(--sp-duration-normal) var(--sp-ease-standard),
+    overlay var(--sp-duration-normal) allow-discrete,
+    display var(--sp-duration-normal) allow-discrete;
+}
+dialog.sp-dialog[open] {
+  opacity: 1;
+  transform: none;
+}
+@starting-style {
+  dialog.sp-dialog[open] {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+dialog.sp-dialog::backdrop {
+  background: var(--sp-overlay);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after,
+  dialog.sp-dialog {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

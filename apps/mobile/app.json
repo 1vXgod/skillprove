@@ -1,0 +1,27 @@
+{
+  "expo": {
+    "name": "SkillProve",
+    "slug": "skillprove",
+    "scheme": "skillprove",
+    "version": "0.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "bundleIdentifier": "com.skillprove.app"
+    },
+    "android": {
+      "package": "com.skillprove.app"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-status-bar",
+      "expo-secure-store",
+      "expo-web-browser",
+      "@clerk/expo",
+      "expo-font"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
