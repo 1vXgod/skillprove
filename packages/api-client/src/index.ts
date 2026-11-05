@@ -1,7 +1,15 @@
 import { API_BASE_PATH, type ApiErrorCode, type ProfileSection } from "@skillprove/shared";
 import {
   apiFailureSchema,
+  aiJobSchema,
   apiSuccessSchema,
+  assessmentDetailSchema,
+  assessmentListSchema,
+  assessmentPreviewSchema,
+  generationStartSchema,
+  publishResultSchema,
+  rubricSchema,
+  versionListSchema,
   candidateViewSchema,
   certificateSchema,
   currentUserSchema,
@@ -17,7 +25,19 @@ import {
   skillPassportSchema,
   skillSearchResultSchema,
   VALIDATION_MESSAGES,
+  type AiJob,
+  type AssessmentDetail,
+  type AssessmentList,
+  type AssessmentPreview,
+  type AssessmentUpdate,
   type AvailabilityInput,
+  type GenerationRequest,
+  type GenerationStart,
+  type ManualAssessmentInput,
+  type QuestionContent,
+  type Rubric,
+  type RubricInput,
+  type VersionList,
   type CandidateView,
   type Certificate,
   type CertificateInput,
@@ -127,6 +147,29 @@ export interface ApiClient {
   getSkillPassport(): Promise<SkillPassport>;
 
   getCandidate(profileId: string): Promise<CandidateView>;
+
+  // Assessments (company members). The AI provider key never reaches clients: generation is a job.
+  listAssessments(companyId: string, query?: { page?: number; pageSize?: number; status?: string }): Promise<AssessmentList>;
+  createAssessment(companyId: string, input: ManualAssessmentInput): Promise<AssessmentDetail>;
+  startGeneration(companyId: string, input: GenerationRequest, idempotencyKey?: string): Promise<GenerationStart>;
+  getAssessment(id: string): Promise<AssessmentDetail>;
+  updateAssessment(id: string, input: AssessmentUpdate): Promise<AssessmentDetail>;
+  deleteAssessment(id: string): Promise<void>;
+  createDraft(id: string): Promise<AssessmentDetail>;
+  getAssessmentPreview(id: string): Promise<AssessmentPreview>;
+  addQuestion(id: string, question: QuestionContent): Promise<AssessmentDetail>;
+  updateQuestion(id: string, questionId: string, question: QuestionContent): Promise<AssessmentDetail>;
+  removeQuestion(id: string, questionId: string): Promise<AssessmentDetail>;
+  reorderQuestions(id: string, questionIds: string[]): Promise<AssessmentDetail>;
+  regenerateQuestion(id: string, questionId: string, additionalInstructions?: string | null, idempotencyKey?: string): Promise<GenerationStart>;
+  getRubric(id: string): Promise<Rubric | null>;
+  updateRubric(id: string, input: RubricInput): Promise<Rubric | null>;
+  listVersions(id: string): Promise<VersionList>;
+  publishAssessment(id: string): Promise<{ versionId: string; version: number }>;
+  restoreVersion(id: string, versionId: string): Promise<AssessmentDetail>;
+  getJob(jobId: string): Promise<AiJob>;
+  retryJob(jobId: string): Promise<AiJob>;
+  cancelJob(jobId: string): Promise<AiJob>;
 }
 
 export function createApiClient({ baseUrl, getToken, fetch: fetchFn, locale }: ApiClientOptions): ApiClient {
@@ -136,7 +179,7 @@ export function createApiClient({ baseUrl, getToken, fetch: fetchFn, locale }: A
     method: "GET" | "POST" | "PUT" | "DELETE",
     path: string,
     schema: z.ZodType<T>,
-    options: { authenticated?: boolean; body?: unknown; query?: Record<string, string | number | undefined> } = {},
+    options: { authenticated?: boolean; body?: unknown; query?: Record<string, string | number | undefined>; headers?: Record<string, string> } = {},
   ): Promise<T> {
     const headers: Record<string, string> = { Accept: "application/json" };
     if (options.authenticated) {
@@ -145,6 +188,7 @@ export function createApiClient({ baseUrl, getToken, fetch: fetchFn, locale }: A
       headers.Authorization = `Bearer ${token}`;
     }
     if (options.body !== undefined) headers["Content-Type"] = "application/json";
+    Object.assign(headers, options.headers);
 
     const params = new URLSearchParams();
     for (const [key, value] of Object.entries({ locale, ...options.query })) {
@@ -230,12 +274,47 @@ export function createApiClient({ baseUrl, getToken, fetch: fetchFn, locale }: A
     getSkillPassport: () => get("/me/skill-passport", skillPassportSchema, true),
 
     getCandidate: (profileId) => get(`/candidates/${segment(profileId)}`, candidateViewSchema, true),
+
+    listAssessments: (companyId, query) => get(`/companies/${segment(companyId)}/assessments`, assessmentListSchema, true, query),
+    createAssessment: (companyId, input) => send("POST", `/companies/${segment(companyId)}/assessments`, assessmentDetailSchema, input),
+    startGeneration: (companyId, input, idempotencyKey) =>
+      request("POST", `/companies/${segment(companyId)}/assessments/generate`, generationStartSchema, {
+        authenticated: true,
+        body: input,
+        headers: idempotencyKey ? { "Idempotency-Key": idempotencyKey } : undefined,
+      }),
+    getAssessment: (id) => get(`/assessments/${segment(id)}`, assessmentDetailSchema, true),
+    updateAssessment: (id, input) => send("PUT", `/assessments/${segment(id)}`, assessmentDetailSchema, input),
+    deleteAssessment: (id) => remove(`/assessments/${segment(id)}`),
+    createDraft: (id) => send("POST", `/assessments/${segment(id)}/draft`, assessmentDetailSchema, undefined),
+    getAssessmentPreview: (id) => get(`/assessments/${segment(id)}/preview`, assessmentPreviewSchema, true),
+    addQuestion: (id, question) => send("POST", `/assessments/${segment(id)}/questions`, assessmentDetailSchema, question),
+    updateQuestion: (id, questionId, question) =>
+      send("PUT", `/assessments/${segment(id)}/questions/${segment(questionId)}`, assessmentDetailSchema, question),
+    removeQuestion: (id, questionId) =>
+      request("DELETE", `/assessments/${segment(id)}/questions/${segment(questionId)}`, assessmentDetailSchema, { authenticated: true }),
+    reorderQuestions: (id, questionIds) => send("PUT", `/assessments/${segment(id)}/questions/reorder`, assessmentDetailSchema, { questionIds }),
+    regenerateQuestion: (id, questionId, additionalInstructions, idempotencyKey) =>
+      request("POST", `/assessments/${segment(id)}/questions/${segment(questionId)}/regenerate`, generationStartSchema, {
+        authenticated: true,
+        body: { additionalInstructions: additionalInstructions ?? null },
+        headers: idempotencyKey ? { "Idempotency-Key": idempotencyKey } : undefined,
+      }),
+    getRubric: (id) => get(`/assessments/${segment(id)}/rubric`, rubricSchema.nullable(), true),
+    updateRubric: (id, input) => send("PUT", `/assessments/${segment(id)}/rubric`, rubricSchema.nullable(), input),
+    listVersions: (id) => get(`/assessments/${segment(id)}/versions`, versionListSchema, true),
+    publishAssessment: (id) => send("POST", `/assessments/${segment(id)}/publish`, publishResultSchema, undefined),
+    restoreVersion: (id, versionId) =>
+      send("POST", `/assessments/${segment(id)}/versions/${segment(versionId)}/restore`, assessmentDetailSchema, undefined),
+    getJob: (jobId) => get(`/ai/jobs/${segment(jobId)}`, aiJobSchema, true),
+    retryJob: (jobId) => send("POST", `/ai/jobs/${segment(jobId)}/retry`, aiJobSchema, undefined),
+    cancelJob: (jobId) => send("POST", `/ai/jobs/${segment(jobId)}/cancel`, aiJobSchema, undefined),
   };
 }
 
 const VALIDATION_KEYS = VALIDATION_MESSAGES;
 export type ValidationMessageKey = `validation.${(typeof VALIDATION_KEYS)[number]}`;
-export type ErrorMessageKey = ValidationMessageKey | "errors.conflict" | "errors.network" | "errors.generic";
+export type ErrorMessageKey = ValidationMessageKey | "errors.conflict" | "errors.network" | "errors.generic" | "errors.rateLimited" | "errors.aiUnavailable";
 
 /** The translation key for a field's validation code, or undefined for anything unrecognised. */
 export function validationMessageKey(code: string | undefined): ValidationMessageKey | undefined {
@@ -250,6 +329,8 @@ export function validationMessageKey(code: string | undefined): ValidationMessag
 export function errorMessageKey(error: unknown): ErrorMessageKey {
   if (!(error instanceof ApiClientError)) return "errors.generic";
   if (error.code === "NETWORK_ERROR") return "errors.network";
+  if (error.code === "RATE_LIMITED") return "errors.rateLimited";
+  if (error.code === "SERVICE_UNAVAILABLE") return "errors.aiUnavailable";
   if (error.code === "CONFLICT" && !error.fields) return "errors.conflict";
   if (error.code === "CONFLICT" || error.code === "BAD_REQUEST") {
     return validationMessageKey(Object.values(error.fields ?? {})[0]) ?? "errors.generic";

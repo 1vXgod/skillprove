@@ -248,7 +248,7 @@ test.describe("application shell", () => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto(URL);
     const sidebar = page.getByRole("navigation", { name: sq("shell.mainNavigation") }).first();
-    for (const key of ["nav.candidates", "nav.assessments", "nav.jobs"] as const) {
+    for (const key of ["nav.candidates", "nav.jobs"] as const) {
       await expect(sidebar.getByRole("link", { name: new RegExp(sq(key)) })).toHaveCount(0);
       await expect(sidebar.getByText(sq(key))).toBeVisible();
     }

@@ -18,4 +18,9 @@ export const COMPANY_ROLE_SETS = {
   manageCompany: ["OWNER", "ADMIN"],
   recruit: ["OWNER", "ADMIN", "RECRUITER"],
   evaluate: ["OWNER", "ADMIN", "REVIEWER"],
+  /** Every active member can read the company's assessments. */
+  readAssessments: ["OWNER", "ADMIN", "RECRUITER", "REVIEWER", "VIEWER"],
+  /** Create, edit, generate and publish. Reviewers and viewers cannot. */
+  authorAssessments: ["OWNER", "ADMIN", "RECRUITER"],
+  deleteAssessments: ["OWNER", "ADMIN"],
 } as const satisfies Record<string, readonly CompanyRole[]>;

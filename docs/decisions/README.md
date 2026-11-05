@@ -116,3 +116,19 @@ Details are in [design-system.md](../design-system.md).
 - **Our own translator, not i18next.** Two languages and typed keys need about 60 lines, and TypeScript rejects a missing Albanian key at build time.
 - **Preferences in cookies on web**, so the server renders the right theme and language first time, and "system" is resolved by a CSS media query with no script. On mobile they are kept with `expo-secure-store`, which was already installed.
 - **`@expo/vector-icons` on mobile** (with its required `expo-font`), because both are part of the Expo SDK. Web uses a small inline SVG set instead of an icon package.
+
+## 9. Assessment generation runs after the response, behind a job
+
+`POST .../assessments/generate` creates an `AIJob` and answers 202 at once. The provider call runs after the response (`after()`), and clients poll the job. There is no queue or worker yet.
+
+**Why:** the AI call can take a minute, and no browser or phone request should wait on it. Jobs give idempotency, limits, cancellation and a place to record tokens and failures.
+
+**Cost:** a process that stops mid-job leaves it `RUNNING` until it is failed as stale on the next read. Move to a worker if volume grows. See [docs/assessments.md](../assessments.md).
+
+## 9a. New question kinds reuse the existing `QuestionType`
+
+Six author-facing kinds share four stored types, told apart by a Zod-validated `kind` inside `options` and `answerKey`. **Why:** an enum migration adds nothing a discriminator does not, and `CODE` stays unused so nothing is ever executed. The migration was additive and left every trigger unchanged.
+
+## 9b. Assessment authoring is web-only; mobile is read-only
+
+Candidates use mobile and companies use web. Mobile shows company members assessment lists, details, versions and job status, and never edits.

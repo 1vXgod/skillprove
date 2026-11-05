@@ -15,6 +15,7 @@
   "dependencies": {
     "@clerk/nextjs": "7.9.23",
     "@skillprove/api-client": "workspace:*",
+    "@skillprove/permissions": "workspace:*",
     "@skillprove/shared": "workspace:*",
     "@skillprove/validation": "workspace:*",
     "@tanstack/react-query": "catalog:",

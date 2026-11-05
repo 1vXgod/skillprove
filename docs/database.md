@@ -118,6 +118,8 @@ erDiagram
   Evaluation ||--o{ EvaluationEvidence : cites
   Evaluation ||--o{ EvaluationReview : "reviewed by"
   AIJob ||--o{ Evaluation : produces
+  AIJob ||--o{ AssessmentVersion : "drafted by"
+  AIJob }o--o| Assessment : "produced"
   VerifiedSkillScoreCalculation ||--o{ VerifiedSkillScoreCalculationInput : uses
   Evaluation ||--o{ VerifiedSkillScoreCalculationInput : "feeds"
   VerifiedSkillScoreCalculation ||--o| VerifiedSkillScore : "is current for"

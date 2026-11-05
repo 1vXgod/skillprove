@@ -168,3 +168,52 @@ describe("error message keys", () => {
     expect(validationMessageKey("<script>")).toBeUndefined();
   });
 });
+
+describe("assessment calls", () => {
+  const job = {
+    id: "7f0a4a5e-3f7a-4c58-9d9b-0d5b8f7a1c11",
+    status: "QUEUED",
+    assessmentId: null,
+    retryCount: 0,
+    errorCode: null,
+    inputTokens: null,
+    outputTokens: null,
+    createdAt: "2026-11-05T10:00:00.000Z",
+    startedAt: null,
+    finishedAt: null,
+  };
+  const request = {
+    title: null,
+    description: null,
+    skills: [{ skillId: "11111111-1111-4111-8111-111111111111", expectedLevel: "BEGINNER" as const }],
+    difficulty: "BEGINNER" as const,
+    assessmentType: "KNOWLEDGE" as const,
+    questionCount: 5,
+    durationMinutes: 20,
+    language: "en" as const,
+    additionalInstructions: null,
+  };
+
+  it("starts generation with an idempotency key and parses the job", async () => {
+    const fetch = vi.fn(async (_url: RequestInfo | URL, _init?: RequestInit) => new Response(JSON.stringify({ success: true, data: { job, reused: false } }), { status: 202 }));
+    const client = createApiClient({ baseUrl: "http://api.test", fetch, getToken: async () => "tok" });
+    const result = await client.startGeneration("22222222-2222-4222-8222-222222222222", request, "key-12345678");
+    expect(result.job.status).toBe("QUEUED");
+    const init = fetch.mock.calls[0]?.[1] as unknown as { headers: Record<string, string>; method: string };
+    expect(init.method).toBe("POST");
+    expect(init.headers["Idempotency-Key"]).toBe("key-12345678");
+    expect(init.headers.Authorization).toBe("Bearer tok");
+  });
+
+  it("rejects a response that does not match the schema instead of passing it on", async () => {
+    const fetch = vi.fn(async () => new Response(JSON.stringify({ success: true, data: { job: { ...job, status: "WHATEVER" }, reused: false } }), { status: 202 }));
+    const client = createApiClient({ baseUrl: "http://api.test", fetch, getToken: async () => "tok" });
+    await expect(client.startGeneration("22222222-2222-4222-8222-222222222222", request)).rejects.toMatchObject({ code: "INVALID_RESPONSE" });
+  });
+
+  it("maps limit and availability failures to translation keys", async () => {
+    const { errorMessageKey } = await import("./index");
+    expect(errorMessageKey(new ApiClientError("RATE_LIMITED", "x", 429))).toBe("errors.rateLimited");
+    expect(errorMessageKey(new ApiClientError("SERVICE_UNAVAILABLE", "x", 503))).toBe("errors.aiUnavailable");
+  });
+});

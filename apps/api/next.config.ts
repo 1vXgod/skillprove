@@ -3,6 +3,8 @@ import type { NextConfig } from "next";
 const config: NextConfig = {
   poweredByHeader: false,
   transpilePackages: [
+    "@skillprove/ai",
+    "@skillprove/assessment-engine",
     "@skillprove/database",
     "@skillprove/permissions",
     "@skillprove/shared",

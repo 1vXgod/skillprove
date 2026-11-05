@@ -32,6 +32,9 @@ export const VALIDATION_MESSAGES = [
   "endDateRequired",
   "currentHasEndDate",
   "invalidChoice",
+  "weightsMustTotal100",
+  "needsCorrectAnswer",
+  "duplicateKey",
 ] as const;
 export type ValidationMessage = (typeof VALIDATION_MESSAGES)[number];
 

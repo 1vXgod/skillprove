@@ -8,9 +8,11 @@ export const API_ERROR_CODES = [
   "NOT_FOUND",
   "CONFLICT",
   "SERVICE_UNAVAILABLE",
+  "RATE_LIMITED",
   "INTERNAL_ERROR",
 ] as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODES)[number];
 
 export * from "./candidate";
+export * from "./assessment";

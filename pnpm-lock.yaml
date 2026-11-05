@@ -208,6 +208,12 @@ importers:
       '@clerk/backend':
         specifier: 3.26.5
         version: 3.26.5(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      '@skillprove/ai':
+        specifier: workspace:*
+        version: link:../../packages/ai
+      '@skillprove/assessment-engine':
+        specifier: workspace:*
+        version: link:../../packages/assessment-engine
       '@skillprove/database':
         specifier: workspace:*
         version: link:../../packages/database
@@ -342,6 +348,9 @@ importers:
       '@skillprove/api-client':
         specifier: workspace:*
         version: link:../../packages/api-client
+      '@skillprove/permissions':
+        specifier: workspace:*
+        version: link:../../packages/permissions
       '@skillprove/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -399,16 +408,35 @@ importers:
         version: 5.0.5(@types/node@24.19.2)(vite@8.3.5(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15))
 
   packages/ai:
+    dependencies:
+      '@skillprove/assessment-engine':
+        specifier: workspace:*
+        version: link:../assessment-engine
+      '@skillprove/shared':
+        specifier: workspace:*
+        version: link:../shared
+      '@skillprove/validation':
+        specifier: workspace:*
+        version: link:../validation
+      zod:
+        specifier: 'catalog:'
+        version: 4.6.7
     devDependencies:
       '@skillprove/config':
         specifier: workspace:*
         version: link:../config
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.19.2
       eslint:
         specifier: 'catalog:'
         version: 9.39.5(jiti@2.7.0)(supports-color@8.1.1)
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
+      vitest:
+        specifier: 'catalog:'
+        version: 5.0.5(@types/node@24.19.2)(vite@8.3.5(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15))
 
   packages/api-client:
     dependencies:
@@ -436,6 +464,16 @@ importers:
         version: 5.0.5(@types/node@26.6.6)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15))
 
   packages/assessment-engine:
+    dependencies:
+      '@skillprove/shared':
+        specifier: workspace:*
+        version: link:../shared
+      '@skillprove/validation':
+        specifier: workspace:*
+        version: link:../validation
+      zod:
+        specifier: 'catalog:'
+        version: 4.6.7
     devDependencies:
       '@skillprove/config':
         specifier: workspace:*
@@ -446,6 +484,9 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
+      vitest:
+        specifier: 'catalog:'
+        version: 5.0.5(@types/node@26.6.6)(vite@8.3.5(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15))
 
   packages/config:
     dependencies:

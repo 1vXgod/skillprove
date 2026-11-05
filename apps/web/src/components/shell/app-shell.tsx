@@ -22,7 +22,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "nav.skillPassport", icon: SuccessIcon, href: "/skill-passport" },
   { label: "nav.account", icon: SettingsIcon, href: "/account" },
   { label: "nav.candidates", icon: UsersIcon },
-  { label: "nav.assessments", icon: ClipboardIcon },
+  { label: "nav.assessments", icon: ClipboardIcon, href: "/assessments" },
   { label: "nav.jobs", icon: BriefcaseIcon },
 ];
 

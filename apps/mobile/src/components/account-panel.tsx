@@ -67,6 +67,7 @@ function AccountPanel() {
       )}
       <Button label={t("nav.profile")} icon="user" onPress={() => router.push("/profile")} fullWidth />
       <Button label={t("nav.skillPassport")} variant="secondary" icon="award" onPress={() => router.push("/skill-passport")} fullWidth />
+      <Button label={t("nav.assessments")} variant="secondary" icon="clipboard" onPress={() => router.push("/assessments")} fullWidth />
       <Button label={t("auth.signOut")} variant="outline" icon="log-out" onPress={() => void signOut()} fullWidth />
     </View>
   );
