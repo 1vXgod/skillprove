@@ -1,5 +1,7 @@
+import { CORS_ALLOWED_REQUEST_HEADERS } from "@skillprove/shared";
+
 const ALLOWED_METHODS = "GET, POST, PUT, PATCH, DELETE, OPTIONS";
-const ALLOWED_HEADERS = "Authorization, Content-Type, Accept";
+const ALLOWED_HEADERS = CORS_ALLOWED_REQUEST_HEADERS.join(", ");
 const PREFLIGHT_MAX_AGE_SECONDS = "600";
 
 export interface CorsResult {

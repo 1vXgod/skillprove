@@ -36,6 +36,11 @@ describe("evaluateCors", () => {
     expect(result.headers["Access-Control-Allow-Headers"]).toContain("Authorization");
   });
 
+  it("allows the Idempotency-Key header that AI generation sends", () => {
+    const allowedHeaders = evaluate(allowed[0] ?? "", "OPTIONS", "POST").headers["Access-Control-Allow-Headers"] ?? "";
+    expect(allowedHeaders.split(", ")).toEqual(["Authorization", "Content-Type", "Accept", "Idempotency-Key"]);
+  });
+
   it("rejects a preflight from a disallowed origin", () => {
     const result = evaluate("https://evil.example", "OPTIONS", "POST");
     expect(result.preflightStatus).toBe(403);
