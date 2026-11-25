@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { Screen } from "../../components/shell/screen";
 import { SignedInGate } from "../../components/shell/signed-in-gate";
+import { ResultView } from "../../components/take/result-view";
 import { Alert, AppText, Badge, Button, Card, Checkbox, EmptyState, Modal, Progress, RadioGroup, Skeleton } from "../../components/ui";
 import { answersToSubmit, formatCountdown, isAnswered, secondsLeft, toggleChoice, unansweredCount, type Answers } from "../../lib/attempt";
 import { clearAnswers, loadAnswers, saveAnswers } from "../../lib/attempt-store";
@@ -64,18 +65,14 @@ function Finished({ attempt }: { attempt: CandidateAttempt }) {
   useEffect(() => {
     void clearAnswers(attempt.id);
   }, [attempt.id]);
-  const [title, body] =
-    attempt.status === "SUBMITTED"
-      ? [t("take.submittedTitle"), t("take.submittedBody")]
-      : attempt.status === "EXPIRED"
-        ? [t("take.finishedTitle"), t("errors.attemptExpired")]
-        : [t("take.finishedTitle"), undefined];
+  if (attempt.status === "SUBMITTED") return <ResultView attemptId={attempt.id} title={attempt.title} />;
+  const body = attempt.status === "EXPIRED" ? t("errors.attemptExpired") : undefined;
   return (
     <View style={styles.gap}>
       <AppText variant="h1" accessibilityRole="header">
         {attempt.title}
       </AppText>
-      <EmptyState title={title} description={body} />
+      <EmptyState title={t("take.finishedTitle")} description={body} />
       <Button label={t("take.backToList")} onPress={backToList} fullWidth />
     </View>
   );
