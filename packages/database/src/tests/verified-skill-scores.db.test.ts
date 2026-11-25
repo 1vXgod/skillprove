@@ -55,9 +55,11 @@ describe.skipIf(hasNoTestDatabase)("recording a verified score inside the caller
 
   it("still refuses a calculation without evidence when the outer transaction commits", async () => {
     const { candidate, skill, input } = await setup();
+    // Either rule may refuse it: the assessment_count CHECK fires first, before the deferred
+    // evidence trigger gets a chance at commit.
     await expect(
       db.$transaction((tx) => recordVerifiedSkillScoreInTransaction(tx, { ...input, evidence: [] })),
-    ).rejects.toThrow(/needs evaluation evidence/);
+    ).rejects.toThrow(/verified_skill_score_calculations_count_positive|needs evaluation evidence/);
 
     const [score, calculations] = await stored(candidate.id, skill.id);
     expect(score).toBeNull();

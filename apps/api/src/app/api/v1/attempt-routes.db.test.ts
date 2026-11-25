@@ -219,7 +219,11 @@ describe.skipIf(!isLocal)("attempt API routes", () => {
     expect((await call(submitRoute, { token: stranger.token, method: "POST", params, body: { answers: {} } })).status).toBe(404);
     expect((await call(submitRoute, { method: "POST", params, body: { answers: {} } })).status).toBe(401);
 
-    await db().assessmentAttempt.update({ where: { id: attempt.id }, data: { expiresAt: new Date(Date.now() - 1000) } });
+    // Started an hour ago: the database requires expires_at to be after started_at.
+    await db().assessmentAttempt.update({
+      where: { id: attempt.id },
+      data: { startedAt: new Date(Date.now() - 3_600_000), expiresAt: new Date(Date.now() - 1000) },
+    });
     const late = await call(submitRoute, { token, method: "POST", params, body: { answers: {} } });
     expect(late.status).toBe(409);
     expect(late.body.error?.code).toBe("ATTEMPT_EXPIRED");
