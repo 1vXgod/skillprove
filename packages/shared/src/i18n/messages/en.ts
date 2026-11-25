@@ -316,6 +316,7 @@ export const en = {
     outdated: "Outdated evidence",
     outdatedBody: "An evaluation behind this result was later corrected or rejected in review. The score shown is the one recorded until it is recalculated.",
     superseded: "Corrected by a later evaluation",
+    moreAssessmentsNeeded: "More assessments needed",
     reviewStatus: {
       NOT_REQUIRED: "No review needed",
       PENDING: "Review pending",
@@ -738,7 +739,7 @@ export const en = {
       readOnlyNotice: "Assessments are created and edited on the SkillProve website. Here you can follow their status.",
       jobs: "Generation status",
     },
-  },
+  },
 };
 
 type Widen<T> = { [K in keyof T]: T[K] extends string ? string : Widen<T[K]> };
