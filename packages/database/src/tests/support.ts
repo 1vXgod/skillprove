@@ -228,6 +228,8 @@ export async function createObjectiveAssessment(
     durationMinutes?: number | null;
     attemptTtlHours?: number | null;
     difficulty?: "BEGINNER" | "INTERMEDIATE" | "ADVANCED" | "EXPERT";
+    /** Stores the first question without its estimated minutes, as hand-edited or outdated data would be. */
+    withUnreadableQuestion?: boolean;
   },
 ) {
   const assessment = await db.assessment.create({
@@ -238,6 +240,7 @@ export async function createObjectiveAssessment(
     const row = encodeQuestion(content) as QuestionRow;
     return { ...row, position: i + 1, options: row.options as Prisma.InputJsonValue, answerKey: row.answerKey as Prisma.InputJsonValue };
   });
+  if (options.withUnreadableQuestion) questions[0]!.estimatedMinutes = null;
   const version = await db.assessmentVersion.create({
     data: {
       assessmentId: assessment.id,

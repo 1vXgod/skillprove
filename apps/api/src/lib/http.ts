@@ -71,6 +71,8 @@ function fromAttemptDataError(error: unknown): ApiError | null {
       return new ApiError("ATTEMPT_EXPIRED", "Time ran out before this attempt was submitted.", 409);
     case "not_in_progress":
       return new ApiError("CONFLICT", "This attempt is no longer in progress.", 409);
+    case "not_submitted":
+      return new ApiError("CONFLICT", "This attempt has not been submitted.", 409);
     default:
       return null;
   }

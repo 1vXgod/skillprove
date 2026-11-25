@@ -3,6 +3,7 @@ import {
   calculateVerifiedSkillScore,
   decodeQuestion,
   scoreObjectiveAttempt,
+  NotObjectiveError,
   type ObjectiveScore,
   type SkillEvaluationInput,
 } from "@skillprove/assessment-engine";
@@ -20,17 +21,47 @@ import { recordVerifiedSkillScoreInTransaction } from "./verified-skill-scores";
 /** Long enough for a full recalculation; the default 5 seconds is tight on a cold database. */
 const TRANSACTION_TIMEOUT_MS = 15_000;
 
-export type ScoreAttemptResult = { evaluationId: string; created: boolean };
+export type ScoreAttemptResult = { evaluationId: string; created: boolean; status: "COMPLETED" | "FAILED" };
 
-/** The original automatic evaluation of an attempt. The database allows at most one. */
+/**
+ * The original automatic evaluations of an attempt. The database allows at most one that has
+ * not failed; a FAILED one may sit beside it once the attempt is re-scored after a fix.
+ */
 const automaticEvaluationOf = (attemptId: string) =>
-  ({ attemptId, evaluatorType: "AUTOMATIC", supersedesEvaluationId: null }) satisfies Prisma.EvaluationWhereInput;
+  ({ attemptId, evaluatorType: "AUTOMATIC", supersedesEvaluationId: null, status: { not: "PENDING" } }) satisfies Prisma.EvaluationWhereInput;
+
+/** The one that counts: a successful evaluation if there is one, otherwise the failure. */
+const currentAutomaticEvaluation = (db: PrismaClient | Prisma.TransactionClient, attemptId: string) =>
+  db.evaluation
+    .findMany({ where: automaticEvaluationOf(attemptId), select: { id: true, status: true } })
+    .then((rows) => rows.find((r) => r.status === "COMPLETED") ?? rows[0] ?? null);
+
+/**
+ * A problem with the assessment's stored data that will happen again on every run, such as
+ * a question that no longer passes validation. Recorded as a FAILED evaluation, so scoring
+ * stops retrying; anything else is treated as temporary and may be retried.
+ */
+class UnscorableAttemptError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "UnscorableAttemptError";
+  }
+}
+
+const isPermanent = (error: unknown) => error instanceof UnscorableAttemptError || error instanceof NotObjectiveError;
+
+const asResult = (row: { id: string; status: string }, created: boolean): ScoreAttemptResult => ({
+  evaluationId: row.id,
+  created,
+  status: row.status === "FAILED" ? "FAILED" : "COMPLETED",
+});
 
 /**
  * Scores a submitted attempt, once. Safe to call again and from several places at the same
- * time: a repeat returns the existing evaluation. Returns null when there is nothing to score
- * yet (the attempt is not submitted, or its answers were erased). This is the evaluation
- * pipeline: never call it with input from a request body.
+ * time: a repeat returns the existing evaluation, including a FAILED one, so a permanent
+ * failure is not retried. Returns null when there is nothing to score yet (the attempt is not
+ * submitted, or its answers were erased). Temporary errors are thrown, record nothing, and can
+ * be retried. This is the evaluation pipeline: never call it with input from a request body.
  */
 export async function scoreAttempt(db: PrismaClient, attemptId: string): Promise<ScoreAttemptResult | null> {
   const owner = await db.assessmentAttempt.findUnique({ where: { id: attemptId }, select: { candidateUserId: true } });
@@ -43,8 +74,8 @@ export async function scoreAttempt(db: PrismaClient, attemptId: string): Promise
         // each recalculate a verified score without the other's result.
         await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('score-attempt:' || ${owner.candidateUserId}::text))`;
 
-        const existing = await tx.evaluation.findFirst({ where: automaticEvaluationOf(attemptId), select: { id: true } });
-        if (existing) return { evaluationId: existing.id, created: false };
+        const existing = await currentAutomaticEvaluation(tx, attemptId);
+        if (existing) return asResult(existing, false);
 
         return await scoreInTransaction(tx, attemptId, owner.candidateUserId);
       },
@@ -53,9 +84,9 @@ export async function scoreAttempt(db: PrismaClient, attemptId: string): Promise
   } catch (error) {
     // The unique index on automatic evaluations caught a run that slipped past the lock.
     if (!isUniqueViolation(error)) throw error;
-    const winner = await db.evaluation.findFirst({ where: automaticEvaluationOf(attemptId), select: { id: true } });
+    const winner = await currentAutomaticEvaluation(db, attemptId);
     if (!winner) throw error;
-    return { evaluationId: winner.id, created: false };
+    return asResult(winner, false);
   }
 }
 
@@ -81,14 +112,22 @@ async function scoreInTransaction(tx: Prisma.TransactionClient, attemptId: strin
   const submission = attempt.submissions[0];
   if (attempt.status !== "SUBMITTED" || !submission?.responses) return null;
 
-  const questions = attempt.assessmentVersion.questions.map((row) => {
-    const content = decodeQuestion(row);
-    // Published questions were validated when saved, so this means corrupted data.
-    if (!content) throw new Error(`Question ${row.id} cannot be read for scoring.`);
-    return { id: row.id, content };
-  });
-  const responses = submission.responses as Record<string, unknown>;
-  const score = scoreObjectiveAttempt(questions, responses);
+  // Scoring is pure and happens before any write, so a permanent failure can still be
+  // recorded in this same transaction.
+  let score: ObjectiveScore;
+  try {
+    const questions = attempt.assessmentVersion.questions.map((row) => {
+      const content = decodeQuestion(row);
+      // Published questions were validated when saved, so this means corrupted data or a
+      // validation rule that changed after publishing.
+      if (!content) throw new UnscorableAttemptError(`Question ${row.id} cannot be read for scoring.`);
+      return { id: row.id, content };
+    });
+    score = scoreObjectiveAttempt(questions, submission.responses as Record<string, unknown>);
+  } catch (error) {
+    if (!isPermanent(error)) throw error;
+    return recordFailure(tx, { attemptId, submissionId: submission.id, rubricVersionId: attempt.rubricVersionId }, (error as Error).message);
+  }
 
   const evaluation = await tx.evaluation.create({
     data: {
@@ -137,7 +176,25 @@ async function scoreInTransaction(tx: Prisma.TransactionClient, attemptId: strin
     if (declared.has(skill.skillId)) await recalculateVerifiedScore(tx, userId, skill.skillId);
   }
 
-  return { evaluationId: evaluation.id, created: true };
+  return { evaluationId: evaluation.id, created: true, status: "COMPLETED" };
+}
+
+/**
+ * Records that the attempt cannot be scored automatically. The reason is for administrators
+ * and the server log; candidates only see that scoring failed. A FAILED evaluation has no
+ * scores and never counts toward a verified score.
+ */
+async function recordFailure(
+  tx: Prisma.TransactionClient,
+  ids: { attemptId: string; submissionId: string; rubricVersionId: string },
+  reason: string,
+): Promise<ScoreAttemptResult> {
+  const evaluation = await tx.evaluation.create({
+    data: { ...ids, evaluatorType: "AUTOMATIC", promptVersion: AUTO_FORMULA_VERSION, reviewStatus: "NOT_REQUIRED", summary: reason },
+    select: { id: true },
+  });
+  await tx.evaluation.update({ where: { id: evaluation.id }, data: { status: "FAILED", completedAt: new Date() } });
+  return { evaluationId: evaluation.id, created: true, status: "FAILED" };
 }
 
 /**

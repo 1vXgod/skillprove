@@ -8,7 +8,9 @@ export type AttemptDataErrorReason =
   /** The attempt's time ran out, including the grace period. */
   | "expired"
   /** The attempt is no longer in progress (already submitted or abandoned). */
-  | "not_in_progress";
+  | "not_in_progress"
+  /** A result was asked for before the attempt was submitted. */
+  | "not_submitted";
 
 /** An expected failure while taking an assessment. The API maps it to a safe response by `reason`. */
 export class AttemptDataError extends Error {

@@ -99,6 +99,7 @@ describe("withErrorHandling", () => {
     expect(await respond("attempts_exhausted")).toEqual([409, "ATTEMPTS_EXHAUSTED"]);
     expect(await respond("expired")).toEqual([409, "ATTEMPT_EXPIRED"]);
     expect(await respond("not_in_progress")).toEqual([409, "CONFLICT"]);
+    expect(await respond("not_submitted")).toEqual([409, "CONFLICT"]);
     expect(await respond("something_else")).toEqual([500, "INTERNAL_ERROR"]);
   });
 });

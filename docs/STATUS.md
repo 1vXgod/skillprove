@@ -308,7 +308,7 @@ Decisions (2026-11-25):
 | 7 | API: list, start, read an attempt | ✅ `fb4f6f2`, route tests passed in CI #13 |
 | 8 | Repository and API: submit, with a 30-second server-side grace period | ✅ `b21fdcc`, database and route tests passed in CI #13 |
 | 9 | `scoreAttempt`: evaluation, criterion scores, verified score, in one transaction. Adds `evaluation_skill_results` (decided 2026-11-25: per-skill results are stored, not re-scored from old answers). A criterion linked to a skill gets that skill's percentage, any other the overall one; rubric weights do not affect automatic scores | |
-| 10 | Result endpoint, lazy expiry, re-trigger after about a minute | |
+| 10 | Result endpoint, lazy expiry, re-trigger after about a minute. Decided 2026-11-26: a permanent scoring error (such as an unreadable question) is recorded as a `FAILED` evaluation and the result state is `failed`, with no retry; a temporary error records nothing and is retried | |
 | 11 | api-client methods | |
 | 12 | **Dev-only demo seed:** a demo company and 2–3 published, fully objective `PUBLIC` assessments (multiple choice, true/false, multiple select; a couple of skills; mixed difficulty) for testing on a phone. Refuses to run unless the database is local or a Neon branch named explicitly by ID that the server confirms is not `main`, and always when `NODE_ENV=production`. Database test: running it twice creates no duplicates, and the guard refuses unsafe targets | |
 | 13 | Mobile: browse assessments | |
