@@ -10,6 +10,7 @@ import { SignedInGate } from "../../components/shell/signed-in-gate";
 import { Alert, AppText, Avatar, Badge, Button, Card, CardHeader, EmptyState, Modal, Separator, Skeleton } from "../../components/ui";
 import { errorMessage, queryKeys, useApiClient } from "../../lib/use-api";
 import { useI18n } from "../../theme/preferences-provider";
+import { spacing } from "@skillprove/shared/design";
 
 export default function ProfileScreen() {
   return (
@@ -236,11 +237,11 @@ function ProfileDetails({ profile }: { profile: OwnProfile }) {
 }
 
 const styles = StyleSheet.create({
-  gap: { gap: 16 },
-  identity: { flexDirection: "row", gap: 16, alignItems: "center" },
-  row: { flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 10 },
-  rowText: { flex: 1, gap: 2 },
-  inline: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 8 },
-  wrap: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
-  buttons: { gap: 8 },
+  gap: { gap: spacing[4] },
+  identity: { flexDirection: "row", gap: spacing[4], alignItems: "center" },
+  row: { flexDirection: "row", alignItems: "center", gap: spacing[2], paddingVertical: spacing[3] },
+  rowText: { flex: 1, gap: spacing[0.5] },
+  inline: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: spacing[2] },
+  wrap: { flexDirection: "row", flexWrap: "wrap", gap: spacing[1.5] },
+  buttons: { gap: spacing[2] },
 });

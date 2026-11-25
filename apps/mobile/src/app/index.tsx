@@ -5,6 +5,7 @@ import { Screen } from "../components/shell/screen";
 import { AppText, Badge, Button, Card, Separator, type Tone } from "../components/ui";
 import { api, apiBaseUrl } from "../lib/api";
 import { useI18n } from "../theme/preferences-provider";
+import { spacing } from "@skillprove/shared/design";
 
 export default function StatusScreen() {
   const { t } = useI18n();
@@ -59,7 +60,7 @@ function StatusRow({ testID, label, query }: { testID: string; label: string; qu
 }
 
 const styles = StyleSheet.create({
-  intro: { gap: 8 },
-  card: { paddingVertical: 4, gap: 0 },
-  row: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: 12 },
+  intro: { gap: spacing[2] },
+  card: { paddingVertical: spacing[1], gap: 0 },
+  row: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: spacing[3] },
 });

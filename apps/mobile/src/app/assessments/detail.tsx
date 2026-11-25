@@ -7,6 +7,7 @@ import { SignedInGate } from "../../components/shell/signed-in-gate";
 import { Alert, AppText, Badge, Button, Card, CardHeader, Skeleton } from "../../components/ui";
 import { errorMessage, queryKeys, useApiClient } from "../../lib/use-api";
 import { useI18n } from "../../theme/preferences-provider";
+import { controlHeights, spacing } from "@skillprove/shared/design";
 
 export default function AssessmentDetailScreen() {
   return (
@@ -103,7 +104,7 @@ function DetailContent() {
 }
 
 const styles = StyleSheet.create({
-  gap: { gap: 16 },
-  wrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  versionRow: { flexDirection: "row", alignItems: "center", gap: 12, minHeight: 44, flexWrap: "wrap" },
+  gap: { gap: spacing[4] },
+  wrap: { flexDirection: "row", flexWrap: "wrap", gap: spacing[2] },
+  versionRow: { flexDirection: "row", alignItems: "center", gap: spacing[3], minHeight: controlHeights.touch, flexWrap: "wrap" },
 });

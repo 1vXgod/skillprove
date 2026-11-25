@@ -6,6 +6,7 @@ import { SignedInGate } from "../../components/shell/signed-in-gate";
 import { Alert, AppText, Button, Card, CardHeader, Progress, Spinner } from "../../components/ui";
 import { errorMessage, queryKeys, useApiClient } from "../../lib/use-api";
 import { useI18n } from "../../theme/preferences-provider";
+import { spacing } from "@skillprove/shared/design";
 
 export default function GenerationStatusScreen() {
   return (
@@ -61,4 +62,4 @@ function JobContent() {
   );
 }
 
-const styles = StyleSheet.create({ gap: { gap: 16 } });
+const styles = StyleSheet.create({ gap: { gap: spacing[4] } });

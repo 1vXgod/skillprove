@@ -181,6 +181,9 @@ export interface ShadowToken {
   elevation: number;
 }
 
+/** Shadows are black at varying opacity. React Native needs the colour spelled out. */
+export const shadowColor = "#000000";
+
 /** Only for things that float above the page: menus, dialogs, tooltips. */
 export const shadows: Record<ShadowName, ShadowToken> = {
   sm: { offsetY: 1, blur: 2, opacity: 0.06, elevation: 1 },

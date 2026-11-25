@@ -16,14 +16,14 @@ Kandidati hap aplikacionin për të **krijuar një profil që tregon qartë cila
 | 3 | Skill Passport | Dy seksione të ndara: **të vetëdeklaruara** dhe **të verifikuara** (të verifikuarat nuk ndryshohen me dorë) | Shton aftësitë që thotë se i ka; shikon cilat janë të verifikuara |
 | 4 | Privatësia | Profili është privat si parazgjedhje; **dukshmëria dhe kalime për detajet** (kontakti, vendndodhja, përvoja, edukimi, aftësitë e verifikuara) | Zgjedh dukshmërinë dhe çfarë detajesh mund të shohin të tjerët |
 
-Zgjedhja e kompanive të veçanta (listë) **nuk është ndërtuar**; është çështje e hapur.
+Lista e kompanive është hequr për tani: privatësia = dukshmëria + kalime për detajet. Ndarja e profilit sipas kompanisë mbetet një veçori e mundshme për të ardhmen (milestone 8).
 
 ## Brenda / Jashtë
 
 | ✅ BRENDA | ❌ JASHTË (jo tani) |
 |-----------|---------------------|
 | Regjistrimi dhe hyrja | Marrja e vlerësimeve nga kandidati dhe rezultati i verifikuar (**hapi tjetër**) |
-| Profili profesional | Lista e kompanive të zgjedhura në privatësi |
+| Profili profesional | Ndarja e profilit sipas kompanisë (e mundshme, milestone 8) |
 | Skill Passport (vetëdeklaruara vs verifikuara) | Kërkimi i kandidatëve nga kompanitë |
 | Kontrollet e privatësisë (privat si parazgjedhje) | Mjetet e punësimit (aplikime, intervista) |
 | Krijimi i vlerësimeve (me dorë ose me AI), draft dhe publikim | Pagesat / abonimet |

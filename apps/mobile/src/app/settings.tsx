@@ -6,6 +6,7 @@ import { AccountSection } from "../components/account-panel";
 import { Screen } from "../components/shell/screen";
 import { AppText, Button, Card, RadioGroup } from "../components/ui";
 import { usePreferences } from "../theme/preferences-provider";
+import { spacing } from "@skillprove/shared/design";
 
 /** Language, theme and account: the app's only settings so far. */
 export default function SettingsScreen() {
@@ -49,5 +50,5 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  account: { gap: 8 },
+  account: { gap: spacing[2] },
 });

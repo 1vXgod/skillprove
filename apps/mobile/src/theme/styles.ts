@@ -1,4 +1,4 @@
-import { colors, shadows, typography, type ColorTokens, type ShadowName, type ThemeName, type TypeStyle } from "@skillprove/shared/design";
+import { colors, shadowColor, shadows, typography, type ColorTokens, type ShadowName, type ThemeName, type TypeStyle } from "@skillprove/shared/design";
 
 /** React Native wants string weights. */
 const WEIGHTS = { 400: "400", 500: "500", 600: "600", 700: "700" } as const;
@@ -25,7 +25,7 @@ export function textStyle(style: TypeStyle): NativeTextStyle {
 export function shadowStyle(name: ShadowName, theme: ThemeName) {
   const s = shadows[name];
   return {
-    shadowColor: "#000000",
+    shadowColor,
     shadowOffset: { width: 0, height: s.offsetY },
     shadowRadius: s.blur / 2,
     shadowOpacity: theme === "dark" ? Math.min(s.opacity * 3, 0.5) : s.opacity,
