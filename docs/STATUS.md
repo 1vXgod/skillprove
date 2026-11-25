@@ -269,7 +269,7 @@ M1–M7 stay as they are. M8 onward is reordered by dependency, core loop first.
 | # | Milestone | Unblocks | Status |
 |---|---|---|---|
 | 1–6 | Foundations, database, auth, profiles and Skill Passport, design system and i18n, assessment creation | | Built. Database, route and browser tests passed in CI #6 |
-| 7 | Candidates take assessments; **automatic** scoring of objective questions; verified scores | Loop steps 3–5 | In progress (slices 1–8 of 16 done) |
+| 7 | Candidates take assessments; **automatic** scoring of objective questions; verified scores | Loop steps 3–5 | In progress (slices 1–13 of 20 done) |
 | 8 | Company onboarding: create a company, profile, owner membership, team invitations | Loop step 1 for real companies | Not started |
 | 9 | Assessment invitations: invite a candidate, accept/decline, deadlines, optional company passing score, in-app notifications | Loop step 2 | Not started |
 | 10 | Company results: attempts and results through candidate privacy, evaluation reports, comparison | Loop step 6 | Not started |
@@ -307,11 +307,15 @@ Decisions (2026-11-25):
 | 6 | Repository: list takeable assessments, start an attempt (profile required), candidate view | ✅ `1de3f5c`, database tests passed in CI #13 |
 | 7 | API: list, start, read an attempt | ✅ `fb4f6f2`, route tests passed in CI #13 |
 | 8 | Repository and API: submit, with a 30-second server-side grace period | ✅ `b21fdcc`, database and route tests passed in CI #13 |
-| 9 | `scoreAttempt`: evaluation, criterion scores, verified score, in one transaction. Adds `evaluation_skill_results` (decided 2026-11-25: per-skill results are stored, not re-scored from old answers). A criterion linked to a skill gets that skill's percentage, any other the overall one; rubric weights do not affect automatic scores | |
-| 10 | Result endpoint, lazy expiry, re-trigger after about a minute. Decided 2026-11-26: a permanent scoring error (such as an unreadable question) is recorded as a `FAILED` evaluation and the result state is `failed`, with no retry; a temporary error records nothing and is retried | |
-| 11 | api-client methods | |
-| 12 | **Dev-only demo seed:** a demo company and 2–3 published, fully objective `PUBLIC` assessments (multiple choice, true/false, multiple select; a couple of skills; mixed difficulty) for testing on a phone. Refuses to run unless the database is local or a Neon branch named explicitly by ID that the server confirms is not `main`, and always when `NODE_ENV=production`. Database test: running it twice creates no duplicates, and the guard refuses unsafe targets | |
-| 13 | Mobile: browse assessments | |
+| 9 | `scoreAttempt`: evaluation, criterion scores, verified score, in one transaction. Adds `evaluation_skill_results` (decided 2026-11-25: per-skill results are stored, not re-scored from old answers). A criterion linked to a skill gets that skill's percentage, any other the overall one; rubric weights do not affect automatic scores | ✅ `d186576`, `09906fc`, PR #8, CI green |
+| 10 | Result endpoint, lazy expiry, re-trigger after about a minute. Decided 2026-11-26: a permanent scoring error (such as an unreadable question) is recorded as a `FAILED` evaluation and the result state is `failed`, with no retry; a temporary error records nothing and is retried | ✅ `9bd1564`, CI green |
+| 11 | api-client methods | ✅ `e57b872`, PR #10, CI green |
+| 12 | **Dev-only demo seed:** a demo company and 2–3 published, fully objective `PUBLIC` assessments (multiple choice, true/false, multiple select; a couple of skills; mixed difficulty) for testing on a phone. Refuses to run unless the database is local or a Neon branch named explicitly by ID that the server confirms is not `main`, and always when `NODE_ENV=production`. Database test: running it twice creates no duplicates, and the guard refuses unsafe targets | ✅ `95c638f`, PR #10, CI green; run on the dev database 2026-11-26 |
+| 13 | Mobile: browse assessments | ✅ `7e21dfd`, PR #11; checked on an Android phone with the demo data |
 | 14 | Mobile: take an assessment. Confirm before starting ("the timer starts now, this uses 1 of N attempts") | |
 | 15 | Mobile: result screen and Skill Passport changes | |
-| 16 | Docs: `assessments.md`, `PROGRES.md`, this file | |
+| 16 | Navigation, mobile and web: show company authoring only to company members, under a "Company" section; for candidates, "Assessments" means browse and take. Today candidates who open "Assessments" see "You are not a member of a company yet." (found on the phone, 2026-11-26) | |
+| 17 | Web: browse assessments (as slice 13) | |
+| 18 | Web: take an assessment, with the same confirmation (as slice 14) | |
+| 19 | Web: result screen and Skill Passport changes (as slice 15) | |
+| 20 | Docs: `assessments.md`, `PROGRES.md`, this file | |
