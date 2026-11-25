@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
-import { AppShell } from "../../../components/shell/app-shell";
-import { UserMenu } from "../../../components/shell/user-menu";
+import { SignedInAppShell } from "../../../components/shell/signed-in-app-shell";
 import { isDesignSystemEnabled } from "../../../lib/design-system";
 import { ClerkTokenProvider } from "../../../lib/token-context";
 
@@ -8,9 +7,7 @@ import { ClerkTokenProvider } from "../../../lib/token-context";
 export default function AppLayout({ children }: { children: ReactNode }) {
   return (
     <ClerkTokenProvider>
-      <AppShell account={<UserMenu />} showDesignSystem={isDesignSystemEnabled()}>
-        {children}
-      </AppShell>
+      <SignedInAppShell showDesignSystem={isDesignSystemEnabled()}>{children}</SignedInAppShell>
     </ClerkTokenProvider>
   );
 }

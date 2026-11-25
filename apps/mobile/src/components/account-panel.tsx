@@ -8,6 +8,7 @@ import { useMemo, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { apiBaseUrl } from "../lib/api";
 import { clerkPublishableKey } from "../lib/auth-config";
+import { spacing } from "@skillprove/shared/design";
 import { useI18n } from "../theme/preferences-provider";
 import { Alert, AppText, Button, Spinner } from "./ui";
 
@@ -67,13 +68,22 @@ function AccountPanel() {
       )}
       <Button label={t("nav.profile")} icon="user" onPress={() => router.push("/profile")} fullWidth />
       <Button label={t("nav.skillPassport")} variant="secondary" icon="award" onPress={() => router.push("/skill-passport")} fullWidth />
-      <Button label={t("nav.takeAssessment")} variant="secondary" icon="edit-3" onPress={() => router.push("/take")} fullWidth />
-      <Button label={t("nav.assessments")} variant="secondary" icon="clipboard" onPress={() => router.push("/assessments")} fullWidth />
+      <Button label={t("nav.assessments")} variant="secondary" icon="edit-3" onPress={() => router.push("/take")} fullWidth />
+      {/* Company authoring only for company members; the API still checks membership itself. */}
+      {(account.data?.companies.length ?? 0) > 0 && (
+        <View style={styles.group}>
+          <AppText variant="label" tone="mutedForeground" accessibilityRole="header" style={styles.heading}>
+            {t("nav.company")}
+          </AppText>
+          <Button label={t("nav.assessments")} variant="secondary" icon="clipboard" onPress={() => router.push("/assessments")} fullWidth />
+        </View>
+      )}
       <Button label={t("auth.signOut")} variant="outline" icon="log-out" onPress={() => void signOut()} fullWidth />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  group: { gap: 8 },
+  group: { gap: spacing[2] },
+  heading: { marginTop: spacing[2] },
 });

@@ -1,6 +1,5 @@
 "use client";
 
-import type { MessageKey } from "@skillprove/shared/i18n";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -8,25 +7,8 @@ import { cn } from "../../lib/cn";
 import { useI18n } from "../../lib/i18n";
 import { BriefcaseIcon, ClipboardIcon, CloseIcon, MenuIcon, PaletteIcon, SettingsIcon, SuccessIcon, UserIcon, UsersIcon } from "../icons";
 import { Badge, IconButton } from "../ui";
+import { navSections, type NavIcon, type NavItem, type NavSection } from "./nav";
 import { LanguageMenu, ThemeMenu } from "./preference-menus";
-
-interface NavItem {
-  label: MessageKey;
-  icon: typeof UserIcon;
-  /** No href: the section is not built yet, and is shown as such rather than linked. */
-  href?: string;
-}
-
-const NAV_ITEMS: NavItem[] = [
-  { label: "nav.profile", icon: UserIcon, href: "/profile" },
-  { label: "nav.skillPassport", icon: SuccessIcon, href: "/skill-passport" },
-  { label: "nav.account", icon: SettingsIcon, href: "/account" },
-  { label: "nav.candidates", icon: UsersIcon },
-  { label: "nav.assessments", icon: ClipboardIcon, href: "/assessments" },
-  { label: "nav.jobs", icon: BriefcaseIcon },
-];
-
-const DESIGN_SYSTEM_ITEM: NavItem = { label: "nav.designSystem", icon: PaletteIcon, href: "/design-system" };
 
 function Brand() {
   return (
@@ -39,12 +21,23 @@ function Brand() {
   );
 }
 
+const ICONS: Record<NavIcon, typeof UserIcon> = {
+  user: UserIcon,
+  passport: SuccessIcon,
+  assessments: ClipboardIcon,
+  account: SettingsIcon,
+  candidates: UsersIcon,
+  jobs: BriefcaseIcon,
+  designSystem: PaletteIcon,
+};
+
 function NavList({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => void }) {
   const { t } = useI18n();
   const pathname = usePathname();
   return (
     <ul className="flex flex-col gap-0.5">
-      {items.map(({ label, icon: Icon, href }) => {
+      {items.map(({ label, icon, href }) => {
+        const Icon = ICONS[icon];
         const content = (
           <>
             <Icon size={18} />
@@ -54,7 +47,7 @@ function NavList({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => v
         const base = "flex h-10 items-center gap-3 rounded-md px-3 type-label";
         if (!href) {
           return (
-            <li key={label}>
+            <li key={`${label}-soon`}>
               <span aria-disabled="true" className={cn(base, "cursor-not-allowed text-muted-foreground/70")}>
                 {content}
                 <Badge className="h-5 px-2">{t("common.comingSoon")}</Badge>
@@ -64,7 +57,7 @@ function NavList({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => v
         }
         const active = pathname === href || pathname.startsWith(`${href}/`);
         return (
-          <li key={label}>
+          <li key={href}>
             <Link
               href={href}
               onClick={onNavigate}
@@ -80,11 +73,31 @@ function NavList({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => v
   );
 }
 
+function NavSections({ sections, onNavigate }: { sections: NavSection[]; onNavigate?: () => void }) {
+  const { t } = useI18n();
+  return (
+    <div className="flex flex-col gap-5">
+      {sections.map((section, i) => (
+        <div key={section.heading ?? i}>
+          {section.heading && (
+            <h2 className="mb-1 px-3 type-caption uppercase tracking-wide text-muted-foreground">
+              {t(section.heading)}
+            </h2>
+          )}
+          <NavList items={section.items} onNavigate={onNavigate} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 interface AppShellProps {
   /** The account control for the header, such as UserMenu. */
   account: ReactNode;
   /** Lists the internal design system page in navigation. */
   showDesignSystem?: boolean;
+  /** Shows the Company section (assessment authoring). Only company members need it. */
+  isCompanyMember?: boolean;
   children: ReactNode;
 }
 
@@ -92,9 +105,9 @@ interface AppShellProps {
  * The signed-in layout: a fixed sidebar from the lg breakpoint, and a drawer below it. The
  * drawer is a native modal dialog, so focus is trapped and Escape closes it.
  */
-export function AppShell({ account, showDesignSystem = false, children }: AppShellProps) {
+export function AppShell({ account, showDesignSystem = false, isCompanyMember = false, children }: AppShellProps) {
   const { t } = useI18n();
-  const items = showDesignSystem ? [...NAV_ITEMS, DESIGN_SYSTEM_ITEM] : NAV_ITEMS;
+  const sections = navSections({ isCompanyMember, showDesignSystem });
   const [drawerOpen, setDrawerOpen] = useState(false);
   const drawer = useRef<HTMLDialogElement>(null);
 
@@ -119,7 +132,7 @@ export function AppShell({ account, showDesignSystem = false, children }: AppShe
           <Brand />
         </div>
         <nav aria-label={t("shell.mainNavigation")} className="flex-1 overflow-y-auto px-3 py-4">
-          <NavList items={items} />
+          <NavSections sections={sections} />
         </nav>
       </aside>
 
@@ -135,7 +148,7 @@ export function AppShell({ account, showDesignSystem = false, children }: AppShe
           <IconButton label={t("shell.closeNavigation")} icon={<CloseIcon size={20} />} onClick={() => setDrawerOpen(false)} />
         </div>
         <nav aria-label={t("shell.mainNavigation")} className="px-3 py-4">
-          <NavList items={items} onNavigate={() => setDrawerOpen(false)} />
+          <NavSections sections={sections} onNavigate={() => setDrawerOpen(false)} />
         </nav>
       </dialog>
 
