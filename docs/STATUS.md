@@ -307,7 +307,7 @@ Decisions (2026-11-25):
 | 6 | Repository: list takeable assessments, start an attempt (profile required), candidate view | Database tests run in CI with PR #5 |
 | 7 | API: list, start, read an attempt | |
 | 8 | Repository and API: submit, with a 30-second server-side grace period | |
-| 9 | `scoreAttempt`: evaluation, criterion scores, verified score, in one transaction | |
+| 9 | `scoreAttempt`: evaluation, criterion scores, verified score, in one transaction. Adds `evaluation_skill_results` (decided 2026-11-25: per-skill results are stored, not re-scored from old answers). A criterion linked to a skill gets that skill's percentage, any other the overall one; rubric weights do not affect automatic scores | |
 | 10 | Result endpoint, lazy expiry, re-trigger after about a minute | |
 | 11 | api-client methods | |
 | 12 | **Dev-only demo seed:** a demo company and 2–3 published, fully objective `PUBLIC` assessments (multiple choice, true/false, multiple select; a couple of skills; mixed difficulty) for testing on a phone. Refuses to run unless the database is local or a Neon branch named explicitly by ID that the server confirms is not `main`, and always when `NODE_ENV=production`. Database test: running it twice creates no duplicates, and the guard refuses unsafe targets | |

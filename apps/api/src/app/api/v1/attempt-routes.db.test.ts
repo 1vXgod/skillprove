@@ -23,8 +23,15 @@ const isLocal = (() => {
   return true;
 })();
 
-const holder = vi.hoisted(() => ({ db: null as PrismaClient | null }));
+const holder = vi.hoisted(() => ({ db: null as PrismaClient | null, background: [] as (() => Promise<void>)[] }));
 vi.mock("../../../lib/db", () => ({ getDb: () => holder.db }));
+// Work scheduled for after the response is collected, not run, so a test can prove the
+// request itself never scores, then run the scoring explicitly.
+vi.mock("../../../lib/ai/schedule", () => ({
+  runInBackground: (task: () => Promise<void>) => {
+    holder.background.push(task);
+  },
+}));
 
 const { privateKey, publicKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
 const ISSUER = "https://test-instance.clerk.accounts.dev";
@@ -199,6 +206,24 @@ describe.skipIf(!isLocal)("attempt API routes", () => {
     const again = await call(submitRoute, { token, method: "POST", params, body: { answers: {} } });
     expect(again.status).toBe(409);
     expect(again.body.error?.code).toBe("CONFLICT");
+  });
+
+  it("scores after the response is sent, from the stored answers only", async () => {
+    const { token, attempt } = await startedAttempt();
+    const [mc] = attempt.questions;
+    holder.background = [];
+
+    const submitted = await call(submitRoute, { token, method: "POST", params: { attemptId: attempt.id }, body: { answers: { [mc!.id]: "B" }, score: 100 } });
+    expect(submitted.status).toBe(200);
+    expect(submitted.text).not.toMatch(/score|percent|correct/i);
+    expect(await db().evaluation.count({ where: { attemptId: attempt.id } })).toBe(0);
+
+    expect(holder.background).toHaveLength(1);
+    await holder.background[0]!();
+    const evaluation = await db().evaluation.findFirstOrThrow({ where: { attemptId: attempt.id }, include: { criterionScores: true } });
+    // One of two correct, whatever the body claimed. The criterion has no skill, so it gets the overall result.
+    expect(Number(evaluation.overallScore)).toBe(50);
+    expect(evaluation.criterionScores.map((c) => Number(c.score))).toEqual([50]);
   });
 
   it("rejects malformed answers before touching the attempt", async () => {

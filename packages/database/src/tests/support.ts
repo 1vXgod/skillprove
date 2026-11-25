@@ -186,6 +186,7 @@ export async function createObjectiveAssessment(
     maxAttempts?: number;
     durationMinutes?: number | null;
     attemptTtlHours?: number | null;
+    difficulty?: "BEGINNER" | "INTERMEDIATE" | "ADVANCED" | "EXPERT";
   },
 ) {
   const choices = [
@@ -234,7 +235,7 @@ export async function createObjectiveAssessment(
       version: 1,
       title: "Objective assessment",
       format: "MULTIPLE_CHOICE",
-      difficulty: "INTERMEDIATE",
+      difficulty: options.difficulty ?? "INTERMEDIATE",
       maxAttempts: options.maxAttempts ?? 2,
       durationMinutes: options.durationMinutes === undefined ? 20 : options.durationMinutes,
       attemptTtlHours: options.attemptTtlHours ?? null,
