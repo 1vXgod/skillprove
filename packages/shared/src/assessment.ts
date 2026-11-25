@@ -29,6 +29,12 @@ export type AssessmentStatus = (typeof ASSESSMENT_STATUSES)[number];
 export const ATTEMPT_STATUSES = ["IN_PROGRESS", "SUBMITTED", "EXPIRED", "ABANDONED"] as const;
 export type AttemptStatusName = (typeof ATTEMPT_STATUSES)[number];
 
+/**
+ * Submissions are accepted this long after the deadline, to absorb network delay. Server side
+ * only: candidates are always shown the exact deadline.
+ */
+export const SUBMISSION_GRACE_SECONDS = 30;
+
 /** What a candidate sees about scoring: still being scored, or scored. */
 export const ATTEMPT_RESULT_STATES = ["pending", "scored"] as const;
 export type AttemptResultState = (typeof ATTEMPT_RESULT_STATES)[number];

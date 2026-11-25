@@ -1,3 +1,4 @@
+import { SUBMISSION_GRACE_SECONDS } from "@skillprove/shared";
 import { describe, expect, it } from "vitest";
 import { AttemptDataError } from "../repositories/attempt-errors";
 import { attemptDeadline, getCandidateAttempt, listTakeableAssessments, startAttempt } from "../repositories/attempts";
@@ -56,9 +57,12 @@ describe.skipIf(hasNoTestDatabase)("taking assessments: list, start and view", (
     expect(first.created).toBe(true);
     expect(again).toEqual({ attemptId: first.attemptId, created: false });
 
+    // The database stores the hard cutoff (deadline plus grace); the candidate sees the deadline.
     const row = await db.assessmentAttempt.findUniqueOrThrow({ where: { id: first.attemptId } });
     expect(row.attemptNumber).toBe(1);
-    expect(row.expiresAt!.getTime() - row.startedAt.getTime()).toBe(15 * 60_000);
+    expect(row.expiresAt!.getTime() - row.startedAt.getTime()).toBe(15 * 60_000 + SUBMISSION_GRACE_SECONDS * 1000);
+    const view = await getCandidateAttempt(db, user.id, first.attemptId);
+    expect(new Date(view!.expiresAt!).getTime() - row.startedAt.getTime()).toBe(15 * 60_000);
   });
 
   it("refuses a new attempt once every allowed attempt is used", async () => {

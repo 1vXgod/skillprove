@@ -97,6 +97,7 @@ describe("withErrorHandling", () => {
     expect(await respond("not_found")).toEqual([404, "NOT_FOUND"]);
     expect(await respond("profile_required")).toEqual([409, "PROFILE_REQUIRED"]);
     expect(await respond("attempts_exhausted")).toEqual([409, "ATTEMPTS_EXHAUSTED"]);
+    expect(await respond("expired")).toEqual([409, "ATTEMPT_EXPIRED"]);
     expect(await respond("not_in_progress")).toEqual([409, "CONFLICT"]);
     expect(await respond("something_else")).toEqual([500, "INTERNAL_ERROR"]);
   });

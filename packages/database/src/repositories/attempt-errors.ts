@@ -5,7 +5,9 @@ export type AttemptDataErrorReason =
   | "profile_required"
   /** Every allowed attempt has been used. */
   | "attempts_exhausted"
-  /** The attempt is no longer in progress (submitted, expired or abandoned). */
+  /** The attempt's time ran out, including the grace period. */
+  | "expired"
+  /** The attempt is no longer in progress (already submitted or abandoned). */
   | "not_in_progress";
 
 /** An expected failure while taking an assessment. The API maps it to a safe response by `reason`. */

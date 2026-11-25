@@ -6,6 +6,7 @@ import { resetClerkForTests } from "../../../lib/auth/clerk";
 import { POST as startAttemptRoute } from "./me/assessments/[assessmentId]/attempts/route";
 import { GET as listAssessments } from "./me/assessments/route";
 import { GET as getAttempt } from "./me/attempts/[attemptId]/route";
+import { POST as submitRoute } from "./me/attempts/[attemptId]/submit/route";
 
 /**
  * The real route handlers, guards, Clerk token verification and repositories, against a
@@ -37,10 +38,11 @@ function tokenFor(subject: string) {
 
 type Handler = (request: Request, context: never) => Promise<Response>;
 
-async function call(handler: Handler, options: { token?: string; method?: string; params?: Record<string, string> } = {}) {
+async function call(handler: Handler, options: { token?: string; method?: string; params?: Record<string, string>; body?: unknown } = {}) {
   const request = new Request("http://localhost:4000/api/v1/test", {
     method: options.method ?? "GET",
     headers: { ...(options.token ? { authorization: `Bearer ${options.token}` } : {}), "content-type": "application/json" },
+    body: options.body === undefined ? undefined : JSON.stringify(options.body),
   });
   const response = await handler(request, { params: Promise.resolve(options.params ?? {}) } as never);
   const text = await response.text();
@@ -171,6 +173,56 @@ describe.skipIf(!isLocal)("attempt API routes", () => {
     expect((await call(getAttempt, { token: owner.token, params: { attemptId: randomUUID() } })).status).toBe(404);
     expect((await call(startAttemptRoute, { token: owner.token, method: "POST", params: { assessmentId: randomUUID() } })).status).toBe(404);
     expect((await call(startAttemptRoute, { token: owner.token, method: "POST", params: { assessmentId: "x" } })).status).toBe(404);
+  });
+
+  async function startedAttempt() {
+    const candidate = await signedIn();
+    const assessment = await takeableAssessment();
+    const started = await call(startAttemptRoute, { token: candidate.token, method: "POST", params: { assessmentId: assessment.id } });
+    const attempt = candidateAttemptSchema.parse(started.body.data);
+    return { ...candidate, attempt };
+  }
+
+  it("submits once, stores only answers, and drops anything else in the body", async () => {
+    const { token, attempt } = await startedAttempt();
+    const [mc, tf] = attempt.questions;
+    const params = { attemptId: attempt.id };
+
+    const submitted = await call(submitRoute, { token, method: "POST", params, body: { answers: { [mc!.id]: "B", [tf!.id]: false }, score: 100, percent: 100 } });
+    expect(submitted.status).toBe(200);
+    expect(candidateAttemptSchema.parse(submitted.body.data)).toMatchObject({ status: "SUBMITTED", questions: [] });
+
+    const stored = await db().assessmentSubmission.findFirstOrThrow({ where: { attemptId: attempt.id } });
+    expect(stored.responses).toEqual({ [mc!.id]: "B", [tf!.id]: false });
+    expect(await db().verifiedSkillScoreCalculation.count({ where: { userId: (await db().assessmentAttempt.findUniqueOrThrow({ where: { id: attempt.id } })).candidateUserId } })).toBe(0);
+
+    const again = await call(submitRoute, { token, method: "POST", params, body: { answers: {} } });
+    expect(again.status).toBe(409);
+    expect(again.body.error?.code).toBe("CONFLICT");
+  });
+
+  it("rejects malformed answers before touching the attempt", async () => {
+    const { token, attempt } = await startedAttempt();
+    const params = { attemptId: attempt.id };
+    for (const body of [{}, { answers: { "not-a-uuid": "A" } }, { answers: { [attempt.questions[0]!.id]: 7 } }]) {
+      const response = await call(submitRoute, { token, method: "POST", params, body });
+      expect(response.status).toBe(400);
+    }
+    expect((await db().assessmentAttempt.findUniqueOrThrow({ where: { id: attempt.id } })).status).toBe("IN_PROGRESS");
+  });
+
+  it("answers ATTEMPT_EXPIRED after the grace period, and hides other people's attempts", async () => {
+    const { token, attempt } = await startedAttempt();
+    const stranger = await signedIn();
+    const params = { attemptId: attempt.id };
+
+    expect((await call(submitRoute, { token: stranger.token, method: "POST", params, body: { answers: {} } })).status).toBe(404);
+    expect((await call(submitRoute, { method: "POST", params, body: { answers: {} } })).status).toBe(401);
+
+    await db().assessmentAttempt.update({ where: { id: attempt.id }, data: { expiresAt: new Date(Date.now() - 1000) } });
+    const late = await call(submitRoute, { token, method: "POST", params, body: { answers: {} } });
+    expect(late.status).toBe(409);
+    expect(late.body.error?.code).toBe("ATTEMPT_EXPIRED");
   });
 
   it("refuses a new attempt when every attempt is used", async () => {

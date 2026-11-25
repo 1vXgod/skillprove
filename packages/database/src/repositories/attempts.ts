@@ -1,3 +1,4 @@
+import { SUBMISSION_GRACE_SECONDS } from "@skillprove/shared";
 import type { Prisma, PrismaClient } from "../generated/prisma/client";
 import { AttemptDataError } from "./attempt-errors";
 import { isUniqueViolation } from "./candidate-errors";
@@ -26,7 +27,7 @@ const takeableVersion = {
   questions: { some: {}, every: { type: { in: [...OBJECTIVE_TYPES] } } },
 } satisfies Prisma.AssessmentVersionWhereInput;
 
-/** The deadline for a new attempt: the assessment's duration, else its attempt lifetime, else 24 hours. */
+/** The deadline a candidate sees: the assessment's duration, else its attempt lifetime, else 24 hours. */
 export function attemptDeadline(
   startedAt: Date,
   version: { durationMinutes: number | null; attemptTtlHours: number | null },
@@ -35,7 +36,16 @@ export function attemptDeadline(
   return new Date(startedAt.getTime() + minutes * 60_000);
 }
 
-/** Marks the candidate's overdue attempts as expired. Done on read, since there is no background job. */
+/*
+ * `expires_at` stores the hard cutoff: the deadline plus the grace period. The database's
+ * submission trigger refuses anything after it, so the grace period is enforced there too.
+ * Candidates are shown the deadline itself, `expires_at` minus the grace period.
+ */
+const GRACE_MS = SUBMISSION_GRACE_SECONDS * 1000;
+const toCutoff = (deadline: Date) => new Date(deadline.getTime() + GRACE_MS);
+const toDeadline = (cutoff: Date | null) => (cutoff ? new Date(cutoff.getTime() - GRACE_MS) : null);
+
+/** Marks the candidate's attempts past their cutoff as expired. Done on read, since there is no background job. */
 async function expireOverdueAttempts(db: PrismaClient | Prisma.TransactionClient, userId: string, attemptId?: string) {
   await db.assessmentAttempt.updateMany({
     where: { candidateUserId: userId, status: "IN_PROGRESS", expiresAt: { lte: new Date() }, ...(attemptId ? { id: attemptId } : {}) },
@@ -106,7 +116,7 @@ export async function startAttempt(db: PrismaClient, userId: string, assessmentI
         candidateUserId: userId,
         attemptNumber: (version.attempts[0]?.attemptNumber ?? 0) + 1,
         startedAt,
-        expiresAt: attemptDeadline(startedAt, version),
+        expiresAt: toCutoff(attemptDeadline(startedAt, version)),
       },
       select: { id: true },
     });
@@ -176,9 +186,64 @@ export async function getCandidateAttempt(db: PrismaClient, userId: string, atte
     attemptNumber: attempt.attemptNumber,
     maxAttempts: v.maxAttempts,
     startedAt: attempt.startedAt.toISOString(),
-    expiresAt: attempt.expiresAt?.toISOString() ?? null,
+    expiresAt: toDeadline(attempt.expiresAt)?.toISOString() ?? null,
     submittedAt: attempt.submittedAt?.toISOString() ?? null,
     // Questions are only needed, and only shown, while the attempt can still be answered.
     questions: attempt.status === "IN_PROGRESS" ? v.questions.map(toAttemptQuestion) : [],
   };
+}
+
+/** The database's submission trigger reports these as plain errors; turn them into reasons. */
+function fromSubmissionTrigger(error: unknown): AttemptDataError | null {
+  const message = error instanceof Error ? error.message : "";
+  if (message.includes("attempt has expired")) return new AttemptDataError("expired");
+  if (message.includes("attempt is not in progress")) return new AttemptDataError("not_in_progress");
+  return null;
+}
+
+/**
+ * Stores the candidate's answers and closes the attempt, once. Only answers to this attempt's
+ * own questions are kept; anything else in the request is dropped. Accepted until the hard
+ * cutoff (deadline plus grace period). Nothing here scores: scoring reads the stored
+ * submission later, so nothing a client sends can reach a score.
+ */
+export async function submitAttempt(
+  db: PrismaClient,
+  userId: string,
+  attemptId: string,
+  answers: Record<string, unknown>,
+): Promise<{ submissionId: string; submittedAt: string }> {
+  const attempt = await db.assessmentAttempt.findFirst({
+    where: { id: attemptId, candidateUserId: userId },
+    select: { status: true, expiresAt: true, assessmentVersion: { select: { questions: { select: { id: true } } } } },
+  });
+  if (!attempt) throw new AttemptDataError("not_found");
+  if (attempt.status === "IN_PROGRESS" && attempt.expiresAt && attempt.expiresAt <= new Date()) {
+    await expireOverdueAttempts(db, userId, attemptId);
+    throw new AttemptDataError("expired");
+  }
+  if (attempt.status === "EXPIRED") throw new AttemptDataError("expired");
+  if (attempt.status !== "IN_PROGRESS") throw new AttemptDataError("not_in_progress");
+
+  const questionIds = new Set(attempt.assessmentVersion.questions.map((q) => q.id));
+  const responses = Object.fromEntries(Object.entries(answers).filter(([id]) => questionIds.has(id))) as Prisma.InputJsonObject;
+
+  try {
+    return await db.$transaction(async (tx) => {
+      const submission = await tx.assessmentSubmission.create({
+        data: { attemptId, responses },
+        select: { id: true, submittedAt: true },
+      });
+      const closed = await tx.assessmentAttempt.updateMany({
+        where: { id: attemptId, status: "IN_PROGRESS" },
+        data: { status: "SUBMITTED", submittedAt: submission.submittedAt },
+      });
+      if (closed.count !== 1) throw new AttemptDataError("not_in_progress");
+      return { submissionId: submission.id, submittedAt: submission.submittedAt.toISOString() };
+    });
+  } catch (error) {
+    // A second submit racing the first hits the unique (attempt, revision) key.
+    if (isUniqueViolation(error)) throw new AttemptDataError("not_in_progress");
+    throw fromSubmissionTrigger(error) ?? error;
+  }
 }

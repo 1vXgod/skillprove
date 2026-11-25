@@ -67,6 +67,8 @@ function fromAttemptDataError(error: unknown): ApiError | null {
       return new ApiError("PROFILE_REQUIRED", "Create your profile before taking an assessment.", 409);
     case "attempts_exhausted":
       return new ApiError("ATTEMPTS_EXHAUSTED", "You have used every attempt for this assessment.", 409);
+    case "expired":
+      return new ApiError("ATTEMPT_EXPIRED", "Time ran out before this attempt was submitted.", 409);
     case "not_in_progress":
       return new ApiError("CONFLICT", "This attempt is no longer in progress.", 409);
     default:

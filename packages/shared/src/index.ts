@@ -14,6 +14,8 @@ export const API_ERROR_CODES = [
   "PROFILE_REQUIRED",
   /** Every allowed attempt at an assessment has been used. */
   "ATTEMPTS_EXHAUSTED",
+  /** The attempt's time ran out before it was submitted. */
+  "ATTEMPT_EXPIRED",
 ] as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODES)[number];
