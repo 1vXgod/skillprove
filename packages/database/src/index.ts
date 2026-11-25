@@ -43,6 +43,7 @@ export {
 export { anonymizeIdentity, syncIdentity, type VerifiedIdentity } from "./repositories/identity";
 export {
   recordVerifiedSkillScore,
+  recordVerifiedSkillScoreInTransaction,
   type VerifiedSkillScoreInput,
 } from "./repositories/verified-skill-scores";
 export { seedSkillTaxonomy } from "./seed/skill-taxonomy";

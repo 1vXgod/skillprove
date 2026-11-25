@@ -172,7 +172,7 @@ Scores, IDs and audit records remain, with no direct identity attached. The rete
 ### Skill verification
 
 - `UserSkill` holds only what the candidate claims. `VerifiedSkillScore` holds verified results.
-- `recordVerifiedSkillScore` is the only supported way to change a verified score. It must never be reachable from a candidate-facing endpoint.
+- `recordVerifiedSkillScore` is the only supported way to change a verified score. It must never be reachable from a candidate-facing endpoint. `recordVerifiedSkillScoreInTransaction` is the same write inside a transaction the caller already holds, so a score commits or rolls back together with the evaluation behind it; the same rule applies.
 - Each change appends a `VerifiedSkillScoreCalculation`, with its formula version and the evaluations behind it. Calculations are immutable, so any score can be traced back to criterion scores and evidence.
 - The database rejects a calculation with no evidence, and evidence that is unfinished, rejected in review, from another candidate or for a skill the assessment does not measure.
 - A trigger copies values from the calculation into `VerifiedSkillScore`, so direct edits to that table have no effect.
