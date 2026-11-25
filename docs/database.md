@@ -183,7 +183,7 @@ Scores, IDs and audit records remain, with no direct identity attached. The rete
 2. **Publish:** set `publishedAt` on the rubric and `PUBLISHED` on the version. Both are then frozen. A change means a new version. A new rubric can be added to a published version.
 3. **Attempt:** requires a published version and rubric. The rubric is fixed for that attempt. `attemptNumber` cannot exceed `maxAttempts`.
 4. **Submit:** allowed only while the attempt is in progress and not expired. Submissions and their file links are then immutable.
-5. **Evaluate:** an evaluation starts `PENDING`. Add criterion scores and evidence, then set `COMPLETED` with an overall score. AI evaluations must record provider and model; human ones must record the evaluator.
+5. **Evaluate:** an evaluation starts `PENDING`. Add criterion scores and evidence, then set `COMPLETED` with an overall score. AI evaluations must record provider and model; human ones must record the evaluator. Automatic ones (objective questions scored by code, migration `20261125100000_automatic_evaluator`) must record the formula version in `prompt_version` and nothing else: no provider, model, AI job or evaluator.
 6. **After completion:** everything is frozen except `reviewStatus`. Corrections are a new evaluation with `supersedesEvaluationId`.
 7. **Review:** `EvaluationReview` rows are append-only and update `reviewStatus` automatically. AI results never make hiring decisions on their own.
 

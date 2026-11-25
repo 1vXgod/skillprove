@@ -1,0 +1,6 @@
+# Commits that git blame should skip because they change formatting only, not content.
+# Use locally with: git config blame.ignoreRevsFile .git-blame-ignore-revs
+# GitHub's blame view reads this file automatically.
+
+# Normalize line endings to LF (CRLF -> LF in the i18n message files, no content change)
+8c7542bf15b6dac7b16c2fdd8f4304c1e166a103

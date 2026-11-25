@@ -314,6 +314,7 @@ export const sq: Messages = {
     outdated: "Dëshmi e vjetruar",
     outdatedBody: "Një vlerësim pas këtij rezultati u korrigjua më vonë ose u refuzua në shqyrtim. Rezultati i shfaqur është ai i regjistruar derisa të rillogaritet.",
     superseded: "Korrigjuar nga një vlerësim i mëvonshëm",
+    moreAssessmentsNeeded: "Duhen më shumë vlerësime",
     reviewStatus: {
       NOT_REQUIRED: "Nuk kërkohet shqyrtim",
       PENDING: "Në pritje të shqyrtimit",
@@ -736,5 +737,5 @@ export const sq: Messages = {
       readOnlyNotice: "Vlerësimet krijohen dhe ndryshohen në faqen e SkillProve. Këtu mund të ndiqni gjendjen e tyre.",
       jobs: "Gjendja e gjenerimit",
     },
-  },
+  },
 };

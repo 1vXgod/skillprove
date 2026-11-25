@@ -1,0 +1,20 @@
+# Line endings: every text file is stored and checked out with LF, on every OS, whatever
+# core.autocrlf says. Node, TypeScript, Prettier, ESLint, Expo and VS Code all handle LF on Windows.
+* text=auto eol=lf
+
+# cmd.exe can misread batch files with LF endings. None exist yet; this is for when they do.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Never touch binary files.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+*.pdf binary
