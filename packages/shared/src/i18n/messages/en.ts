@@ -314,7 +314,7 @@ export const en = {
     scoreOutOf: "{score} / 100",
     confidence: "Confidence",
     assessments: "Assessments",
-    highestDifficulty: "Highest level",
+    highestDifficulty: "Hardest assessment",
     lastVerified: "Last verified",
     evidence: "Evidence",
     outdated: "Outdated evidence",

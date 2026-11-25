@@ -312,7 +312,7 @@ export const sq: Messages = {
     scoreOutOf: "{score} / 100",
     confidence: "Besueshmëria",
     assessments: "Vlerësimet",
-    highestDifficulty: "Niveli më i lartë",
+    highestDifficulty: "Vlerësimi më i vështirë",
     lastVerified: "Verifikuar së fundi",
     evidence: "Dëshmitë",
     outdated: "Dëshmi e vjetruar",
