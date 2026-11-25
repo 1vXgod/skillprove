@@ -73,6 +73,8 @@ When a profile is visible, the response always includes the name, headline, biog
 | `showVerifiedSkills` | Verified skills: score, confidence, count, difficulty, date and evidence status. Never the evidence itself, which could name assessments the viewer's company does not own |
 | `isVisible` on a portfolio item | That item |
 
+Privacy is a visibility level plus these detail toggles. There is no per-company sharing list: it was dropped for now and may return as a possible future feature (milestone 8).
+
 `isDiscoverable` is stored but has no effect yet; it is for company search, a later milestone. There is no listing or search endpoint.
 
 ## Not implemented

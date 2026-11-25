@@ -2,7 +2,7 @@
 
 People should demonstrate their skills rather than simply claim them.
 
-SkillProve is a skills verification and recruitment platform. **Current state:** candidates can sign in (Clerk), build a profile, keep a Skill Passport that separates self-reported from verified skills, and control profile privacy (private by default), in Albanian and English on mobile and web. Companies can create assessments by hand or with AI generation. **Not built yet:** candidates taking assessments, scoring, and verified results; per-company profile sharing; candidate search and hiring tools. Authentication needs Clerk keys. See [docs/authentication.md](docs/authentication.md) and [PROGRES.md](PROGRES.md) (in Albanian).
+SkillProve is a skills verification and recruitment platform. **Current state:** candidates can sign in (Clerk), build a profile, keep a Skill Passport that separates self-reported from verified skills, and control profile privacy (private by default), in Albanian and English on mobile and web. Companies can create assessments by hand or with AI generation. **Not built yet:** candidates taking assessments, scoring, and verified results; candidate search and hiring tools. Authentication needs Clerk keys. See [docs/authentication.md](docs/authentication.md) and [PROGRES.md](PROGRES.md) (in Albanian).
 
 ## Setup
 

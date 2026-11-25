@@ -23,14 +23,13 @@ Milestone 6 (commit `df1d6f7`, një commit i vetëm me 98 skedarë) shtoi **krij
 Pjesa e kandidatit që *merr* vlerësime nuk ekziston ende.
 
 ## Pjesërisht gati
-- **Privatësia:** ka dukshmëri dhe kalime për detajet; **nuk ka listë kompanish** që zgjedh kush e sheh profilin (as tabelë, as endpoint).
 - **Zgjedhja e gjuhës:** në mobile ka buton SQ/EN në krye të aplikacionit (`apps/mobile/src/components/shell/screen.tsx`), para dhe pas hyrjes, dhe te Cilësimet. Hyrja vetë është ekrani i Clerk-ut pa zgjedhës të veçantë. Web nuk u kontrollua.
 - **Aftësitë e verifikuara:** shfaqja dhe ruajtja ekzistojnë, por asgjë nuk i prodhon ende, kështu që seksioni është bosh.
 - **Hyrja në mobile** kërkon `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`; pa të shfaqet mesazh "nuk është konfiguruar".
 
 ## Nuk është nisur
 - Marrja e vlerësimeve nga kandidati, dorëzimet, vlerësimi dhe rezultati i verifikuar (Milestone 7).
-- Lista e kompanive në privatësi.
+- Ndarja e profilit sipas kompanisë: vendim më 2026-11-18 ta heqim për tani. Privatësia = dukshmëri + kalime për detajet. Mund të vijë më vonë (milestone 8).
 - Kërkimi i kandidatëve nga kompanitë, mjetet e punësimit, pagesat.
 
 ## Probleme të njohura
@@ -40,8 +39,8 @@ Pjesa e kandidatit që *merr* vlerësime nuk ekziston ende.
 ## Hapi tjetër
 1. Ngrit një bazë PostgreSQL provë (jo Neon `main`), ekzekuto `pnpm test` dhe bëji të kalojnë 137 testet e anashkaluara.
 2. Ekipi rishikon kodin kryesor (auth, profili, Skill Passport, privatësia, assessments) që secili ta shpjegojë pjesën e vet.
-3. Vendos nëse lista e kompanive në privatësi ndërtohet apo hiqet nga HARTA.
-4. Fillo Milestone 7 me hapa të vegjël (nisja e tentativës, dorëzimi, vlerësimi, rezultati i verifikuar).
+3. Fillo Milestone 7 me hapa të vegjël (nisja e tentativës, dorëzimi, vlerësimi, rezultati i verifikuar).
+   Vendim më 2026-11-25: vlerësimi në Milestone 7 është **vetëm automatik**, për pyetjet objektive. Vlerësimi me AI me rishikim nga njeriu vjen më vonë.
 
 ## Milestones (emërtimet 1–5 dhe 7–12 janë të Claude-it, jo të projektit)
 Në dokumente emërtohen vetëm Milestone 6 dhe 7. Pjesa tjetër është rindërtuar nga migrimet, commit-et dhe dokumentet.
@@ -55,7 +54,7 @@ Në dokumente emërtohen vetëm Milestone 6 dhe 7. Pjesa tjetër është rindër
 | 5 | Design system dhe i18n (shqip/anglisht) | ✅ Gati |
 | 6 | Krijimi i vlerësimeve (me dorë ose me AI) | ✅ Gati |
 | 7 | Marrja dhe vlerësimi i testeve, rezultatet e verifikuara | ⏭️ Tjetri |
-| 8 | Privatësia: lista e kompanive (ose heqja nga HARTA) | ⏳ Jo e nisur |
+| 8 | Privatësia: ndarja sipas kompanisë (veçori e mundshme në të ardhmen) | 💤 E shtyrë |
 | 9 | Pjesa e kompanisë: kërkimi i kandidatëve, dashboard, anëtarët | ⏳ Jo e nisur |
 | 10 | Mjetet e punësimit: aplikime, intervista, njoftime | ⏳ Jo e nisur |
 | 11 | Gatishmëria për prodhim: Sentry, ruajtja e skedarëve, radhë punësh, rate limiting, baza e prodhimit, përditësimi i Next.js | ⏳ Jo e nisur |
