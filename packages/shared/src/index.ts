@@ -1,6 +1,13 @@
 export const API_VERSION = "v1";
 export const API_BASE_PATH = `/api/${API_VERSION}`;
 
+/**
+ * Request headers browsers may send to the API cross-origin. Every header the API client sets
+ * must be listed, or the browser blocks the request before it is sent and the client reports a
+ * network error. The api-client tests check this.
+ */
+export const CORS_ALLOWED_REQUEST_HEADERS = ["Authorization", "Content-Type", "Accept", "Idempotency-Key"] as const;
+
 export const API_ERROR_CODES = [
   "BAD_REQUEST",
   "UNAUTHENTICATED",

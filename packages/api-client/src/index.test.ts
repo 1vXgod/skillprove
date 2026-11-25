@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { CORS_ALLOWED_REQUEST_HEADERS } from "@skillprove/shared";
 import { ApiClientError, createApiClient, errorMessageKey } from "./index";
 
 const health = {
@@ -287,5 +288,31 @@ describe("attempt calls", () => {
     expect(errorMessageKey(new ApiClientError("PROFILE_REQUIRED", "x", 409))).toBe("errors.profileRequired");
     expect(errorMessageKey(new ApiClientError("ATTEMPTS_EXHAUSTED", "x", 409))).toBe("errors.attemptsExhausted");
     expect(errorMessageKey(new ApiClientError("ATTEMPT_EXPIRED", "x", 409))).toBe("errors.attemptExpired");
+  });
+});
+
+describe("headers and CORS", () => {
+  it("sends only headers the API allows cross-origin, from every method", async () => {
+    const sent = new Set<string>();
+    const fetch = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
+      for (const name of Object.keys((init?.headers ?? {}) as Record<string, string>)) sent.add(name.toLowerCase());
+      return new Response(JSON.stringify({ success: true, data: {} }), { status: 200 });
+    });
+    const client = createApiClient({ baseUrl: "http://api.test", fetch, getToken: async () => "tok" });
+
+    // Call every method, including nested ones, with string arguments: an ID, a body and an
+    // idempotency key all become "x". Responses fail the schemas; only the requests matter here.
+    const calls: Promise<unknown>[] = [];
+    const visit = (value: unknown) => {
+      if (typeof value === "function") calls.push(Promise.resolve().then(() => value("x", "x", "x", "x")).catch(() => undefined));
+      else if (value && typeof value === "object") Object.values(value).forEach(visit);
+    };
+    visit(client);
+    await Promise.all(calls);
+
+    expect(fetch.mock.calls.length).toBeGreaterThan(40);
+    expect(sent).toContain("idempotency-key");
+    const allowedHeaders = CORS_ALLOWED_REQUEST_HEADERS.map((h) => h.toLowerCase());
+    expect([...sent].filter((h) => !allowedHeaders.includes(h))).toEqual([]);
   });
 });
