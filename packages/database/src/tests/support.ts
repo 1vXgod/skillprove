@@ -167,3 +167,98 @@ export async function createCompletedEvaluation(
   });
   return { published, submitted, evaluation, criterionScore };
 }
+
+/** Marker text in every answer key and explanation, so tests can prove none of it leaks. */
+export const SECRET = "secret-answer-material";
+
+/**
+ * A takeable assessment for Milestone 7: one multiple choice (correct "B"), one true/false
+ * (correct false) and one multiple select (correct "A" and "C"), all for one skill. Options
+ * change it into something that must not be takeable.
+ */
+export async function createObjectiveAssessment(
+  db: PrismaClient,
+  options: {
+    skillId: string;
+    visibility?: "PUBLIC" | "INVITE_ONLY";
+    publish?: boolean;
+    withWrittenQuestion?: boolean;
+    maxAttempts?: number;
+    durationMinutes?: number | null;
+    attemptTtlHours?: number | null;
+  },
+) {
+  const choices = [
+    { id: "A", text: "One" },
+    { id: "B", text: "Two" },
+    { id: "C", text: "Three" },
+  ];
+  const assessment = await db.assessment.create({
+    data: { ownerType: "PLATFORM", visibility: options.visibility ?? "PUBLIC" },
+  });
+  const questions = [
+    {
+      position: 1,
+      type: "SINGLE_CHOICE" as const,
+      prompt: "Pick two.",
+      options: { kind: "multiple_choice", choices },
+      answerKey: { kind: "multiple_choice", correctChoiceId: "B", note: SECRET },
+      explanation: SECRET,
+      skillId: options.skillId,
+    },
+    {
+      position: 2,
+      type: "SINGLE_CHOICE" as const,
+      prompt: "The sky is green.",
+      options: { kind: "true_false" },
+      answerKey: { kind: "true_false", correct: false, note: SECRET },
+      explanation: SECRET,
+      skillId: options.skillId,
+    },
+    {
+      position: 3,
+      type: "MULTIPLE_CHOICE" as const,
+      prompt: "Pick one and three.",
+      options: { kind: "multiple_select", choices },
+      answerKey: { kind: "multiple_select", correctChoiceIds: ["A", "C"], note: SECRET },
+      explanation: SECRET,
+      skillId: options.skillId,
+    },
+    ...(options.withWrittenQuestion
+      ? [{ position: 4, type: "LONG_TEXT" as const, prompt: "Explain.", options: { kind: "practical_task" }, answerKey: { kind: "practical_task", note: SECRET }, explanation: null, skillId: options.skillId }]
+      : []),
+  ];
+  const version = await db.assessmentVersion.create({
+    data: {
+      assessmentId: assessment.id,
+      version: 1,
+      title: "Objective assessment",
+      format: "MULTIPLE_CHOICE",
+      difficulty: "INTERMEDIATE",
+      maxAttempts: options.maxAttempts ?? 2,
+      durationMinutes: options.durationMinutes === undefined ? 20 : options.durationMinutes,
+      attemptTtlHours: options.attemptTtlHours ?? null,
+      questions: { create: questions },
+      skills: { create: { skillId: options.skillId, weight: 100 } },
+    },
+  });
+  const rubric = await db.assessmentRubricVersion.create({
+    data: {
+      assessmentVersionId: version.id,
+      version: 1,
+      criteria: { create: { key: "correctness", title: "Correctness", weight: 100, skillId: options.skillId } },
+    },
+  });
+  if (options.publish !== false) {
+    await db.assessmentRubricVersion.update({ where: { id: rubric.id }, data: { publishedAt: new Date() } });
+    await db.assessmentVersion.update({ where: { id: version.id }, data: { status: "PUBLISHED", publishedAt: new Date() } });
+  }
+  return { assessment, version, rubric };
+}
+
+/** A user with a candidate profile, which taking an assessment requires. */
+export async function createCandidate(db: PrismaClient) {
+  const user = await createUser(db);
+  await db.candidateProfile.create({ data: { userId: user.id, fullName: "Test Candidate", privacySettings: { create: {} } } });
+  return user;
+}

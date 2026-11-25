@@ -72,3 +72,5 @@ export async function checkDatabaseConnection(client: PrismaClient): Promise<voi
 export { AssessmentDataError, type AssessmentDataErrorReason } from "./repositories/assessment-errors";
 export * from "./repositories/assessments";
 export * from "./repositories/ai-jobs";
+export { AttemptDataError, type AttemptDataErrorReason } from "./repositories/attempt-errors";
+export { attemptDeadline, getCandidateAttempt, listTakeableAssessments, startAttempt, DEFAULT_ATTEMPT_HOURS } from "./repositories/attempts";
