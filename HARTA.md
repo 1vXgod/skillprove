@@ -1,5 +1,7 @@
 # HARTA — SkillProve
 
+> Kjo hartë përshkruan fushëveprimin e MVP-së për kursin. Vizioni i plotë afatgjatë është te [docs/VISION.md](docs/VISION.md), dhe gjendja reale te [docs/STATUS.md](docs/STATUS.md).
+
 ## Puna e vetme (single job)
 Kandidati hap aplikacionin për të **krijuar një profil që tregon qartë cilat aftësi i ka dëshmuar — dhe për të vendosur vetë kush e sheh atë**.
 
