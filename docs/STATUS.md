@@ -1,6 +1,6 @@
 # SkillProve: real status
 
-The single place that shows what is built, compared with the long-term [vision](VISION.md). Audited against the code on 2026-11-25, branch `milestone-6-assessment-generation` at `831efb1`.
+The single place that shows what is built, compared with the long-term [vision](VISION.md). Audited against the code on 2026-11-25 (branch `milestone-6-assessment-generation`), and updated the same day with the CI #6 result.
 
 ## What SkillProve is
 
@@ -16,20 +16,22 @@ SkillProve helps people prove their skills instead of only claiming them. A cand
 | ❌ | Not built |
 | ❓ | Could not verify from the code |
 
-**Tests today:** `pnpm test` passes 252 tests: unit tests plus the database tests that need no database. **137 database and API route tests are skipped** locally because there is no test database. CI starts its own PostgreSQL and should run them, but no result has been confirmed yet. Browser tests (`apps/web/e2e`, Playwright) exist and have not run in this audit. None of these count until they run.
+**Tests:** CI #6 (the merge run of PR #3, 2026-11-25) passed everything: `@skillprove/database` 123/123 and `@skillprove/api` 105/105 with **0 skipped**, plus `db:migrate:deploy`, the production build and the browser tests (`test:e2e`). Locally, without a test database, the 137 database and route tests are still skipped; they count because CI ran them. Mobile screens have no automated tests, so a mobile feature is ✅ only where the API is what is being judged.
+
+**Dev database:** on 2026-11-25 the development database (Neon `main`) was found two migrations behind (`20261104120000_candidate_interests_technologies`, `20261105100000_assessment_generation`). That made the Profile tab fail with a 500 on web and mobile. Both were applied with `pnpm db:migrate:deploy`, and `migrate status` now reports the schema up to date.
 
 ## The core loop
 
 | Step | Works today? |
 |---|---|
-| 1. Company creates an assessment | 🔄 Built (web wizard, editor, AI generation, publish). Route tests not yet run. There is no way for a company to sign up (see §3), so this only works for companies created directly in the database |
+| 1. Company creates an assessment | ✅ Built and tested in CI #6 (web wizard, editor, AI generation with a mock provider, publish). There is no way for a company to sign up yet (Milestone 8), so this only works for companies created directly in the database |
 | 2. Company invites a candidate | ❌ No assessment invitations. `CompanyInvitation` is for company team members, not candidates |
 | 3. Candidate takes the assessment | ❌ Milestone 7. No attempt or submission endpoints, no candidate screens |
 | 4. Evaluation | ❌ Pure scoring functions exist and pass their tests (`scoreObjectiveAttempt`, `calculateVerifiedSkillScore`), but nothing calls them yet |
-| 5. Verified score appears in the Skill Passport | 🔄 Display, storage and immutability triggers exist. Nothing produces a score, so the section is empty |
+| 5. Verified score appears in the Skill Passport | 🔄 Display, storage and immutability are built and tested (CI #6). Nothing produces a score yet, so the section is empty |
 | 6. Company reviews and compares | ❌ No company access to attempts, results or candidates |
 
-**None of the six steps works end to end yet.** Step 1 works in isolation.
+**The loop does not work end to end yet.** Step 1 works for existing companies; steps 3–5 are Milestone 7.
 
 ## Status by vision section
 
@@ -39,22 +41,22 @@ SkillProve helps people prove their skills instead of only claiming them. A cand
 |---|---|---|
 | One backend, one API, one database for web and mobile | ✅ | Only `apps/api` imports `@skillprove/database`. Both apps use `packages/api-client`. Health tests ran |
 | Web: public landing page | 🔄 | `apps/web/src/app/page.tsx` is a connection-status page with sign-in links, language and theme menus. No product or marketing content |
-| Web: candidate registration and sign-in | 🔄 | Clerk pages at `/sign-in`, `/sign-up`. Browser tests in `e2e/api-connection.spec.ts` not run here |
+| Web: candidate registration and sign-in | 🔄 | Clerk pages at `/sign-in`, `/sign-up`. Browser tests for the signed-out and missing-key paths passed in CI #6. Real sign-in confirmed by hand on 2026-11-25; there is no automated test with real Clerk keys |
 | Web: company registration | ❌ | No endpoint or screen creates a `Company`. Companies exist only in test fixtures (`createCompany` in `packages/database/src/tests/support.ts`) |
 | Web: candidate dashboard | ❌ | No dashboard. Signed-in users land on profile, Skill Passport and account pages |
 | Web: company dashboard | ❌ | Only the assessment list. The "Candidates" and "Jobs" nav items are shown as not built (`app-shell.tsx`) |
 | Web: candidate discovery and search | ❌ | |
-| Web: skill assessments | 🔄 | Company authoring only: `apps/web/src/app/(auth)/(app)/assessments/` |
+| Web: skill assessments | 🔄 | Company authoring only (`apps/web/src/app/(auth)/(app)/assessments/`), tested in CI #6 (route, database and browser tests). Candidates cannot take assessments yet |
 | Web: assessment results | ❌ | |
-| Web: Skill Passport | 🔄 | `skill-passport/page.tsx`. Verified section has nothing to show yet |
-| Web: profile management | 🔄 | `profile/page.tsx`. Database and route tests skipped |
+| Web: Skill Passport | ✅ | `skill-passport/page.tsx`. Browser test "keeps verified, in-assessment and self-reported skills apart" and `skill-passport.db.test.ts` passed in CI #6. No real verified scores exist yet |
+| Web: profile management | ✅ | `profile/page.tsx`. `candidate-routes.db.test.ts`, `candidate-profile.db.test.ts` and the profile browser tests passed in CI #6. Profile tab confirmed by hand on 2026-11-25 |
 | Web: notifications | 🗄️ | `Notification` model only |
 | Web: account and security settings | 🔄 | `/account` shows email, status and company memberships. Security settings live on Clerk's hosted pages |
 | Web: platform administration | ❌ | See §3 administrators |
-| Mobile: candidate registration and sign-in | 🔄 | Clerk hosted pages through the browser (`components/account-panel.tsx`). Android only partly tried by hand; iOS not verified |
+| Mobile: candidate registration and sign-in | 🔄 | Clerk hosted pages through the browser (`components/account-panel.tsx`). Sign-in confirmed by hand on Android on 2026-11-25. No automated test; iOS not verified |
 | Mobile: company account access | 🔄 | Read-only assessment list, details and generation status (`app/assessments/`) |
-| Mobile: candidate profile and profile editing | 🔄 | `app/profile/*`. Database and route tests skipped |
-| Mobile: Skill Passport | 🔄 | `app/skill-passport.tsx`, same limits as web |
+| Mobile: candidate profile and profile editing | 🔄 | `app/profile/*`. The API behind it passed its tests in CI #6, and the Profile tab loads on Android (checked by hand 2026-11-25). The mobile screens have no automated tests, and editing has not been confirmed on a device |
+| Mobile: Skill Passport | 🔄 | `app/skill-passport.tsx`. The API passed its tests in CI #6; the screen has no automated test and is not yet confirmed on a device |
 | Mobile: assessment invitations | ❌ | |
 | Mobile: assessment completion | ❌ | Milestone 7 |
 | Mobile: assessment results | ❌ | Milestone 7 |
@@ -69,14 +71,14 @@ SkillProve helps people prove their skills instead of only claiming them. A cand
 
 | Feature | Status | Evidence / notes |
 |---|---|---|
-| Create an account | 🔄 | Clerk plus webhook sync (`webhooks/clerk`, `identity.ts`). `identity-sync.db.test.ts` skipped |
-| Build a profile: experience, education, certificates, portfolio, languages | 🔄 | `/me/profile` and `/me/profile/[section]`, web and mobile. `candidate-profile.db.test.ts` and `candidate-routes.db.test.ts` skipped. Validation unit tests ran |
-| Add skills | 🔄 | `/me/skills`, `/skills`. `skills.db.test.ts` skipped |
+| Create an account | ✅ | Clerk plus identity sync (`webhooks/clerk`, `syncFromClerk`, `identity.ts`). `identity-sync.db.test.ts` (13 tests) passed in CI #6 |
+| Build a profile: experience, education, certificates, portfolio, languages | ✅ | `/me/profile` and `/me/profile/[section]`. `candidate-profile.db.test.ts`, `candidate-routes.db.test.ts` and the web profile browser tests passed in CI #6. Mobile screens have no automated tests |
+| Add skills | ✅ | `/me/skills`, `/skills`. `skills.db.test.ts`, `skill-passport.db.test.ts` and route tests passed in CI #6 |
 | Receive assessment invitations | ❌ | |
 | Complete assessments | ❌ | Milestone 7 |
-| Assessment history | ❌ | |
-| See verified skill scores | 🔄 | `/me/skill-passport` and both screens. Nothing produces scores yet |
-| Profile visibility and privacy settings | 🔄 | `/me/profile/privacy`, web and mobile. `getCandidateView` applies them. Tests skipped |
+| Assessment history | ❌ | Milestone 7 |
+| See verified skill scores | 🔄 | `/me/skill-passport` and both screens; display tested with sample data in CI #6. Nothing produces a real score until Milestone 7 |
+| Profile visibility and privacy settings | ✅ | `/me/profile/privacy`, `getCandidateView`. Visibility tests in `skill-passport.db.test.ts`, the privacy route test and the privacy browser test passed in CI #6 |
 | Share the Skill Passport | ❌ | No share link or public passport |
 | Notifications | 🗄️ | |
 
@@ -88,12 +90,12 @@ SkillProve helps people prove their skills instead of only claiming them. A cand
 | Company profile and information | 🗄️ | `Company` model. No endpoint |
 | Invite team members | 🗄️ | `CompanyInvitation`, `CompanyMember`. No endpoint |
 | Search and filter candidates | ❌ | `isDiscoverable` is stored but unused |
-| View a candidate's passport within their privacy settings | 🔄 | `GET /candidates/[profileId]` through `getCandidateView`. No company screen. Tests skipped |
+| View a candidate's passport within their privacy settings | 🔄 | `GET /candidates/[profileId]` through `getCandidateView`, tested in CI #6. No company screen |
 | Create assessments, generate with AI, set difficulty and duration | 🔄 | See §6 |
 | Send assessment invitations | ❌ | |
 | Track progress, review completed assessments, AI evaluation reports | ❌ | |
 | Compare candidates | ❌ | |
-| Assessment history | 🔄 | Version history and restore (`/assessments/[id]/versions`) |
+| Assessment history | ✅ | Version history and restore (`/assessments/[id]/versions`), tested in `assessment-generation.db.test.ts` and route tests (CI #6) |
 | Save candidates | ❌ | |
 | Notifications | 🗄️ | |
 
@@ -101,30 +103,30 @@ SkillProve helps people prove their skills instead of only claiming them. A cand
 
 | Feature | Status | Evidence / notes |
 |---|---|---|
-| Admin role and backend check | 🔄 | `PlatformAdmin` model, `requirePlatformAdmin` (`apps/api/src/lib/auth/guards.ts`). No route uses it yet |
-| Assessment management | 🔄 | Admins can **read** any company's assessments (`lib/assessments/access.ts`), never edit. No screen |
+| Admin role and backend check | 🔄 | `PlatformAdmin` model, `requirePlatformAdmin`. Revoked roles are ignored (`identity-sync.db.test.ts`, CI #6). No admin route uses it yet |
+| Assessment management | 🔄 | Admins can **read** any company's assessments, never edit (route test "lets a platform administrator read but not edit", CI #6). No screen |
 | User, company and candidate management | ❌ | |
 | Reports, analytics, platform statistics | ❌ | |
 | Verification and moderation, reports and complaints | ❌ | `Company.verificationStatus` exists, nothing sets it |
 | Platform configuration | ❌ | |
 | AI usage monitoring | 🗄️ | Token counts and estimated cost stored per AI job. No admin view |
 | System activity logs | 🗄️ | `AuditLog` is written for publishes, profile changes and identity events. No viewer |
-| Permissions enforced on the backend | 🔄 | Yes for every existing route (`withAuth`, company role guards). `packages/permissions` unit tests ran; guard tests are database tests and skipped |
+| Permissions enforced on the backend | ✅ | Every existing route uses `withAuth` and company role guards. Route role tests and database guard tests passed in CI #6 |
 
 ### §4 Candidate profiles
 
 | Feature | Status | Evidence / notes |
 |---|---|---|
-| Name, headline, biography, location, contact with privacy controls | 🔄 | Both platforms. Tests skipped |
+| Name, headline, biography, location, contact with privacy controls | ✅ | `candidate-profile.db.test.ts`, `candidate-routes.db.test.ts` and the profile browser tests passed in CI #6 |
 | Profile photo | ❌ | Shows "photo unavailable". `FileAsset` exists, but no storage (R2) is connected |
-| Employment status | 🔄 | Availability: `/me/profile/availability` |
-| Experience, education, certifications, portfolio, languages | 🔄 | Both platforms. Tests skipped |
+| Employment status | 🔄 | Availability (`/me/profile/availability`). Stored and read in database tests (CI #6); the update endpoint has no dedicated test |
+| Experience, education, certifications, portfolio, languages | ✅ | "manages education, certificates, portfolio and languages", experience date tests and section route tests passed in CI #6 |
 | Technical and soft skills | 🔄 | One skill list grouped by category (for example `communication`). There is no technical/soft split |
-| Skill Passport: verified, being assessed and self-reported kept separate | 🔄 | `skill-passport.ts` returns three separate lists. `skill-passport.db.test.ts` skipped |
-| Verified skill details (score, date, difficulty, status, verification) | 🔄 | Shown when present; none exist yet |
-| Verified scores are immutable | 🔄 | Enforced by database triggers (`sync_verified_score`, evaluation and score-input guards) and by `recordVerifiedSkillScore` being the only write path. The tests proving it are database tests, all skipped |
-| Private by default | 🔄 | Default `PRIVATE`. Tests skipped |
-| Profile preview ("what companies see") | 🔄 | `GET /me/profile/preview`, shown on the privacy screen on web (`privacy-settings.tsx`) and mobile (`profile/privacy.tsx`). Tests skipped |
+| Skill Passport: verified, being assessed and self-reported kept separate | ✅ | `skill-passport.ts`; `skill-passport.db.test.ts` and the passport browser test passed in CI #6 |
+| Verified skill details (score, date, difficulty, status, verification) | 🔄 | Display tested with sample data (CI #6); no real scores exist until Milestone 7 |
+| Verified scores are immutable | ✅ | Database triggers plus a single write path (`recordVerifiedSkillScore`). "discards direct edits to a verified score", "refuses a calculation without evidence", "never overwrites a completed evaluation" and related tests passed in CI #6 |
+| Private by default | ✅ | "creates a profile with the most private defaults" and "hides a private profile from every company" passed in CI #6 |
+| Profile preview ("what companies see") | ✅ | `GET /me/profile/preview`, on the privacy screen on web and mobile. "previews the filtered view for the candidate" and the privacy browser test passed in CI #6. Mobile screen not automated |
 
 ### §5 Company platform
 
@@ -138,8 +140,8 @@ SkillProve helps people prove their skills instead of only claiming them. A cand
 
 | Feature | Status | Evidence / notes |
 |---|---|---|
-| Creation: title, description, skills, difficulty, question count, duration, type | 🔄 | Web wizard and editor, API under `/companies/[id]/assessments` and `/assessments/[id]`. Validation unit tests ran; `assessment-routes.db.test.ts` and `assessments.db.test.ts` skipped; browser tests not run |
-| Evaluation criteria | 🔄 | Rubric editor, weights must total 100 |
+| Creation: title, description, skills, difficulty, question count, duration, type | ✅ | Web wizard and editor, API under `/companies/[id]/assessments` and `/assessments/[id]`. Route, database and browser tests (wizard, manual draft, editor) passed in CI #6 |
+| Evaluation criteria | ✅ | Rubric editor; "refuses to publish a rubric whose weights do not total 100" passed in CI #6 |
 | Passing score | ❌ | Not in the schema. Milestone 7 decided on no threshold (see disagreements) |
 | Difficulty levels Beginner, Intermediate, Advanced | ✅ | `ASSESSMENT_DIFFICULTIES` in `packages/shared`, validation tests ran |
 | Question types: multiple choice, true/false, short answer, scenario, practical | ✅ | Authoring only. Codec round-trip tests ran (`assessment-engine/src/engine.test.ts`). Multiple select is also supported |
@@ -151,9 +153,9 @@ SkillProve helps people prove their skills instead of only claiming them. A cand
 | AI evaluation against rubrics, with question scores, strengths, weaknesses, feedback, summary | 🗄️ | `Evaluation`, `EvaluationCriterionScore`, `EvaluationEvidence`, `EvaluationReview` tables and triggers. Planned after Milestone 7 |
 | Provider-independent abstraction, Gemini first | ✅ | `AiProvider`, `GeminiProvider`, tests ran (adapter against a fake `fetch`) |
 | JSON responses, schema validation, retries, timeouts, error handling | ✅ | `packages/ai`, tests ran |
-| Usage tracking and cost controls | 🔄 | Token counts and cost per job, rate limits per user and company. The limit tests are database tests, skipped |
+| Usage tracking and cost controls | ✅ | Per-user, per-company and concurrency limits; usage and cost recorded. `assessment-generation.db.test.ts` passed in CI #6 |
 | Evaluation versioning | 🗄️ | `promptVersion` on evaluations, `formulaVersion` on score calculations |
-| Auditability | 🔄 | Publishing writes an audit record. `audit.db.test.ts` skipped |
+| Auditability | ✅ | Publishing writes an audit record in the same transaction. `audit.db.test.ts` and the publish test passed in CI #6 |
 
 ### §7 Invitations and notifications
 
@@ -180,7 +182,7 @@ SkillProve helps people prove their skills instead of only claiming them. A cand
 | Mobile: React Native, Expo, TypeScript, Expo Router, shared tokens and API contracts | ✅ | `apps/mobile` (Expo SDK 58). iOS not verified |
 | Backend: Next.js REST API, shared logic, Zod, server-side authorization | ✅ | `apps/api`, `packages/validation`, `packages/permissions` |
 | Database: PostgreSQL on Neon with Prisma | ✅ | `packages/database` |
-| Clerk authentication, sessions, webhook sync, roles | 🔄 | In use. Webhook and role tests are database tests, skipped |
+| Clerk authentication, sessions, webhook sync, roles | ✅ | Identity sync and role tests passed in CI #6; sign-in used by hand on web and Android |
 | Social sign-in | ❓ | No code involved: Clerk's hosted pages show whichever providers are enabled in the Clerk dashboard. Check Clerk Dashboard > User & Authentication > Social connections |
 | Cloudflare R2 storage | ❌ | `FileAsset` model only |
 | Expo push, email | ❌ | |
@@ -192,11 +194,11 @@ SkillProve helps people prove their skills instead of only claiming them. A cand
 |---|---|---|
 | Brand colours #222c6e and #2f5be0 | ✅ | `packages/shared/src/design/tokens.ts` (`primary`, and `accent`/`ring`). Contrast tests ran |
 | Consistent spacing, typography, accessible contrast | ✅ | Design tokens, `tokens.test.ts` ran |
-| Responsive layouts | 🔄 | Built. Browser tests not run |
+| Responsive layouts | ✅ | Browser tests "has no horizontal overflow" at several widths, "uses a drawer below the lg breakpoint" and "candidate screens fit a phone" passed in CI #6 |
 | Subtle animations | 🔄 | Few; reduced-motion support on mobile (`use-reduced-motion.ts`) |
-| Loading, skeleton, empty and error states, confirmation dialogs | 🔄 | Components exist on both platforms (`components/ui`) and are used on the built screens. Browser tests not run |
+| Loading, skeleton, empty and error states, confirmation dialogs | ✅ | `components/ui` on both platforms. Web browser tests (loading and disabled states, dialogs, alert dialog, empty and error states on the assessment list) passed in CI #6 |
 | Toast notifications | ❌ | No toast component on either platform |
-| Light, dark and system appearance | 🔄 | Web: `lib/theme.tsx` and theme menu (cookie plus `prefers-color-scheme`). Mobile: `preferences-provider.tsx` follows `useColorScheme`. Mobile style tests ran; web browser tests not run |
+| Light, dark and system appearance | ✅ | Web: browser tests "defaults to Albanian and the system theme", "system follows the device setting" and "switching theme … survives a reload" passed in CI #6. Mobile: `preferences-provider.tsx`, style unit tests ran |
 | Central translations, Albanian default, English | ✅ | `packages/shared/src/i18n`, `DEFAULT_LOCALE = "sq"`. Key-parity test ran |
 | Kosovo formatting: sq, Europe/Belgrade, EUR, +383 | ✅ | `REGION` in `packages/shared/src/i18n/index.ts`: `formatDate` uses the time zone, `formatCurrency` uses EUR, `formatPhone` formats +383. `i18n.test.ts` ran |
 | Ready for more countries and languages | 🔄 | Region settings live in one place, but there is only one region |
@@ -205,18 +207,18 @@ SkillProve helps people prove their skills instead of only claiming them. A cand
 
 | Feature | Status | Evidence / notes |
 |---|---|---|
-| Role-based permissions, ownership checks | 🔄 | Every route uses `withAuth` and company role guards. Unit tests ran; database guard tests skipped |
-| Company data isolation | 🔄 | `companyScope`, composite keys. `isolation.db.test.ts` skipped |
-| Candidate privacy | 🔄 | `getCandidateView`. Tests skipped |
+| Role-based permissions, ownership checks | ✅ | Route role tests and "never lets one candidate change another's records" passed in CI #6 |
+| Company data isolation | ✅ | `companyScope`, composite keys. `isolation.db.test.ts` passed in CI #6 |
+| Candidate privacy | ✅ | `getCandidateView`. Visibility tests and "enforces candidate privacy for other signed-in users" passed in CI #6 |
 | Server-side validation | ✅ | Every route parses input with `packages/validation`. Validation tests ran |
 | Secure authentication | 🔄 | Clerk token verification, `auth.test.ts` ran with mocks. Real sign-in not verified on a device |
 | Rate limiting | 🔄 | AI generation only. No general API rate limiting |
 | Input sanitization | 🔄 | Zod on input, React escapes output, pattern-based content screen for assessments. No HTML is stored |
-| Audit logs | 🔄 | Written for key actions. Tests skipped |
+| Audit logs | ✅ | Written for key actions, append-only. `audit.db.test.ts` passed in CI #6 |
 | Secure file access | ❌ | No file storage yet |
-| No unauthorized access to assessments | 🔄 | Same 403 for missing, foreign and deleted. Candidates never receive answer keys (`toCandidateQuestion`). Route tests skipped |
-| Submission integrity | 🗄️ | Immutable-submission triggers. No submission endpoints |
-| No unauthorized score changes | 🔄 | Triggers plus a single write path. Tests skipped |
+| No unauthorized access to assessments | ✅ | Same 403 for missing, foreign and deleted; candidates never receive answer keys. Route tests passed in CI #6 |
+| Submission integrity | 🗄️ | Immutable-submission triggers, tested in `assessments.db.test.ts` (CI #6). No submission endpoints yet |
+| No unauthorized score changes | ✅ | Triggers plus a single write path. Score tests in `skills.db.test.ts` passed in CI #6 |
 
 ### §12 Principles and §13 development instructions
 
@@ -265,7 +267,7 @@ M1–M7 stay as they are. M8 onward is reordered by dependency, core loop first.
 
 | # | Milestone | Unblocks | Status |
 |---|---|---|---|
-| 1–6 | Foundations, database, auth, profiles and Skill Passport, design system and i18n, assessment creation | | Built. Database tests not yet confirmed in CI |
+| 1–6 | Foundations, database, auth, profiles and Skill Passport, design system and i18n, assessment creation | | Built. Database, route and browser tests passed in CI #6 |
 | 7 | Candidates take assessments; **automatic** scoring of objective questions; verified scores | Loop steps 3–5 | In progress (slices 1–2 of 16 done) |
 | 8 | Company onboarding: create a company, profile, owner membership, team invitations | Loop step 1 for real companies | Not started |
 | 9 | Assessment invitations: invite a candidate, accept/decline, deadlines, optional company passing score, in-app notifications | Loop step 2 | Not started |
