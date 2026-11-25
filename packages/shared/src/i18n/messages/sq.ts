@@ -53,6 +53,9 @@ export const sq: Messages = {
     loadFailed: "Kjo nuk mund të ngarkohej.",
     rateLimited: "Keni arritur kufirin e gjenerimit. Provoni përsëri më vonë.",
     aiUnavailable: "Gjenerimi me AI nuk është i disponueshëm tani.",
+    profileRequired: "Krijoni profilin tuaj para se të bëni një vlerësim.",
+    attemptsExhausted: "Keni përdorur të gjitha tentativat për këtë vlerësim.",
+    attemptExpired: "Koha mbaroi para se kjo tentativë të dorëzohej.",
   },
   language: {
     label: "Gjuha",

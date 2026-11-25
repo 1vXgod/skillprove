@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { ApiClientError, createApiClient } from "./index";
+import { ApiClientError, createApiClient, errorMessageKey } from "./index";
 
 const health = {
   status: "ok",
@@ -215,5 +215,77 @@ describe("assessment calls", () => {
     const { errorMessageKey } = await import("./index");
     expect(errorMessageKey(new ApiClientError("RATE_LIMITED", "x", 429))).toBe("errors.rateLimited");
     expect(errorMessageKey(new ApiClientError("SERVICE_UNAVAILABLE", "x", 503))).toBe("errors.aiUnavailable");
+  });
+});
+
+describe("attempt calls", () => {
+  const attemptId = "33333333-3333-4333-8333-333333333333";
+  const questionId = "44444444-4444-4444-8444-444444444444";
+  const attempt = {
+    id: attemptId,
+    assessmentId: "55555555-5555-4555-8555-555555555555",
+    title: "JavaScript basics",
+    instructions: null,
+    language: "en",
+    difficulty: "BEGINNER",
+    status: "SUBMITTED",
+    attemptNumber: 1,
+    maxAttempts: 2,
+    startedAt: "2026-11-26T10:00:00.000Z",
+    expiresAt: "2026-11-26T10:20:00.000Z",
+    submittedAt: "2026-11-26T10:10:00.000Z",
+    questions: [],
+  };
+  const client = (data: unknown, status = 200) => {
+    const fetch = vi.fn(async (_url: RequestInfo | URL, _init?: RequestInit) => new Response(JSON.stringify({ success: true, data }), { status }));
+    return { fetch, client: createApiClient({ baseUrl: "http://api.test", fetch, getToken: async () => "tok" }) };
+  };
+  const call = (fetch: ReturnType<typeof client>["fetch"]) => {
+    const [url, init] = fetch.mock.calls[0] as unknown as [string, { method: string; body?: string; headers: Record<string, string> }];
+    return { url: url.split("?")[0], method: init.method, body: init.body ? (JSON.parse(init.body) as unknown) : undefined, auth: init.headers.Authorization };
+  };
+
+  it("submits answers under an `answers` key, with the session token", async () => {
+    const { fetch, client: api } = client(attempt);
+    await api.submitAttempt(attemptId, { [questionId]: "B" });
+    expect(call(fetch)).toEqual({
+      url: `http://api.test/api/v1/me/attempts/${attemptId}/submit`,
+      method: "POST",
+      body: { answers: { [questionId]: "B" } },
+      auth: "Bearer tok",
+    });
+  });
+
+  it("uses the documented paths for listing, starting, reading and results", async () => {
+    const list = client({ items: [] });
+    await list.client.listTakeableAssessments();
+    expect(call(list.fetch)).toMatchObject({ url: "http://api.test/api/v1/me/assessments", method: "GET" });
+
+    const start = client({ ...attempt, status: "IN_PROGRESS", submittedAt: null }, 201);
+    expect((await start.client.startAttempt("../x")).status).toBe("IN_PROGRESS");
+    expect(call(start.fetch)).toMatchObject({ url: "http://api.test/api/v1/me/assessments/..%2Fx/attempts", method: "POST" });
+
+    const read = client(attempt);
+    await read.client.getAttempt(attemptId);
+    expect(call(read.fetch)).toMatchObject({ url: `http://api.test/api/v1/me/attempts/${attemptId}`, method: "GET" });
+  });
+
+  it("parses each result state, and refuses a result shape outside the contract", async () => {
+    const base = { attemptId, submittedAt: attempt.submittedAt, questionCount: 3 };
+    const pending = client({ ...base, state: "pending", scoredAt: null, percent: null, skills: [] });
+    expect((await pending.client.getAttemptResult(attemptId)).state).toBe("pending");
+    expect(call(pending.fetch).url).toBe(`http://api.test/api/v1/me/attempts/${attemptId}/result`);
+
+    const failed = client({ ...base, state: "failed", scoredAt: null, percent: null, skills: [] });
+    expect((await failed.client.getAttemptResult(attemptId)).state).toBe("failed");
+
+    const leaky = client({ ...base, state: "scored", scoredAt: attempt.submittedAt, percent: 150, skills: [] });
+    await expect(leaky.client.getAttemptResult(attemptId)).rejects.toMatchObject({ code: "INVALID_RESPONSE" });
+  });
+
+  it("maps attempt failures to translation keys", () => {
+    expect(errorMessageKey(new ApiClientError("PROFILE_REQUIRED", "x", 409))).toBe("errors.profileRequired");
+    expect(errorMessageKey(new ApiClientError("ATTEMPTS_EXHAUSTED", "x", 409))).toBe("errors.attemptsExhausted");
+    expect(errorMessageKey(new ApiClientError("ATTEMPT_EXPIRED", "x", 409))).toBe("errors.attemptExpired");
   });
 });

@@ -55,6 +55,9 @@ export const en = {
     loadFailed: "This could not be loaded.",
     rateLimited: "You have reached the generation limit. Try again later.",
     aiUnavailable: "AI generation is not available right now.",
+    profileRequired: "Create your profile before taking an assessment.",
+    attemptsExhausted: "You have used every attempt for this assessment.",
+    attemptExpired: "Time ran out before this attempt was submitted.",
   },
   language: {
     label: "Language",
