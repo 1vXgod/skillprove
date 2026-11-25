@@ -313,9 +313,9 @@ Decisions (2026-11-25):
 | 12 | **Dev-only demo seed:** a demo company and 2–3 published, fully objective `PUBLIC` assessments (multiple choice, true/false, multiple select; a couple of skills; mixed difficulty) for testing on a phone. Refuses to run unless the database is local or a Neon branch named explicitly by ID that the server confirms is not `main`, and always when `NODE_ENV=production`. Database test: running it twice creates no duplicates, and the guard refuses unsafe targets | ✅ `95c638f`, PR #10, CI green; run on the dev database 2026-11-26 |
 | 13 | Mobile: browse assessments | ✅ `7e21dfd`, PR #11; checked on an Android phone with the demo data |
 | 14 | Mobile: take an assessment. Confirm before starting ("the timer starts now, this uses 1 of N attempts") | |
-| 15 | Mobile: result screen and Skill Passport changes | `5fb469b`. Checked on an Android phone 2026-11-26: JavaScript intermediate 10/10 answered, result shown; Skill Passport shows JavaScript level Intermediate (score 50/100, confidence 50%), TypeScript and React "More assessments needed" |
+| 15 | Mobile: result screen and Skill Passport changes | `5fb469b`. Checked on an Android phone 2026-11-26: JavaScript intermediate 10/10 answered, result shown; Skill Passport shows JavaScript level Intermediate (score 50/100, confidence 50%), TypeScript and React "More assessments needed". Combining checked the same day: JavaScript basics 60% (3/5, weight 1.0) plus the latest JavaScript intermediate retake 60% (6/10, weight 1.2) gave score 60, confidence 75% and 2 evidence items, as `auto-v1` predicts |
 | 16 | Navigation, mobile and web: show company authoring only to company members, under a "Company" section; for candidates, "Assessments" means browse and take. Today candidates who open "Assessments" see "You are not a member of a company yet." (found on the phone, 2026-11-26) | |
-| 17 | Web: browse assessments (as slice 13) | |
-| 18 | Web: take an assessment, with the same confirmation (as slice 14) | |
-| 19 | Web: result screen and Skill Passport changes (as slice 15) | |
+| 17 | Web: browse assessments (as slice 13). Also add the "Level" row (or "More assessments needed") to the web Skill Passport, which mobile already has | |
+| 18 | Web: take an assessment, with the same confirmation (as slice 14), including "the timer keeps running" | |
+| 19 | Web: result screen with the Skill Passport level per skill (as slice 15) | |
 | 20 | Docs: `assessments.md`, `PROGRES.md`, this file | |
