@@ -172,6 +172,47 @@ describe("GeminiProvider", () => {
   it("refuses to start without a key", () => {
     expect(() => new GeminiProvider({ apiKey: "", model: "m" })).toThrow();
   });
+
+  const thinkingOf = (init?: RequestInit) =>
+    (JSON.parse(String(init?.body)) as { generationConfig: { thinkingConfig?: { thinkingLevel: string } } }).generationConfig.thinkingConfig;
+
+  it("sends the thinking level when one is set, and none otherwise", async () => {
+    const sent: unknown[] = [];
+    const record: typeof fetch = async (_url, init) => {
+      sent.push(thinkingOf(init));
+      return Response.json(body);
+    };
+    await call(new GeminiProvider({ apiKey: "KEY-123", model: "m", fetch: record, thinkingLevel: "low" }));
+    await call(make(record));
+    expect(sent).toEqual([{ thinkingLevel: "low" }, undefined]);
+  });
+
+  it("asks again without the thinking level when the model rejects it, and stops sending it", async () => {
+    const sent: unknown[] = [];
+    const provider = new GeminiProvider({
+      apiKey: "KEY-123",
+      model: "m",
+      thinkingLevel: "minimal",
+      fetch: async (_url, init) => {
+        const thinking = thinkingOf(init);
+        sent.push(thinking);
+        return thinking ? new Response("INVALID_ARGUMENT", { status: 400 }) : Response.json(body);
+      },
+    });
+    expect((await call(provider)).text).toBe("{}");
+    await call(provider);
+    expect(sent).toEqual([{ thinkingLevel: "minimal" }, undefined, undefined]);
+  });
+
+  it("treats a 400 without a thinking level as a plain failure, with no second request", async () => {
+    let calls = 0;
+    const provider = make(async () => {
+      calls += 1;
+      return new Response("x", { status: 400 });
+    });
+    await expect(call(provider)).rejects.toMatchObject({ code: "unavailable", retryable: false });
+    expect(calls).toBe(1);
+  });
 });
 
 describe("estimateCostUsd", () => {

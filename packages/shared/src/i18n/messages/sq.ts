@@ -56,6 +56,7 @@ export const sq: Messages = {
     profileRequired: "Krijoni profilin tuaj para se të bëni një vlerësim.",
     attemptsExhausted: "Keni përdorur të gjitha tentativat për këtë vlerësim.",
     attemptExpired: "Koha mbaroi para se kjo tentativë të dorëzohej.",
+    retriesExhausted: "Nuk ka më riprovime. Filloni një gjenerim të ri.",
   },
   language: {
     label: "Gjuha",

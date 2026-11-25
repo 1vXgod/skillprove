@@ -169,7 +169,11 @@ describe.skipIf(hasNoTestDatabase)("assessment generation data", () => {
       await requeueJob(db, job.id, 1);
       await claimJob(db, job.id);
       await failJob(db, job.id, { code: "provider_timeout", message: "m" }, noUsage);
-      await expect(requeueJob(db, job.id, 1)).rejects.toMatchObject({ reason: "job_state" });
+      await expect(requeueJob(db, job.id, 1)).rejects.toMatchObject({ reason: "retries_exhausted" });
+      // A job that has not failed cannot be retried, whatever its count.
+      const { job: running } = await create(company.id, user.id, null, { n: 8 });
+      await claimJob(db, running.id);
+      await expect(requeueJob(db, running.id, 1)).rejects.toMatchObject({ reason: "job_state" });
 
       const { job: stuck } = await create(company.id, user.id, null, { n: 9 });
       await claimJob(db, stuck.id, new Date(Date.now() - 3_600_000));

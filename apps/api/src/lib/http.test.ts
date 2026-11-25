@@ -84,6 +84,18 @@ describe("withErrorHandling", () => {
     expect(log).not.toHaveBeenCalled();
   });
 
+  it("tells a job with no retries left apart from other job conflicts", async () => {
+    const respond = async (reason: string) => {
+      const error = Object.assign(new Error("Assessment data error"), { name: "AssessmentDataError", reason });
+      const response = await withErrorHandling(() => {
+        throw error;
+      })();
+      return [response.status, ((await response.json()) as { error: { code: string } }).error.code];
+    };
+    expect(await respond("retries_exhausted")).toEqual([409, "RETRIES_EXHAUSTED"]);
+    expect(await respond("job_state")).toEqual([409, "CONFLICT"]);
+  });
+
   it("maps each attempt failure to a fixed response the app can act on", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     const respond = async (reason: string) => {

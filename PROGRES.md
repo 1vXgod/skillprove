@@ -55,6 +55,7 @@ Pjesa e kandidatit që *merr* vlerësime nuk ekziston ende.
   - `minimatch` (mesatare, GHSA-g3hv-75wg-m249), përmes `typescript-eslint`, `eslint-config-next` dhe paketave të Expo-s. Rregullohet kur këto të kalojnë në `minimatch` ≥ 11.0.1.
 - **Rivlerësimi nga administratori:** një veprim për administratorin që rivlerëson tentativat me vlerësim automatik `FAILED`, pasi të rregullohen të dhënat. Kërkon rolin e administratorit (shih VISION §3).
 - **Modeli rezervë për AI:** kur Gemini kthen 503 ("high demand"), provo përsëri me një listë modelesh rezervë që konfigurohet (p.sh. `GEMINI_FALLBACK_MODELS`), sipas VISION §6 (riprovimi dhe pavarësia nga ofruesi).
+- **Gjenerimi në pjesë ose me streaming:** për vlerësime të mëdha, gjenero pyetjet në grupe (p.sh. 4 për thirrje) ose me streaming, që asnjë thirrje të mos i afrohet kufirit të kohës. Grupet duhen bashkuar dhe kontrolluar së bashku (pa pyetje të përsëritura, peshat e rubrikës).
 - **Test ndoshta i paqëndrueshëm:** testet e `@skillprove/api-client` dështuan një herë lokalisht më 2026-11-25 dhe kaluan kur u rinisën. Hetoje nëse ndodh përsëri.
 
 ## Milestones (emërtimet 1–5 janë të Claude-it, jo të projektit)

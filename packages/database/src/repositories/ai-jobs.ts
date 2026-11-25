@@ -180,5 +180,7 @@ export async function requeueJob(db: PrismaClient, jobId: string, maxRetries: nu
     where: { id: jobId, status: "FAILED", retryCount: { lt: maxRetries } },
     data: { status: "QUEUED", errorCode: null, errorMessage: null, startedAt: null, finishedAt: null, retryCount: { increment: 1 } },
   });
-  if (count !== 1) throw new AssessmentDataError("job_state");
+  if (count === 1) return;
+  const job = await db.aIJob.findUnique({ where: { id: jobId }, select: { status: true, retryCount: true } });
+  throw new AssessmentDataError(job?.status === "FAILED" && job.retryCount >= maxRetries ? "retries_exhausted" : "job_state");
 }

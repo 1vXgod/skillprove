@@ -24,6 +24,8 @@ const envSchema = z.object({
   GEMINI_API_KEY: z.string().min(1).optional().catch(undefined),
   // gemini-2.5-flash is closed to new API keys (404 "no longer available to new users", 2026-11-26).
   GEMINI_MODEL: z.string().min(1).default("gemini-3.8-flash"),
+  /** How much the model reasons before answering. "low" is much faster; "off" sends no setting. */
+  GEMINI_THINKING_LEVEL: z.string().min(1).default("low"),
   /** US dollars per million tokens, for cost estimates. Unset means cost is not estimated. */
   GEMINI_INPUT_PRICE_PER_MILLION: z.coerce.number().nonnegative().optional().catch(undefined),
   GEMINI_OUTPUT_PRICE_PER_MILLION: z.coerce.number().nonnegative().optional().catch(undefined),

@@ -3,6 +3,11 @@ import { AiProviderError, type AiJsonRequest, type AiJsonResponse, type AiProvid
 export interface GeminiOptions {
   apiKey: string;
   model: string;
+  /**
+   * Asks the model to reason less before answering (for example "low"), which makes long JSON
+   * answers much faster. A model that rejects the level gets the request again without it.
+   */
+  thinkingLevel?: string;
   /** Overridable for tests. */
   baseUrl?: string;
   fetch?: typeof fetch;
@@ -24,6 +29,8 @@ export class GeminiProvider implements AiProvider {
   private readonly apiKey: string;
   private readonly baseUrl: string;
   private readonly fetchImpl: typeof fetch;
+  /** Cleared once the model rejects it, so later calls skip the rejected request. */
+  private thinkingLevel: string | undefined;
 
   constructor(options: GeminiOptions) {
     if (!options.apiKey) throw new AiProviderError("misconfigured", false);
@@ -31,24 +38,39 @@ export class GeminiProvider implements AiProvider {
     this.model = options.model;
     this.baseUrl = options.baseUrl ?? "https://generativelanguage.googleapis.com/v1beta";
     this.fetchImpl = options.fetch ?? fetch;
+    this.thinkingLevel = options.thinkingLevel;
   }
 
   async generateJson(request: AiJsonRequest): Promise<AiJsonResponse> {
     const timeout = AbortSignal.timeout(request.timeoutMs);
     const signal = request.signal ? AbortSignal.any([timeout, request.signal]) : timeout;
 
-    let response: Response;
-    try {
-      response = await this.fetchImpl(`${this.baseUrl}/models/${encodeURIComponent(this.model)}:generateContent`, {
+    const send = (thinkingLevel: string | undefined) =>
+      this.fetchImpl(`${this.baseUrl}/models/${encodeURIComponent(this.model)}:generateContent`, {
         method: "POST",
         headers: { "content-type": "application/json", "x-goog-api-key": this.apiKey },
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: request.system }] },
           contents: [{ role: "user", parts: [{ text: request.prompt }] }],
-          generationConfig: { responseMimeType: "application/json", temperature: 0.4 },
+          generationConfig: {
+            responseMimeType: "application/json",
+            temperature: 0.4,
+            ...(thinkingLevel ? { thinkingConfig: { thinkingLevel } } : {}),
+          },
         }),
         signal,
       });
+
+    let response: Response;
+    try {
+      const thinkingLevel = this.thinkingLevel;
+      response = await send(thinkingLevel);
+      // A 400 with a thinking level means the model does not support that level. Ask again
+      // without it, within the same timeout, and stop sending it.
+      if (response.status === 400 && thinkingLevel) {
+        this.thinkingLevel = undefined;
+        response = await send(undefined);
+      }
     } catch {
       if (request.signal?.aborted) throw new AiProviderError("cancelled", false);
       if (timeout.aborted) throw new AiProviderError("timeout", true);

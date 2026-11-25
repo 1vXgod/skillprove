@@ -7,8 +7,10 @@ import { getEnv } from "../env";
  * never leaves the API process.
  */
 export function getAiProvider(): AiProvider | null {
-  const { GEMINI_API_KEY, GEMINI_MODEL } = getEnv();
-  return GEMINI_API_KEY ? new GeminiProvider({ apiKey: GEMINI_API_KEY, model: GEMINI_MODEL }) : null;
+  const { GEMINI_API_KEY, GEMINI_MODEL, GEMINI_THINKING_LEVEL } = getEnv();
+  if (!GEMINI_API_KEY) return null;
+  const thinkingLevel = GEMINI_THINKING_LEVEL === "off" ? undefined : GEMINI_THINKING_LEVEL;
+  return new GeminiProvider({ apiKey: GEMINI_API_KEY, model: GEMINI_MODEL, thinkingLevel });
 }
 
 export function getPricing(): TokenPricing | null {

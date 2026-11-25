@@ -10,7 +10,10 @@ import type { RouteContext } from "../../../../../../../lib/request";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-/** Queues a failed job again, at most `GENERATION_MAX_JOB_RETRIES` times. Anything else is a 409. */
+/**
+ * Queues a failed job again, at most `GENERATION_MAX_JOB_RETRIES` times. Once they are used up the
+ * answer is 409 RETRIES_EXHAUSTED; any other state is 409 CONFLICT.
+ */
 export const POST = withAuth(async (_request, user, context: RouteContext<{ jobId: string }>) => {
   const { jobId } = await context.params;
   const { db } = await requireJobAccess(user, jobId, "act");
