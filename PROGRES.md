@@ -67,6 +67,6 @@ Në dokumente emërtohen vetëm Milestone 6 dhe 7. Pjesa tjetër është rindër
 | 4 | Profili i kandidatit, Skill Passport, privatësia | ✅ Gati |
 | 5 | Design system dhe i18n (shqip/anglisht) | ✅ Gati |
 | 6 | Krijimi i vlerësimeve (me dorë ose me AI) | ✅ Gati |
-| 7 | Marrja dhe vlerësimi i testeve, rezultatet e verifikuara | 🔄 Në punë (hapat 1–8 nga 16) |
+| 7 | Marrja dhe vlerësimi i testeve, rezultatet e verifikuara | 🔄 Në punë (hapat 1–13 nga 20) |
 
 Roadmap-i nga milestone 8 e tutje (vendosur më 2026-11-25: M8 regjistrimi i kompanive → M9 ftesat → M10 rezultatet për kompanitë → M11 kërkimi → M12 vlerësimi me AI me rishikim nga njeriu → …) është te [docs/STATUS.md](docs/STATUS.md#roadmap).

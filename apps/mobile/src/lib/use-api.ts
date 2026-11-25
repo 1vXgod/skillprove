@@ -23,6 +23,7 @@ export const queryKeys = {
   preview: (locale: string) => ["profile-preview", locale] as const,
   skillSearch: (locale: string, q: string) => ["skill-search", locale, q] as const,
   takeable: (locale: string) => ["takeable-assessments", locale] as const,
+  attempt: (id: string) => ["attempt", id] as const,
 };
 
 export function fieldMessage(t: Translate, code: string | undefined): string | undefined {
