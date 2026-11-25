@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { listTakeableAssessments } from "../repositories/attempts";
-import { DEMO_ASSESSMENTS, DEMO_COMPANY_SLUG, seedDemoData } from "../seed/demo";
+import { addDemoMember, DEMO_ASSESSMENTS, DEMO_COMPANY_SLUG, seedDemoData } from "../seed/demo";
 import { seedSkillTaxonomy } from "../seed/skill-taxonomy";
-import { createCandidate, hasNoTestDatabase, useTestDatabase } from "./support";
+import { createCandidate, createUser, hasNoTestDatabase, useTestDatabase } from "./support";
 
 describe.skipIf(hasNoTestDatabase)("demo seed", () => {
   const db = useTestDatabase();
@@ -22,5 +22,19 @@ describe.skipIf(hasNoTestDatabase)("demo seed", () => {
     const candidate = await createCandidate(db);
     const listed = (await listTakeableAssessments(db, candidate.id, "en")).map((a) => a.assessmentId);
     for (const id of ids) expect(listed).toContain(id);
+  });
+
+  it("adds a user to the demo company as ADMIN once, and refuses an unknown email", async () => {
+    await seedSkillTaxonomy(db);
+    await seedDemoData(db);
+    const user = await createUser(db);
+    const company = await db.company.findUniqueOrThrow({ where: { slug: DEMO_COMPANY_SLUG } });
+
+    expect(await addDemoMember(db, `  ${user.email!.toUpperCase()} `)).toBe("added");
+    expect(await addDemoMember(db, user.email!)).toBe("existing");
+    const members = await db.companyMember.findMany({ where: { companyId: company.id, userId: user.id } });
+    expect(members).toEqual([expect.objectContaining({ role: "ADMIN", status: "ACTIVE" })]);
+
+    await expect(addDemoMember(db, "nobody@test.invalid")).rejects.toThrow(/Sign in to SkillProve once/);
   });
 });

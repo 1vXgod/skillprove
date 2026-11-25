@@ -250,3 +250,20 @@ export async function seedDemoData(client: PrismaClient): Promise<{ created: num
   }
   return { created, existing: DEMO_ASSESSMENTS.length - created };
 }
+
+/**
+ * Adds an existing user to the demo company as an ADMIN, so the Company section and assessment
+ * authoring can be tried. The user must have signed in once, so their account exists. Safe to
+ * repeat: an existing membership, whatever its role or status, is left alone.
+ */
+export async function addDemoMember(client: PrismaClient, email: string): Promise<"added" | "existing"> {
+  const user = await client.user.findUnique({ where: { email: email.trim().toLowerCase() }, select: { id: true } });
+  if (!user) throw new Error("No user has that email. Sign in to SkillProve once with it, then run the demo seed again.");
+  const company = await client.company.findUnique({ where: { slug: DEMO_COMPANY_SLUG }, select: { id: true } });
+  if (!company) throw new Error("The demo company is missing. Run the demo seed without DEMO_MEMBER_EMAIL first.");
+
+  const existing = await client.companyMember.findUnique({ where: { companyId_userId: { companyId: company.id, userId: user.id } }, select: { id: true } });
+  if (existing) return "existing";
+  await client.companyMember.create({ data: { companyId: company.id, userId: user.id, role: "ADMIN" } });
+  return "added";
+}
