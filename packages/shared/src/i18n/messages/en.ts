@@ -90,7 +90,7 @@ export const en = {
     profile: "Profile",
     skillPassport: "Skill Passport",
     privacy: "Privacy",
-    takeAssessment: "Take an assessment",
+    company: "Company",
   },
   auth: {
     signIn: "Sign in",

@@ -22,6 +22,7 @@ export default async function DesignSystemPage() {
   };
   return (
     <AppShell
+      isCompanyMember
       showDesignSystem
       account={
         <Link href="/sign-in" className={buttonClasses({ variant: "outline", size: "sm" })}>

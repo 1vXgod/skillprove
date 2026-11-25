@@ -88,7 +88,7 @@ export const sq: Messages = {
     profile: "Profili",
     skillPassport: "Pasaporta e aftësive",
     privacy: "Privatësia",
-    takeAssessment: "Bëj një vlerësim",
+    company: "Kompania",
   },
   auth: {
     signIn: "Kyçu",

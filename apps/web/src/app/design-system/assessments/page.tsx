@@ -27,6 +27,7 @@ export default async function AssessmentScreensPage({ searchParams }: { searchPa
   return (
     <PlaceholderTokenProvider>
       <AppShell
+        isCompanyMember
         showDesignSystem
         account={
           <Link href="/sign-in" className={buttonClasses({ variant: "outline", size: "sm" })}>
