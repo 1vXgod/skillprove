@@ -1,10 +1,12 @@
 import { controlHeights, spacing } from "@skillprove/shared/design";
 import type { TakeableAssessment } from "@skillprove/validation";
-import { useQuery } from "@tanstack/react-query";
-import { StyleSheet, View } from "react-native";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { router } from "expo-router";
+import { useState } from "react";
+import { Pressable, StyleSheet, View } from "react-native";
 import { Screen } from "../../components/shell/screen";
 import { SignedInGate } from "../../components/shell/signed-in-gate";
-import { Alert, AppText, Badge, Button, Card, EmptyState, Skeleton, type Tone } from "../../components/ui";
+import { Alert, AppText, Badge, Button, Card, EmptyState, Modal, Skeleton, type Tone } from "../../components/ui";
 import { takeableState, type TakeableState } from "../../lib/takeable";
 import { errorMessage, queryKeys, useApiClient } from "../../lib/use-api";
 import { useI18n } from "../../theme/preferences-provider";
@@ -19,14 +21,35 @@ export default function TakeAssessmentsScreen() {
   );
 }
 
+const openAttempt = (attemptId: string) => router.push({ pathname: "/take/attempt", params: { attemptId } });
+
 /**
- * Published public assessments the candidate can take (Milestone 7, slice 13). Browsing only:
- * starting an attempt is the Take screen (slice 14), so the cards are not tappable yet.
+ * Published public assessments the candidate can take. An attempt in progress opens directly;
+ * a new one asks first, because starting it starts the timer and uses an attempt.
  */
 function TakeableList() {
   const { t, locale } = useI18n();
   const client = useApiClient();
+  const queryClient = useQueryClient();
   const list = useQuery({ queryKey: queryKeys.takeable(locale), queryFn: client.listTakeableAssessments, retry: false });
+  const [confirming, setConfirming] = useState<TakeableAssessment | null>(null);
+  const start = useMutation({
+    mutationFn: (assessmentId: string) => client.startAttempt(assessmentId),
+    onSuccess: (attempt) => {
+      setConfirming(null);
+      void queryClient.invalidateQueries({ queryKey: queryKeys.takeable(locale) });
+      openAttempt(attempt.id);
+    },
+  });
+
+  function choose(item: TakeableAssessment) {
+    const state = takeableState(item);
+    if (state === "inProgress" && item.openAttemptId) openAttempt(item.openAttemptId);
+    else if (state === "available") {
+      start.reset();
+      setConfirming(item);
+    }
+  }
 
   const header = (
     <View style={styles.gap}>
@@ -60,7 +83,28 @@ function TakeableList() {
   return (
     <View style={styles.gap}>
       {header}
-      {items.length === 0 ? <EmptyState title={t("take.empty")} /> : items.map((item) => <TakeableCard key={item.assessmentId} item={item} />)}
+      {items.length === 0 ? (
+        <EmptyState title={t("take.empty")} />
+      ) : (
+        items.map((item) => <TakeableCard key={item.assessmentId} item={item} onPress={() => choose(item)} />)
+      )}
+      <Modal
+        visible={confirming !== null}
+        onClose={() => setConfirming(null)}
+        dismissible={false}
+        title={t("take.confirmTitle")}
+        description={confirming ? t("take.confirmBody", { max: confirming.maxAttempts }) : undefined}
+        footer={
+          <View style={styles.gap}>
+            <Button label={t("take.start")} loading={start.isPending} onPress={() => confirming && start.mutate(confirming.assessmentId)} fullWidth />
+            <Button label={t("common.cancel")} variant="outline" disabled={start.isPending} onPress={() => setConfirming(null)} fullWidth />
+          </View>
+        }
+      >
+        {confirming?.durationMinutes ? <AppText>{t("take.confirmDuration", { minutes: confirming.durationMinutes })}</AppText> : null}
+        <AppText>{t("take.confirmKeepsRunning")}</AppText>
+        {start.isError && <Alert tone="error" message={errorMessage(t, start.error)} />}
+      </Modal>
     </View>
   );
 }
@@ -71,11 +115,12 @@ const stateBadge: Record<TakeableState, { tone: Tone; key: "take.inProgress" | "
   available: null,
 };
 
-function TakeableCard({ item }: { item: TakeableAssessment }) {
+function TakeableCard({ item, onPress }: { item: TakeableAssessment; onPress: () => void }) {
   const { t } = useI18n();
-  const badge = stateBadge[takeableState(item)];
-  return (
-    <Card style={styles.card} accessibilityLabel={item.title}>
+  const state = takeableState(item);
+  const badge = stateBadge[state];
+  const card = (
+    <Card style={styles.card}>
       <AppText variant="h4">{item.title}</AppText>
       {item.description && <AppText tone="mutedForeground">{item.description}</AppText>}
       <View style={styles.wrap}>
@@ -91,6 +136,17 @@ function TakeableCard({ item }: { item: TakeableAssessment }) {
         {t("take.attempts", { used: item.attemptsUsed, max: item.maxAttempts })}
       </AppText>
     </Card>
+  );
+  if (state === "noAttemptsLeft") return <View accessibilityLabel={item.title}>{card}</View>;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={item.title}
+      accessibilityHint={t(state === "inProgress" ? "take.continue" : "take.start")}
+      onPress={onPress}
+    >
+      {card}
+    </Pressable>
   );
 }
 

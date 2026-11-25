@@ -19,3 +19,11 @@ export async function writePreference(key: string, value: string): Promise<void>
     // The choice still applies for this session.
   }
 }
+
+export async function removePreference(key: string): Promise<void> {
+  try {
+    await SecureStore.deleteItemAsync(key);
+  } catch {
+    // Nothing to clean up, or the store is unavailable.
+  }
+}
