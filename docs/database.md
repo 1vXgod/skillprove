@@ -33,7 +33,8 @@ Each file is gitignored. Only the `.env.example` files are committed.
 1. Copy the pooled and direct connection strings from Neon's **Connect** dialog.
 2. Fill in the first two files in the table above, using their `.env.example` files as templates.
 3. Run `pnpm db:migrate:deploy`, then `pnpm db:migrate:status`.
-4. Start the API and open `http://localhost:4000/api/v1/health/ready`. It should return `"database":"connected"`.
+4. Run `pnpm db:seed` to load the skill taxonomy. Without it, the skill picker is empty and every search says "No skills match your search". It is safe to repeat (see [Seed data](#seed-data)). Repeat steps 3 and 4 whenever you pull new migrations or seed data.
+5. Start the API and open `http://localhost:4000/api/v1/health/ready`. It should return `"database":"connected"`.
 
 ## Test database safeguards
 
