@@ -213,6 +213,7 @@ Prisma cannot express these, so they live at the end of migration `2026110310000
 - With the opt-in and no `DEMO_DATABASE_URL`, it seeds the configured development database (`DIRECT_URL`, else `DATABASE_URL`, which is Neon `main`). It prints the host only, never the URL.
 - `NODE_ENV=production` and any host in `PRODUCTION_DATABASE_HOSTS` (comma-separated, empty for now) are refused even with the opt-in.
 - Without the opt-in, `DEMO_DATABASE_URL` follows the database-test rules and is refused before connecting unless it is local, or a Neon branch named by `DEMO_NEON_BRANCH_ID` that is not an application database; the server then confirms the branch.
+- With `DEMO_MEMBER_EMAIL`, it also adds that user to the demo company as `ADMIN`, so the Company section and assessment authoring can be tried. The user must have signed in once. An existing membership is left alone.
 - It is safe to repeat: the assessments have fixed IDs and existing ones are left alone, because published versions cannot change.
 - To try it on a phone: `pnpm db:seed`, then `DEMO_ALLOW_DEV_DATABASE=1 pnpm db:seed:demo` (in PowerShell, set `$env:DEMO_ALLOW_DEV_DATABASE = "1"` first).
 

@@ -1,12 +1,13 @@
 import { existsSync } from "node:fs";
 import { createPrismaClient } from "../src/index";
-import { assertDemoBranch, checkDemoDatabaseUrl, parseProductionHosts, seedDemoData } from "../src/seed/demo";
+import { addDemoMember, assertDemoBranch, checkDemoDatabaseUrl, parseProductionHosts, seedDemoData } from "../src/seed/demo";
 import { loadProtectedUrls } from "../src/test-database-guard";
 
 /*
  * Development-only demo data. Targets DEMO_DATABASE_URL, or, with DEMO_ALLOW_DEV_DATABASE=1, the
  * configured development database (DIRECT_URL, else DATABASE_URL). Production is always refused:
  * NODE_ENV=production or a host in PRODUCTION_DATABASE_HOSTS. Only the host is ever printed.
+ * With DEMO_MEMBER_EMAIL, that existing user also becomes an ADMIN of the demo company.
  * See docs/database.md.
  */
 if (existsSync(".env")) process.loadEnvFile(".env");
@@ -33,6 +34,11 @@ try {
   console.log(`Seeding demo data into ${new URL(url).hostname}`);
   const { created, existing } = await seedDemoData(client);
   console.log(`Done: ${created} assessments created, ${existing} already there.`);
+  const memberEmail = process.env.DEMO_MEMBER_EMAIL;
+  if (memberEmail) {
+    const membership = await addDemoMember(client, memberEmail);
+    console.log(membership === "added" ? "Added the user to the demo company as ADMIN." : "The user is already a member of the demo company.");
+  }
 } finally {
   await client.$disconnect();
 }
