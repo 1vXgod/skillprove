@@ -168,6 +168,8 @@ enum AttemptStatus {
 enum EvaluatorType {
   AI
   HUMAN
+  /// Scored by code from the answer key (objective questions). `promptVersion` holds the formula version.
+  AUTOMATIC
 }
 
 enum EvaluationStatus {
