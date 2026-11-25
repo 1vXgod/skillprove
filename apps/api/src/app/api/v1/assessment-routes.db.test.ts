@@ -51,7 +51,7 @@ vi.mock("../../../lib/ai/provider", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../../lib/ai/provider")>()),
   getAiProvider: () => holder.provider,
 }));
-vi.mock("../../../lib/ai/schedule", () => ({
+vi.mock("../../../lib/background", () => ({
   runInBackground: (task: () => Promise<void>) => {
     holder.tasks.push(task());
   },

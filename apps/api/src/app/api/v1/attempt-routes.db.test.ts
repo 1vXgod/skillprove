@@ -27,7 +27,7 @@ const holder = vi.hoisted(() => ({ db: null as PrismaClient | null, background: 
 vi.mock("../../../lib/db", () => ({ getDb: () => holder.db }));
 // Work scheduled for after the response is collected, not run, so a test can prove the
 // request itself never scores, then run the scoring explicitly.
-vi.mock("../../../lib/ai/schedule", () => ({
+vi.mock("../../../lib/background", () => ({
   runInBackground: (task: () => Promise<void>) => {
     holder.background.push(task);
   },

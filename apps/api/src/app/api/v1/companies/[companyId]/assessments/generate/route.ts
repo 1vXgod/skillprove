@@ -6,7 +6,7 @@ import { requireCompanyAccess } from "../../../../../../../lib/assessments/acces
 import { getAiProvider, getGenerationLimits } from "../../../../../../../lib/ai/provider";
 import { presentJob } from "../../../../../../../lib/ai/job-access";
 import { processGenerationJob } from "../../../../../../../lib/ai/process-job";
-import { runInBackground } from "../../../../../../../lib/ai/schedule";
+import { runInBackground } from "../../../../../../../lib/background";
 import { badRequest, ok, unavailable } from "../../../../../../../lib/http";
 import { parseBody, type RouteContext } from "../../../../../../../lib/request";
 

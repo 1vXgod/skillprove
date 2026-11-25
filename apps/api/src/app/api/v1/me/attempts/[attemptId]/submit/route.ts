@@ -1,7 +1,7 @@
 import { getCandidateAttempt, scoreAttempt, submitAttempt } from "@skillprove/database";
 import { attemptSubmitSchema, candidateAttemptSchema } from "@skillprove/validation";
 import { z } from "zod";
-import { runInBackground } from "../../../../../../../lib/ai/schedule";
+import { runInBackground } from "../../../../../../../lib/background";
 import { withAuth } from "../../../../../../../lib/auth/guards";
 import { notFound, ok } from "../../../../../../../lib/http";
 import { parseBody, requireDb, type RouteContext } from "../../../../../../../lib/request";

@@ -1,5 +1,5 @@
 import { after } from "next/server";
-import { describeError } from "../http";
+import { describeError } from "./http";
 
 /**
  * Runs work after the response is sent: AI generation, so the client gets a job ID at once and
