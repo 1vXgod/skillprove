@@ -1,10 +1,10 @@
-import { getCandidateAttempt, scoreAttempt, submitAttempt } from "@skillprove/database";
+import { getCandidateAttempt, submitAttempt } from "@skillprove/database";
 import { attemptSubmitSchema, candidateAttemptSchema } from "@skillprove/validation";
 import { z } from "zod";
-import { runInBackground } from "../../../../../../../lib/background";
 import { withAuth } from "../../../../../../../lib/auth/guards";
 import { notFound, ok } from "../../../../../../../lib/http";
 import { parseBody, requireDb, type RouteContext } from "../../../../../../../lib/request";
+import { scheduleScoring } from "../../../../../../../lib/scoring";
 
 export const dynamic = "force-dynamic";
 
@@ -20,9 +20,7 @@ export const POST = withAuth(async (request, user, context: RouteContext<{ attem
   const { answers } = await parseBody(request, attemptSubmitSchema);
   const db = requireDb();
   await submitAttempt(db, user.id, attemptId, answers);
-  runInBackground(async () => {
-    await scoreAttempt(db, attemptId);
-  });
+  scheduleScoring(db, attemptId);
   const attempt = await getCandidateAttempt(db, user.id, attemptId);
   if (!attempt) throw notFound();
   return ok(candidateAttemptSchema.parse(attempt));

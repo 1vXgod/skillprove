@@ -14,6 +14,7 @@ describe.skipIf(hasNoTestDatabase)("scoring a submitted attempt", () => {
     answers: Record<number, unknown>;
     maxAttempts?: number;
     difficulty?: "BEGINNER" | "EXPERT";
+    withUnreadableQuestion?: boolean;
     user?: { id: string };
     skill?: { id: string };
   }) {
@@ -23,6 +24,7 @@ describe.skipIf(hasNoTestDatabase)("scoring a submitted attempt", () => {
       skillId: skill.id,
       maxAttempts: options.maxAttempts,
       difficulty: options.difficulty,
+      withUnreadableQuestion: options.withUnreadableQuestion,
     });
     return { user, skill, assessment, ...(await takeAgain(user.id, assessment.id, version.id, options.answers)) };
   }
@@ -77,7 +79,7 @@ describe.skipIf(hasNoTestDatabase)("scoring a submitted attempt", () => {
     const first = await scoreAttempt(db, attemptId);
     const again = await scoreAttempt(db, attemptId);
 
-    expect(again).toEqual({ evaluationId: first!.evaluationId, created: false });
+    expect(again).toEqual({ evaluationId: first!.evaluationId, created: false, status: "COMPLETED" });
     expect(await db.evaluation.count({ where: { attemptId } })).toBe(1);
     expect(await db.verifiedSkillScoreCalculation.count({ where: { userId: user.id } })).toBe(1);
   });
@@ -90,6 +92,26 @@ describe.skipIf(hasNoTestDatabase)("scoring a submitted attempt", () => {
     expect(a?.evaluationId).toBe(b?.evaluationId);
     expect(await db.evaluation.count({ where: { attemptId } })).toBe(1);
     expect(await db.verifiedSkillScoreCalculation.count({ where: { userId: user.id } })).toBe(1);
+  });
+
+  it("records a question that cannot be read as a FAILED evaluation, and does not retry it", async () => {
+    const { user, skill, attemptId } = await submitted({ answers: ALL_CORRECT, withUnreadableQuestion: true });
+    const first = await scoreAttempt(db, attemptId);
+    expect(first).toMatchObject({ created: true, status: "FAILED" });
+
+    const evaluation = await db.evaluation.findUniqueOrThrow({
+      where: { id: first!.evaluationId },
+      include: { criterionScores: true, skillResults: true },
+    });
+    expect(evaluation).toMatchObject({ evaluatorType: "AUTOMATIC", status: "FAILED", overallScore: null });
+    expect(evaluation.summary).toMatch(/cannot be read for scoring/);
+    expect(evaluation.criterionScores).toEqual([]);
+    expect(evaluation.skillResults).toEqual([]);
+    expect(await db.verifiedSkillScore.findUnique({ where: { userId_skillId: { userId: user.id, skillId: skill.id } } })).toBeNull();
+
+    // A repeat returns the failure instead of trying again.
+    expect(await scoreAttempt(db, attemptId)).toEqual({ evaluationId: first!.evaluationId, created: false, status: "FAILED" });
+    expect(await db.evaluation.count({ where: { attemptId } })).toBe(1);
   });
 
   it("scores nothing until the attempt is submitted", async () => {

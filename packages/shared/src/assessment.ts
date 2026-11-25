@@ -35,8 +35,14 @@ export type AttemptStatusName = (typeof ATTEMPT_STATUSES)[number];
  */
 export const SUBMISSION_GRACE_SECONDS = 30;
 
-/** What a candidate sees about scoring: still being scored, or scored. */
-export const ATTEMPT_RESULT_STATES = ["pending", "scored"] as const;
+/**
+ * Scoring runs right after a submit. If a submitted attempt still has no result this long
+ * afterwards, the run was probably lost, so reading the result starts it again.
+ */
+export const SCORING_RETRY_AFTER_SECONDS = 60;
+
+/** `pending`: still being scored. `scored`: results are ready. `failed`: it cannot be scored automatically. */
+export const ATTEMPT_RESULT_STATES = ["pending", "scored", "failed"] as const;
 export type AttemptResultState = (typeof ATTEMPT_RESULT_STATES)[number];
 
 export const AI_JOB_STATUSES = ["QUEUED", "RUNNING", "SUCCEEDED", "FAILED", "CANCELLED"] as const;

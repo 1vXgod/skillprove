@@ -1,4 +1,4 @@
-import { SUBMISSION_GRACE_SECONDS } from "@skillprove/shared";
+import { SCORING_RETRY_AFTER_SECONDS, SUBMISSION_GRACE_SECONDS } from "@skillprove/shared";
 import type { Prisma, PrismaClient } from "../generated/prisma/client";
 import { AttemptDataError } from "./attempt-errors";
 import { isUniqueViolation } from "./candidate-errors";
@@ -246,4 +246,62 @@ export async function submitAttempt(
     if (isUniqueViolation(error)) throw new AttemptDataError("not_in_progress");
     throw fromSubmissionTrigger(error) ?? error;
   }
+}
+
+/**
+ * The candidate's result for a submitted attempt: overall and per-skill percentages only, never
+ * which questions were right. `pending` while scoring runs, `failed` if it cannot be scored
+ * automatically. `retryScoring` is true when a pending result is old enough that the scoring
+ * run was probably lost; the caller then starts it again. Throws `not_found` for someone else's
+ * attempt, `expired` and `not_submitted` for attempts that have no result.
+ */
+export async function getAttemptResult(db: PrismaClient, userId: string, attemptId: string, locale: SkillLocale) {
+  await expireOverdueAttempts(db, userId, attemptId);
+  const attempt = await db.assessmentAttempt.findFirst({
+    where: { id: attemptId, candidateUserId: userId },
+    select: {
+      status: true,
+      submittedAt: true,
+      assessmentVersion: { select: { _count: { select: { questions: true } } } },
+      evaluations: {
+        where: { evaluatorType: "AUTOMATIC", supersedesEvaluationId: null, status: { in: ["COMPLETED", "FAILED"] } },
+        select: {
+          status: true,
+          overallScore: true,
+          completedAt: true,
+          skillResults: { select: { questionCount: true, answeredCount: true, percent: true, skill: { include: skillWithNames(locale) } } },
+        },
+      },
+    },
+  });
+  if (!attempt) throw new AttemptDataError("not_found");
+  if (attempt.status === "EXPIRED") throw new AttemptDataError("expired");
+  if (attempt.status !== "SUBMITTED" || !attempt.submittedAt) throw new AttemptDataError("not_submitted");
+
+  // A successful evaluation wins over a failed one, which only remains after a re-score.
+  const evaluation = attempt.evaluations.find((e) => e.status === "COMPLETED") ?? attempt.evaluations[0] ?? null;
+  const state = evaluation ? (evaluation.status === "COMPLETED" ? "scored" : "failed") : "pending";
+  const scored = state === "scored" ? evaluation : null;
+
+  return {
+    result: {
+      attemptId,
+      state,
+      submittedAt: attempt.submittedAt.toISOString(),
+      scoredAt: scored?.completedAt?.toISOString() ?? null,
+      questionCount: attempt.assessmentVersion._count.questions,
+      // A completed evaluation always has an overall score; the database requires one.
+      percent: scored ? Number(scored.overallScore) : null,
+      skills: (scored?.skillResults ?? [])
+        .map((r) => ({
+          skillId: r.skill.id,
+          name: skillName(r.skill, locale),
+          questionCount: r.questionCount,
+          answeredCount: r.answeredCount,
+          percent: Number(r.percent),
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    },
+    retryScoring: state === "pending" && Date.now() - attempt.submittedAt.getTime() >= SCORING_RETRY_AFTER_SECONDS * 1000,
+  };
 }

@@ -1,12 +1,13 @@
 import { createSign, generateKeyPairSync, randomUUID } from "node:crypto";
 import { createPrismaClient, type PrismaClient } from "@skillprove/database";
 import { encodeQuestion } from "@skillprove/assessment-engine";
-import { candidateAttemptSchema, questionContentSchema, takeableAssessmentListSchema } from "@skillprove/validation";
+import { attemptResultSchema, candidateAttemptSchema, questionContentSchema, takeableAssessmentListSchema } from "@skillprove/validation";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { resetClerkForTests } from "../../../lib/auth/clerk";
 import { POST as startAttemptRoute } from "./me/assessments/[assessmentId]/attempts/route";
 import { GET as listAssessments } from "./me/assessments/route";
 import { GET as getAttempt } from "./me/attempts/[attemptId]/route";
+import { GET as resultRoute } from "./me/attempts/[attemptId]/result/route";
 import { POST as submitRoute } from "./me/attempts/[attemptId]/submit/route";
 
 /**
@@ -241,6 +242,58 @@ describe.skipIf(!isLocal)("attempt API routes", () => {
     // One of two correct, whatever the body claimed. The criterion has no skill, so it gets the overall result.
     expect(Number(evaluation.overallScore)).toBe(50);
     expect(evaluation.criterionScores.map((c) => Number(c.score))).toEqual([50]);
+  });
+
+  it("returns the result: pending, then scored, with per-skill percentages only", async () => {
+    const { token, attempt } = await startedAttempt();
+    const [mc] = attempt.questions;
+    const params = { attemptId: attempt.id };
+
+    const early = await call(resultRoute, { token, params });
+    expect(early.status).toBe(409);
+    expect(early.body.error?.code).toBe("CONFLICT");
+
+    holder.background = [];
+    await call(submitRoute, { token, method: "POST", params, body: { answers: { [mc!.id]: "B" } } });
+    const pending = await call(resultRoute, { token, params });
+    expect(pending.status).toBe(200);
+    expect(attemptResultSchema.parse(pending.body.data)).toMatchObject({ state: "pending", percent: null });
+    // Only the submit scheduled scoring; a fresh pending result does not start it again.
+    expect(holder.background).toHaveLength(1);
+
+    await holder.background[0]!();
+    const scored = await call(resultRoute, { token, params });
+    expect(attemptResultSchema.parse(scored.body.data)).toMatchObject({
+      state: "scored",
+      percent: 50,
+      questionCount: 2,
+      skills: [{ name: "Test skill", questionCount: 2, answeredCount: 1, percent: 50 }],
+    });
+    expect(scored.text).not.toContain(SECRET);
+    expect(scored.text).not.toMatch(/correctChoiceId|answerKey|explanation/);
+
+    const stranger = await signedIn();
+    expect((await call(resultRoute, { token: stranger.token, params })).status).toBe(404);
+    expect((await call(resultRoute, { params })).status).toBe(401);
+  });
+
+  it("starts scoring again when a result is still pending a minute after submit, at most once a minute", async () => {
+    const { token, attempt } = await startedAttempt();
+    const params = { attemptId: attempt.id };
+    await call(submitRoute, { token, method: "POST", params, body: { answers: {} } });
+    // The scoring run scheduled by the submit is lost.
+    holder.background = [];
+    await db().assessmentAttempt.update({ where: { id: attempt.id }, data: { submittedAt: new Date(Date.now() - 120_000) } });
+
+    const pending = await call(resultRoute, { token, params });
+    expect(attemptResultSchema.parse(pending.body.data).state).toBe("pending");
+    expect(holder.background).toHaveLength(1);
+    // A second poll within the minute schedules nothing more.
+    expect(attemptResultSchema.parse((await call(resultRoute, { token, params })).body.data).state).toBe("pending");
+    expect(holder.background).toHaveLength(1);
+
+    await holder.background[0]!();
+    expect(attemptResultSchema.parse((await call(resultRoute, { token, params })).body.data)).toMatchObject({ state: "scored", percent: 0 });
   });
 
   it("rejects malformed answers before touching the attempt", async () => {
