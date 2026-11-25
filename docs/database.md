@@ -176,7 +176,7 @@ Scores, IDs and audit records remain, with no direct identity attached. The rete
 - Each change appends a `VerifiedSkillScoreCalculation`, with its formula version and the evaluations behind it. Calculations are immutable, so any score can be traced back to criterion scores and evidence.
 - The database rejects a calculation with no evidence, and evidence that is unfinished, rejected in review, from another candidate or for a skill the assessment does not measure.
 - A trigger copies values from the calculation into `VerifiedSkillScore`, so direct edits to that table have no effect.
-- The scoring formula itself is not implemented yet.
+- Formula `auto-v1` (Milestone 7) scores automatic evaluations: `scoreAttempt` recalculates each skill the assessment declares from the candidate's stored `EvaluationSkillResult` rows, counting only the latest evaluation per assessment.
 
 ### Assessment and evaluation lifecycle
 
@@ -184,17 +184,17 @@ Scores, IDs and audit records remain, with no direct identity attached. The rete
 2. **Publish:** set `publishedAt` on the rubric and `PUBLISHED` on the version. Both are then frozen. A change means a new version. A new rubric can be added to a published version.
 3. **Attempt:** requires a published version and rubric. The rubric is fixed for that attempt. `attemptNumber` cannot exceed `maxAttempts`.
 4. **Submit:** allowed only while the attempt is in progress and not expired. Submissions and their file links are then immutable. For candidate attempts, `expires_at` stores the hard cutoff: the deadline plus a 30-second grace period (`SUBMISSION_GRACE_SECONDS`), so the trigger enforces the grace period too. The API shows candidates the deadline itself.
-5. **Evaluate:** an evaluation starts `PENDING`. Add criterion scores and evidence, then set `COMPLETED` with an overall score. AI evaluations must record provider and model; human ones must record the evaluator. Automatic ones (objective questions scored by code, migration `20261125100000_automatic_evaluator`) must record the formula version in `prompt_version` and nothing else: no provider, model, AI job or evaluator.
+5. **Evaluate:** an evaluation starts `PENDING`. Add criterion scores and evidence, then set `COMPLETED` with an overall score. AI evaluations must record provider and model; human ones must record the evaluator. Automatic ones (objective questions scored by code, migration `20261125100000_automatic_evaluator`) must record the formula version in `prompt_version` and nothing else: no provider, model, AI job or evaluator. `scoreAttempt` writes them, with one `EvaluationSkillResult` per skill (question, answered and correct counts, and percentage), so verified scores never need to re-score old answers. An attempt has at most one original automatic evaluation (migration `20261126100000_evaluation_skill_results`).
 6. **After completion:** everything is frozen except `reviewStatus`. Corrections are a new evaluation with `supersedesEvaluationId`.
 7. **Review:** `EvaluationReview` rows are append-only and update `reviewStatus` automatically. AI results never make hiring decisions on their own.
 
 ### Rules enforced by hand-written SQL
 
-Prisma cannot express these, so they live at the end of migration `20261103100000_core_data_models`, plus the list checks in `20261104120000_candidate_interests_technologies`. `migrate diff` does not detect changes to them, so change them only through a new migration, and add a test.
+Prisma cannot express these, so they live at the end of migration `20261103100000_core_data_models`, plus the list checks in `20261104120000_candidate_interests_technologies`, the automatic evaluator check in `20261125100000_automatic_evaluator` and the skill result rules in `20261126100000_evaluation_skill_results`. `migrate diff` does not detect changes to them, so change them only through a new migration, and add a test.
 
-- **CHECK constraints:** profile interests and portfolio technologies (at most 15 entries of 1 to 40 characters, never null), scores 0 to 100, weights, dates, salary ranges, lowercase emails, URL and phone formats, one file owner, payload sizes.
-- **Partial unique index:** one pending invitation per email per company.
-- **Triggers:** append-only tables, category cycles, frozen versions and rubrics, attempt limits, submission rules, evaluation immutability, evidence validity, review status, verified score sync.
+- **CHECK constraints:** profile interests and portfolio technologies (at most 15 entries of 1 to 40 characters, never null), scores 0 to 100, weights, dates, salary ranges, lowercase emails, URL and phone formats, one file owner, payload sizes, consistent skill result counts.
+- **Partial unique indexes:** one pending invitation per email per company; one original automatic evaluation per attempt.
+- **Triggers:** append-only tables, category cycles, frozen versions and rubrics, attempt limits, submission rules, evaluation immutability (including skill results), evidence validity, review status, verified score sync.
 
 ## Seed data
 

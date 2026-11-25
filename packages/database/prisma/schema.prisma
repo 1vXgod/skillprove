@@ -590,6 +590,7 @@ model Skill {
   assessmentSkills    AssessmentSkill[]
   assessmentQuestions AssessmentQuestion[]
   rubricCriteria      AssessmentRubricCriterion[]
+  evaluationResults   EvaluationSkillResult[]
 
   @@index([categoryId])
   @@map("skills")
@@ -941,6 +942,7 @@ model Evaluation {
   supersedes      Evaluation?                          @relation("EvaluationHistory", fields: [supersedesEvaluationId], references: [id], onDelete: Restrict)
   supersededBy    Evaluation?                          @relation("EvaluationHistory")
   criterionScores EvaluationCriterionScore[]
+  skillResults    EvaluationSkillResult[]
   evidence        EvaluationEvidence[]
   reviews         EvaluationReview[]
   scoreInputs     VerifiedSkillScoreCalculationInput[]
@@ -950,6 +952,27 @@ model Evaluation {
   @@index([submissionId])
   @@index([reviewStatus])
   @@map("evaluations")
+}
+
+/// One skill's share of an automatic evaluation, so verified scores can be recalculated from
+/// stored results without re-scoring old answers. Frozen once the evaluation finishes.
+model EvaluationSkillResult {
+  id            String  @id @default(uuid()) @db.Uuid
+  evaluationId  String  @map("evaluation_id") @db.Uuid
+  skillId       String  @map("skill_id") @db.Uuid
+  /// Questions measuring this skill, answered or not.
+  questionCount Int     @map("question_count")
+  answeredCount Int     @map("answered_count")
+  correctCount  Int     @map("correct_count")
+  /// 0 to 100.
+  percent       Decimal @db.Decimal(5, 2)
+
+  evaluation Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Restrict)
+  skill      Skill      @relation(fields: [skillId], references: [id], onDelete: Restrict)
+
+  @@unique([evaluationId, skillId])
+  @@index([skillId])
+  @@map("evaluation_skill_results")
 }
 
 model EvaluationCriterionScore {
