@@ -57,6 +57,25 @@ function fromCandidateDataError(error: unknown): ApiError | null {
   }
 }
 
+/** Expected failures while taking an assessment, recognised by shape for the same reason. */
+function fromAttemptDataError(error: unknown): ApiError | null {
+  if (!(error instanceof Error) || error.name !== "AttemptDataError" || !("reason" in error)) return null;
+  switch (error.reason) {
+    case "not_found":
+      return notFound();
+    case "profile_required":
+      return new ApiError("PROFILE_REQUIRED", "Create your profile before taking an assessment.", 409);
+    case "attempts_exhausted":
+      return new ApiError("ATTEMPTS_EXHAUSTED", "You have used every attempt for this assessment.", 409);
+    case "expired":
+      return new ApiError("ATTEMPT_EXPIRED", "Time ran out before this attempt was submitted.", 409);
+    case "not_in_progress":
+      return new ApiError("CONFLICT", "This attempt is no longer in progress.", 409);
+    default:
+      return null;
+  }
+}
+
 /** Expected assessment failures, recognised by shape for the same reason. Messages are fixed text; nothing from the request or a provider is echoed. */
 function fromAssessmentDataError(error: unknown): ApiError | null {
   if (!(error instanceof Error) || error.name !== "AssessmentDataError" || !("reason" in error)) return null;
@@ -126,7 +145,7 @@ export function withErrorHandling<Args extends unknown[]>(
     try {
       return await handler(...args);
     } catch (error) {
-      const expected = error instanceof ApiError ? error : (fromCandidateDataError(error) ?? fromAssessmentDataError(error));
+      const expected = error instanceof ApiError ? error : (fromCandidateDataError(error) ?? fromAssessmentDataError(error) ?? fromAttemptDataError(error));
       if (expected) return fail(expected.code, expected.message, expected.status, expected.fields);
       console.error("Unhandled API error", JSON.stringify(describeError(error)));
       return fail("INTERNAL_ERROR", "Something went wrong.", 500);

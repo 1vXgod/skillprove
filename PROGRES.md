@@ -44,6 +44,11 @@ Pjesa e kandidatit që *merr* vlerësime nuk ekziston ende.
 3. Vazhdo Milestone 7 me hapa të vegjël (hapat 1–2 gati; hapi 3 është migrimi për vlerësuesin `AUTOMATIC`). Lista e plotë e hapave është te [docs/STATUS.md](docs/STATUS.md#milestone-7-plan).
    Vendim më 2026-11-25: vlerësimi në Milestone 7 është **vetëm automatik**, për pyetjet objektive. Vlerësimi me AI me rishikim nga njeriu vjen më vonë.
 
+## Detyra për më vonë
+- **Kërkimi i aftësive pa theks:** përdoruesit shqiptarë shpesh shkruajnë "e" për "ë" dhe "c" për "ç", p.sh. "te dhena" nuk e gjen "Të dhëna". Kërkimi duhet t'i trajtojë si të njëjta (`packages/database/src/repositories/skills.ts`).
+- **Variantet me disa fjalë:** "React Js" nuk e gjen React, sepse alias-et janë "reactjs" dhe "react.js". Normalizo hapësirat dhe pikat si në alias-e, ashtu edhe në kërkim.
+- **Katalogu i aftësive është i vogël:** ka vetëm 35 aftësi. Zgjeroje para përdoruesve të vërtetë (më shumë teknologji, dizajn, marketing, gjuhë dhe aftësi të buta) në `packages/database/src/seed/skill-taxonomy-data.ts`.
+
 ## Milestones (emërtimet 1–5 janë të Claude-it, jo të projektit)
 Në dokumente emërtohen vetëm Milestone 6 dhe 7. Pjesa tjetër është rindërtuar nga migrimet, commit-et dhe dokumentet.
 

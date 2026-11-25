@@ -33,7 +33,8 @@ Each file is gitignored. Only the `.env.example` files are committed.
 1. Copy the pooled and direct connection strings from Neon's **Connect** dialog.
 2. Fill in the first two files in the table above, using their `.env.example` files as templates.
 3. Run `pnpm db:migrate:deploy`, then `pnpm db:migrate:status`.
-4. Start the API and open `http://localhost:4000/api/v1/health/ready`. It should return `"database":"connected"`.
+4. Run `pnpm db:seed` to load the skill taxonomy. Without it, the skill picker is empty and every search says "No skills match your search". It is safe to repeat (see [Seed data](#seed-data)). Repeat steps 3 and 4 whenever you pull new migrations or seed data.
+5. Start the API and open `http://localhost:4000/api/v1/health/ready`. It should return `"database":"connected"`.
 
 ## Test database safeguards
 
@@ -171,7 +172,7 @@ Scores, IDs and audit records remain, with no direct identity attached. The rete
 ### Skill verification
 
 - `UserSkill` holds only what the candidate claims. `VerifiedSkillScore` holds verified results.
-- `recordVerifiedSkillScore` is the only supported way to change a verified score. It must never be reachable from a candidate-facing endpoint.
+- `recordVerifiedSkillScore` is the only supported way to change a verified score. It must never be reachable from a candidate-facing endpoint. `recordVerifiedSkillScoreInTransaction` is the same write inside a transaction the caller already holds, so a score commits or rolls back together with the evaluation behind it; the same rule applies.
 - Each change appends a `VerifiedSkillScoreCalculation`, with its formula version and the evaluations behind it. Calculations are immutable, so any score can be traced back to criterion scores and evidence.
 - The database rejects a calculation with no evidence, and evidence that is unfinished, rejected in review, from another candidate or for a skill the assessment does not measure.
 - A trigger copies values from the calculation into `VerifiedSkillScore`, so direct edits to that table have no effect.
@@ -182,7 +183,7 @@ Scores, IDs and audit records remain, with no direct identity attached. The rete
 1. **Draft:** create an `Assessment`, then an `AssessmentVersion` with questions and skills, and a rubric whose weights total 100.
 2. **Publish:** set `publishedAt` on the rubric and `PUBLISHED` on the version. Both are then frozen. A change means a new version. A new rubric can be added to a published version.
 3. **Attempt:** requires a published version and rubric. The rubric is fixed for that attempt. `attemptNumber` cannot exceed `maxAttempts`.
-4. **Submit:** allowed only while the attempt is in progress and not expired. Submissions and their file links are then immutable.
+4. **Submit:** allowed only while the attempt is in progress and not expired. Submissions and their file links are then immutable. For candidate attempts, `expires_at` stores the hard cutoff: the deadline plus a 30-second grace period (`SUBMISSION_GRACE_SECONDS`), so the trigger enforces the grace period too. The API shows candidates the deadline itself.
 5. **Evaluate:** an evaluation starts `PENDING`. Add criterion scores and evidence, then set `COMPLETED` with an overall score. AI evaluations must record provider and model; human ones must record the evaluator. Automatic ones (objective questions scored by code, migration `20261125100000_automatic_evaluator`) must record the formula version in `prompt_version` and nothing else: no provider, model, AI job or evaluator.
 6. **After completion:** everything is frozen except `reviewStatus`. Corrections are a new evaluation with `supersedesEvaluationId`.
 7. **Review:** `EvaluationReview` rows are append-only and update `reviewStatus` automatically. AI results never make hiring decisions on their own.

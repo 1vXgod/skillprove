@@ -43,6 +43,7 @@ export {
 export { anonymizeIdentity, syncIdentity, type VerifiedIdentity } from "./repositories/identity";
 export {
   recordVerifiedSkillScore,
+  recordVerifiedSkillScoreInTransaction,
   type VerifiedSkillScoreInput,
 } from "./repositories/verified-skill-scores";
 export { seedSkillTaxonomy } from "./seed/skill-taxonomy";
@@ -71,3 +72,5 @@ export async function checkDatabaseConnection(client: PrismaClient): Promise<voi
 export { AssessmentDataError, type AssessmentDataErrorReason } from "./repositories/assessment-errors";
 export * from "./repositories/assessments";
 export * from "./repositories/ai-jobs";
+export { AttemptDataError, type AttemptDataErrorReason } from "./repositories/attempt-errors";
+export { attemptDeadline, getCandidateAttempt, listTakeableAssessments, startAttempt, submitAttempt, DEFAULT_ATTEMPT_HOURS } from "./repositories/attempts";

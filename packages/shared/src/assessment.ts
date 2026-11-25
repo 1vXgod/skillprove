@@ -25,6 +25,20 @@ export const OBJECTIVE_QUESTION_KINDS: readonly QuestionKind[] = ["multiple_choi
 export const ASSESSMENT_STATUSES = ["DRAFT", "PUBLISHED", "ARCHIVED"] as const;
 export type AssessmentStatus = (typeof ASSESSMENT_STATUSES)[number];
 
+/** Mirrors the database `AttemptStatus`. */
+export const ATTEMPT_STATUSES = ["IN_PROGRESS", "SUBMITTED", "EXPIRED", "ABANDONED"] as const;
+export type AttemptStatusName = (typeof ATTEMPT_STATUSES)[number];
+
+/**
+ * Submissions are accepted this long after the deadline, to absorb network delay. Server side
+ * only: candidates are always shown the exact deadline.
+ */
+export const SUBMISSION_GRACE_SECONDS = 30;
+
+/** What a candidate sees about scoring: still being scored, or scored. */
+export const ATTEMPT_RESULT_STATES = ["pending", "scored"] as const;
+export type AttemptResultState = (typeof ATTEMPT_RESULT_STATES)[number];
+
 export const AI_JOB_STATUSES = ["QUEUED", "RUNNING", "SUCCEEDED", "FAILED", "CANCELLED"] as const;
 export type AiJobStatus = (typeof AI_JOB_STATUSES)[number];
 
@@ -43,6 +57,7 @@ export const ASSESSMENT_LIMITS = {
   choiceTextMax: 300,
   minChoices: 2,
   maxChoices: 8,
+  choiceIdMax: 20,
   listItemMax: 400,
   maxListItems: 10,
   explanationMax: 1500,
@@ -52,6 +67,9 @@ export const ASSESSMENT_LIMITS = {
   pageSizeMax: 50,
   pageSizeDefault: 20,
 } as const;
+
+/** Choice IDs, as authors write them and candidates send them back. */
+export const CHOICE_ID_PATTERN = /^[A-Za-z0-9_-]+$/;
 
 /** Defaults for the generation limits. The API reads overrides from its environment. */
 export const GENERATION_LIMIT_DEFAULTS = {

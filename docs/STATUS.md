@@ -16,7 +16,7 @@ SkillProve helps people prove their skills instead of only claiming them. A cand
 | ❌ | Not built |
 | ❓ | Could not verify from the code |
 
-**Tests:** CI #6 (the merge run of PR #3, 2026-11-25) passed everything: `@skillprove/database` 123/123 and `@skillprove/api` 105/105 with **0 skipped**, plus `db:migrate:deploy`, the production build and the browser tests (`test:e2e`). Locally, without a test database, the 137 database and route tests are still skipped; they count because CI ran them. Mobile screens have no automated tests, so a mobile feature is ✅ only where the API is what is being judged.
+**Tests:** CI #6 (the merge run of PR #3, 2026-11-25) passed everything: `@skillprove/database` 123/123 and `@skillprove/api` 105/105 with **0 skipped**, plus `db:migrate:deploy`, the production build and the browser tests (`test:e2e`). Locally, without a test database, the 137 database and route tests are still skipped; they count because CI ran them. Mobile screens have no automated tests. Mobile rows marked ✅ combine the API tests in CI with a full check by hand on an Android phone on 2026-11-25 (sign-in, profile, Skill Passport, privacy and preview). iOS has not been verified.
 
 **Dev database:** on 2026-11-25 the development database (Neon `main`) was found two migrations behind (`20261104120000_candidate_interests_technologies`, `20261105100000_assessment_generation`). That made the Profile tab fail with a 500 on web and mobile. Both were applied with `pnpm db:migrate:deploy`, and `migrate status` now reports the schema up to date.
 
@@ -53,10 +53,11 @@ SkillProve helps people prove their skills instead of only claiming them. A cand
 | Web: notifications | 🗄️ | `Notification` model only |
 | Web: account and security settings | 🔄 | `/account` shows email, status and company memberships. Security settings live on Clerk's hosted pages |
 | Web: platform administration | ❌ | See §3 administrators |
-| Mobile: candidate registration and sign-in | 🔄 | Clerk hosted pages through the browser (`components/account-panel.tsx`). Sign-in confirmed by hand on Android on 2026-11-25. No automated test; iOS not verified |
+| Mobile: candidate registration and sign-in | ✅ | Clerk hosted pages through the browser (`components/account-panel.tsx`). Confirmed by hand on Android on 2026-11-25. No automated test; iOS not verified |
 | Mobile: company account access | 🔄 | Read-only assessment list, details and generation status (`app/assessments/`) |
-| Mobile: candidate profile and profile editing | 🔄 | `app/profile/*`. The API behind it passed its tests in CI #6, and the Profile tab loads on Android (checked by hand 2026-11-25). The mobile screens have no automated tests, and editing has not been confirmed on a device |
-| Mobile: Skill Passport | 🔄 | `app/skill-passport.tsx`. The API passed its tests in CI #6; the screen has no automated test and is not yet confirmed on a device |
+| Mobile: candidate profile and profile editing | ✅ | `app/profile/*`. API tests passed in CI #6. Confirmed by hand on Android on 2026-11-25: a profile saved on the phone appears on the web. No automated screen tests; iOS not verified |
+| Mobile: Skill Passport | ✅ | `app/skill-passport.tsx`. API tests passed in CI #6. Confirmed by hand on Android on 2026-11-25, including adding a skill from the catalogue (after the dev database was seeded). No automated screen tests; iOS not verified |
+| Mobile: privacy settings and profile preview | ✅ | `app/profile/privacy.tsx`. API tests passed in CI #6. Toggles and preview confirmed by hand on Android on 2026-11-25. No automated screen tests; iOS not verified |
 | Mobile: assessment invitations | ❌ | |
 | Mobile: assessment completion | ❌ | Milestone 7 |
 | Mobile: assessment results | ❌ | Milestone 7 |
@@ -126,7 +127,7 @@ SkillProve helps people prove their skills instead of only claiming them. A cand
 | Verified skill details (score, date, difficulty, status, verification) | 🔄 | Display tested with sample data (CI #6); no real scores exist until Milestone 7 |
 | Verified scores are immutable | ✅ | Database triggers plus a single write path (`recordVerifiedSkillScore`). "discards direct edits to a verified score", "refuses a calculation without evidence", "never overwrites a completed evaluation" and related tests passed in CI #6 |
 | Private by default | ✅ | "creates a profile with the most private defaults" and "hides a private profile from every company" passed in CI #6 |
-| Profile preview ("what companies see") | ✅ | `GET /me/profile/preview`, on the privacy screen on web and mobile. "previews the filtered view for the candidate" and the privacy browser test passed in CI #6. Mobile screen not automated |
+| Profile preview ("what companies see") | ✅ | `GET /me/profile/preview`, on the privacy screen on web and mobile. "previews the filtered view for the candidate" and the privacy browser test passed in CI #6. Mobile screen confirmed by hand on Android (2026-11-25) |
 
 ### §5 Company platform
 
@@ -287,6 +288,10 @@ Decisions (2026-11-25):
 - **Scoring is automatic only**, for multiple choice, true/false and multiple select. Only assessments that are fully objective can be taken. Multiple select is all or nothing. AI-assisted scoring with human review is Milestone 12.
 - Scoring runs server-side after submit, from stored answers only. The result endpoint re-triggers it if a submitted attempt still has no evaluation after about a minute; idempotency prevents duplicates.
 - Time limit from `durationMinutes`, otherwise `attemptTtlHours`, otherwise 24 hours, judged by the server. Retakes up to `maxAttempts`; the most recent completed attempt per assessment counts.
+- Starting an attempt requires a candidate profile; without one the API refuses with `profile_required` and the app asks the candidate to create a profile first.
+- Every attempt counts toward `maxAttempts`, including expired and abandoned ones, so nobody can look at the questions and then retake.
+- Submissions get a 30-second grace period after the deadline, on the server only. The phone shows the exact deadline.
+- The Take screen asks for confirmation before starting: the timer starts now, and this uses 1 of N attempts.
 - No pass threshold in Milestone 7.
 - Formula `auto-v1`: difficulty-weighted average; confidence = min(100, 5 × answered questions). A level label (Beginner < 40 ≤ Intermediate < 60 ≤ Advanced < 80 ≤ Expert) is shown only when confidence ≥ 50; below that, "more assessments needed".
 - Candidates see overall and per-skill scores after submitting, never the correct answers.
@@ -296,17 +301,17 @@ Decisions (2026-11-25):
 |---|---|---|
 | 1 | Pure scoring function `scoreObjectiveAttempt` (`assessment-engine`) | ✅ `432aa97`, tests ran |
 | 2 | Formula `auto-v1` and level labels (`assessment-engine`, `shared`) | ✅ `eb636e5`, tests ran |
-| 3 | Migration: `AUTOMATIC` evaluator type with its CHECK constraint | Waiting for CI and phone gates |
-| 4 | `recordVerifiedSkillScore` runs inside an existing transaction | |
-| 5 | Validation schemas for start, answers and result (no answer fields) | |
-| 6 | Repository: list takeable assessments, start an attempt, candidate view | |
+| 3 | Migration: `AUTOMATIC` evaluator type with its CHECK constraint | ✅ `9e812f1`, database tests passed in CI #8 and #9 |
+| 4 | `recordVerifiedSkillScore` runs inside an existing transaction | Committed `b153b9f`; database tests run in CI with PR #5 |
+| 5 | Validation schemas for start, answers and result (no answer fields) | ✅ `be82b0f`, tests ran |
+| 6 | Repository: list takeable assessments, start an attempt (profile required), candidate view | Database tests run in CI with PR #5 |
 | 7 | API: list, start, read an attempt | |
-| 8 | Repository and API: submit | |
+| 8 | Repository and API: submit, with a 30-second server-side grace period | |
 | 9 | `scoreAttempt`: evaluation, criterion scores, verified score, in one transaction | |
 | 10 | Result endpoint, lazy expiry, re-trigger after about a minute | |
 | 11 | api-client methods | |
 | 12 | **Dev-only demo seed:** a demo company and 2–3 published, fully objective `PUBLIC` assessments (multiple choice, true/false, multiple select; a couple of skills; mixed difficulty) for testing on a phone. Refuses to run unless the database is local or a Neon branch named explicitly by ID that the server confirms is not `main`, and always when `NODE_ENV=production`. Database test: running it twice creates no duplicates, and the guard refuses unsafe targets | |
 | 13 | Mobile: browse assessments | |
-| 14 | Mobile: take an assessment | |
+| 14 | Mobile: take an assessment. Confirm before starting ("the timer starts now, this uses 1 of N attempts") | |
 | 15 | Mobile: result screen and Skill Passport changes | |
 | 16 | Docs: `assessments.md`, `PROGRES.md`, this file | |

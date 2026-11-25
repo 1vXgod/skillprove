@@ -5,6 +5,7 @@ import {
   ASSESSMENT_STATUSES,
   ASSESSMENT_TYPES,
   AI_JOB_STATUSES,
+  CHOICE_ID_PATTERN,
 } from "@skillprove/shared";
 import { z } from "zod";
 
@@ -37,8 +38,8 @@ const choiceSchema = z.object({
     .string()
     .trim()
     .min(1, "required")
-    .max(20, "tooLong")
-    .regex(/^[A-Za-z0-9_-]+$/, "invalidChoice"),
+    .max(L.choiceIdMax, "tooLong")
+    .regex(CHOICE_ID_PATTERN, "invalidChoice"),
   text: text(L.choiceTextMax),
 });
 const choicesSchema = (min: number) =>
