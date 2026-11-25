@@ -1,3 +1,4 @@
+import { verifiedSkillLevel } from "@skillprove/shared";
 import { formatDate, formatNumber } from "@skillprove/shared/i18n";
 import type { SkillPassport, VerifiedSkillWithEvidence } from "@skillprove/validation";
 import { useQuery } from "@tanstack/react-query";
@@ -123,7 +124,9 @@ function Sections({ passport }: { passport: SkillPassport }) {
 function VerifiedSkill({ skill }: { skill: VerifiedSkillWithEvidence }) {
   const { t, locale } = useI18n();
   const outdated = skill.evidenceStatus === "OUTDATED";
+  const level = verifiedSkillLevel(skill.score, skill.confidence);
   const rows: [string, string][] = [
+    [t("passport.verifiedLevel"), level ? t(`passport.levels.${level}`) : t("passport.moreAssessmentsNeeded")],
     [t("passport.score"), t("passport.scoreOutOf", { score: formatNumber(locale, skill.score, { maximumFractionDigits: 1 }) })],
     [t("passport.confidence"), formatNumber(locale, skill.confidence / 100, { style: "percent" })],
     [t("passport.highestDifficulty"), t(`passport.difficulty.${skill.highestDifficulty}`)],
