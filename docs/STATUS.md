@@ -16,7 +16,7 @@ SkillProve helps people prove their skills instead of only claiming them. A cand
 | ❌ | Not built |
 | ❓ | Could not verify from the code |
 
-**Tests:** CI #6 (the merge run of PR #3, 2026-11-25) passed everything: `@skillprove/database` 123/123 and `@skillprove/api` 105/105 with **0 skipped**, plus `db:migrate:deploy`, the production build and the browser tests (`test:e2e`). Locally, without a test database, the 137 database and route tests are still skipped; they count because CI ran them. Mobile screens have no automated tests, so a mobile feature is ✅ only where the API is what is being judged.
+**Tests:** CI #6 (the merge run of PR #3, 2026-11-25) passed everything: `@skillprove/database` 123/123 and `@skillprove/api` 105/105 with **0 skipped**, plus `db:migrate:deploy`, the production build and the browser tests (`test:e2e`). Locally, without a test database, the 137 database and route tests are still skipped; they count because CI ran them. Mobile screens have no automated tests. Mobile rows marked ✅ combine the API tests in CI with a full check by hand on an Android phone on 2026-11-25 (sign-in, profile, Skill Passport, privacy and preview). iOS has not been verified.
 
 **Dev database:** on 2026-11-25 the development database (Neon `main`) was found two migrations behind (`20261104120000_candidate_interests_technologies`, `20261105100000_assessment_generation`). That made the Profile tab fail with a 500 on web and mobile. Both were applied with `pnpm db:migrate:deploy`, and `migrate status` now reports the schema up to date.
 
@@ -53,10 +53,11 @@ SkillProve helps people prove their skills instead of only claiming them. A cand
 | Web: notifications | 🗄️ | `Notification` model only |
 | Web: account and security settings | 🔄 | `/account` shows email, status and company memberships. Security settings live on Clerk's hosted pages |
 | Web: platform administration | ❌ | See §3 administrators |
-| Mobile: candidate registration and sign-in | 🔄 | Clerk hosted pages through the browser (`components/account-panel.tsx`). Sign-in confirmed by hand on Android on 2026-11-25. No automated test; iOS not verified |
+| Mobile: candidate registration and sign-in | ✅ | Clerk hosted pages through the browser (`components/account-panel.tsx`). Confirmed by hand on Android on 2026-11-25. No automated test; iOS not verified |
 | Mobile: company account access | 🔄 | Read-only assessment list, details and generation status (`app/assessments/`) |
-| Mobile: candidate profile and profile editing | 🔄 | `app/profile/*`. The API behind it passed its tests in CI #6, and the Profile tab loads on Android (checked by hand 2026-11-25). The mobile screens have no automated tests, and editing has not been confirmed on a device |
-| Mobile: Skill Passport | 🔄 | `app/skill-passport.tsx`. The API passed its tests in CI #6; the screen has no automated test and is not yet confirmed on a device |
+| Mobile: candidate profile and profile editing | ✅ | `app/profile/*`. API tests passed in CI #6. Confirmed by hand on Android on 2026-11-25: a profile saved on the phone appears on the web. No automated screen tests; iOS not verified |
+| Mobile: Skill Passport | ✅ | `app/skill-passport.tsx`. API tests passed in CI #6. Confirmed by hand on Android on 2026-11-25, including adding a skill from the catalogue (after the dev database was seeded). No automated screen tests; iOS not verified |
+| Mobile: privacy settings and profile preview | ✅ | `app/profile/privacy.tsx`. API tests passed in CI #6. Toggles and preview confirmed by hand on Android on 2026-11-25. No automated screen tests; iOS not verified |
 | Mobile: assessment invitations | ❌ | |
 | Mobile: assessment completion | ❌ | Milestone 7 |
 | Mobile: assessment results | ❌ | Milestone 7 |
@@ -126,7 +127,7 @@ SkillProve helps people prove their skills instead of only claiming them. A cand
 | Verified skill details (score, date, difficulty, status, verification) | 🔄 | Display tested with sample data (CI #6); no real scores exist until Milestone 7 |
 | Verified scores are immutable | ✅ | Database triggers plus a single write path (`recordVerifiedSkillScore`). "discards direct edits to a verified score", "refuses a calculation without evidence", "never overwrites a completed evaluation" and related tests passed in CI #6 |
 | Private by default | ✅ | "creates a profile with the most private defaults" and "hides a private profile from every company" passed in CI #6 |
-| Profile preview ("what companies see") | ✅ | `GET /me/profile/preview`, on the privacy screen on web and mobile. "previews the filtered view for the candidate" and the privacy browser test passed in CI #6. Mobile screen not automated |
+| Profile preview ("what companies see") | ✅ | `GET /me/profile/preview`, on the privacy screen on web and mobile. "previews the filtered view for the candidate" and the privacy browser test passed in CI #6. Mobile screen confirmed by hand on Android (2026-11-25) |
 
 ### §5 Company platform
 
