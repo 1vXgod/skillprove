@@ -2,7 +2,7 @@
 
 > Gjendja e plotë veçori për veçori, krahasuar me [vizionin](docs/VISION.md), dhe roadmap-i nga milestone 8 e tutje janë te [docs/STATUS.md](docs/STATUS.md). Ky skedar mban shënimet e punës dhe hapin tjetër.
 
-Gjendja sipas kodit, e verifikuar më 2026-11-18. `pnpm lint` dhe `pnpm typecheck` kalojnë; `pnpm test` kalon me 71 teste API dhe 20 teste databaze, ndërsa **34 teste API dhe 103 teste databaze u anashkaluan** (mungon baza testuese) dhe nuk llogariten si të kaluara.
+Gjendja sipas kodit, përditësuar më 2026-11-25. **CI #6** (bashkimi i PR #3) kaloi gjithçka: `@skillprove/database` 123/123 dhe `@skillprove/api` 105/105, **0 të anashkaluara**, si dhe `db:migrate:deploy`, build-i dhe testet në shfletues (`test:e2e`). Lokalisht, pa bazë testuese, 137 testet e bazës dhe të rrugëve ende anashkalohen; ato llogariten sepse i ekzekutoi CI.
 
 ## Çfarë funksionon
 | Veçoria | Skedarët |
@@ -35,13 +35,13 @@ Pjesa e kandidatit që *merr* vlerësime nuk ekziston ende.
 - Kërkimi i kandidatëve nga kompanitë, mjetet e punësimit, pagesat.
 
 ## Probleme të njohura
-- Testet e rrugëve dhe të bazës janë anashkaluar këtu; rregullat e privatësisë dhe të "verifikuarat nuk ndryshohen" nuk janë provuar kundër një baze reale.
-- Asnjë test në pajisje reale; iOS i paverifikuar.
+- Ekranet mobile nuk kanë teste automatike. Në Android u kontrollua me dorë hyrja dhe skeda Profili (2026-11-25); pjesa tjetër e rrjedhës në telefon nuk është konfirmuar ende. iOS i paverifikuar.
+- Baza e zhvillimit (Neon `main`) ishte 2 migrime prapa (`20261104120000_candidate_interests_technologies`, `20261105100000_assessment_generation`), prandaj skeda Profili jepte gabim 500 në web dhe mobile. U aplikuan me `pnpm db:migrate:deploy` më 2026-11-25; `migrate status` tani thotë që skema është e përditësuar. Do të shtohet një kontroll në `/health/ready` për migrimet e paaplikuara.
 
 ## Hapi tjetër
-1. Ngrit një bazë PostgreSQL provë (jo Neon `main`), ekzekuto `pnpm test` dhe bëji të kalojnë 137 testet e anashkaluara.
+1. ~~Bëj që 137 testet e bazës të ekzekutohen~~: u krye në CI #6.
 2. Ekipi rishikon kodin kryesor (auth, profili, Skill Passport, privatësia, assessments) që secili ta shpjegojë pjesën e vet.
-3. Fillo Milestone 7 me hapa të vegjël (nisja e tentativës, dorëzimi, vlerësimi, rezultati i verifikuar).
+3. Vazhdo Milestone 7 me hapa të vegjël (hapat 1–2 gati; hapi 3 është migrimi për vlerësuesin `AUTOMATIC`). Lista e plotë e hapave është te [docs/STATUS.md](docs/STATUS.md#milestone-7-plan).
    Vendim më 2026-11-25: vlerësimi në Milestone 7 është **vetëm automatik**, për pyetjet objektive. Vlerësimi me AI me rishikim nga njeriu vjen më vonë.
 
 ## Milestones (emërtimet 1–5 janë të Claude-it, jo të projektit)
