@@ -46,6 +46,8 @@ CREATE TRIGGER evaluation_skill_results_guard BEFORE INSERT OR UPDATE OR DELETE 
   FOR EACH ROW EXECUTE FUNCTION guard_criterion_score();
 
 -- Scoring runs again if the first run is lost, so the database keeps it idempotent: an attempt
--- gets at most one original automatic evaluation. A later re-score must supersede it.
+-- gets at most one original automatic evaluation that has not failed. A later re-score must
+-- supersede it. A FAILED one does not count, because failed evaluations can be neither
+-- deleted nor superseded: the attempt must stay scorable once the cause is fixed.
 CREATE UNIQUE INDEX "evaluations_one_automatic_per_attempt" ON "evaluations"("attempt_id")
-  WHERE "evaluator_type" = 'AUTOMATIC' AND "supersedes_evaluation_id" IS NULL;
+  WHERE "evaluator_type" = 'AUTOMATIC' AND "supersedes_evaluation_id" IS NULL AND "status" <> 'FAILED';

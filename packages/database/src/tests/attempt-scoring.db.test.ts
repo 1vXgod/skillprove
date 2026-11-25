@@ -151,6 +151,25 @@ describe.skipIf(hasNoTestDatabase)("scoring a submitted attempt", () => {
     expect(await db.evaluation.count({ where: { attemptId } })).toBe(1);
   });
 
+  it("does not let a FAILED automatic evaluation block a later successful one", async () => {
+    const { attemptId } = await submitted({ answers: ALL_CORRECT });
+    const submission = await db.assessmentSubmission.findFirstOrThrow({ where: { attemptId } });
+    const { rubricVersionId } = await db.assessmentAttempt.findUniqueOrThrow({ where: { id: attemptId } });
+    const automatic = { attemptId, submissionId: submission.id, rubricVersionId, evaluatorType: "AUTOMATIC" as const, promptVersion: "auto-v1" };
+
+    // A scoring run that failed for good: recorded, frozen, and impossible to delete.
+    const failed = await db.evaluation.create({ data: automatic });
+    await db.evaluation.update({ where: { id: failed.id }, data: { status: "FAILED" } });
+    await expect(db.evaluation.delete({ where: { id: failed.id } })).rejects.toThrow(/finished evaluation is immutable/);
+
+    // Once the cause is fixed, a new automatic evaluation of the same attempt is still allowed.
+    const retry = await db.evaluation.create({ data: automatic });
+    expect(retry.id).not.toBe(failed.id);
+    // But only one that has not failed.
+    await expect(db.evaluation.create({ data: automatic })).rejects.toThrow(/Unique constraint|evaluations_one_automatic_per_attempt/);
+    expect(await db.evaluation.count({ where: { attemptId } })).toBe(2);
+  });
+
   it("refuses skill results that do not add up", async () => {
     const { attemptId } = await submitted({ answers: ALL_CORRECT });
     const evaluation = await db.evaluation.create({
