@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "@skillprove/config": "workspace:*",
+    "@skillprove/validation": "workspace:*",
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "prisma": "7.10.1",

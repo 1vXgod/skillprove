@@ -1,5 +1,8 @@
+import { encodeQuestion } from "@skillprove/assessment-engine";
+import { questionContentSchema, type QuestionContent } from "@skillprove/validation";
 import { afterAll, beforeAll } from "vitest";
-import type { PrismaClient } from "../generated/prisma/client";
+import type { Prisma, PrismaClient } from "../generated/prisma/client";
+import type { QuestionRow } from "../repositories/assessments";
 import { createPrismaClient } from "../index";
 import {
   assertExpectedBranch,
@@ -168,8 +171,46 @@ export async function createCompletedEvaluation(
   return { published, submitted, evaluation, criterionScore };
 }
 
-/** Marker text in every answer key and explanation, so tests can prove none of it leaks. */
+/**
+ * Marker text in every explanation and in the written question's evaluation criteria, so tests
+ * can prove none of the private material leaks. Answer keys themselves hold only choice IDs and
+ * booleans, which the authoring schema requires.
+ */
 export const SECRET = "secret-answer-material";
+
+/**
+ * The question content behind `createObjectiveAssessment`, parsed by the same schema the
+ * authoring API uses, so the fixture cannot drift into data that scoring would refuse.
+ * Correct answers: multiple choice "B", true/false false, multiple select "A" and "C".
+ */
+export function fixtureQuestionContents(skillId: string, options: { withWrittenQuestion?: boolean } = {}): QuestionContent[] {
+  const choices = [
+    { id: "A", text: "One" },
+    { id: "B", text: "Two" },
+    { id: "C", text: "Three" },
+  ];
+  const common = { skillId, difficulty: "INTERMEDIATE", estimatedMinutes: 1, explanation: SECRET };
+  const contents: unknown[] = [
+    { ...common, kind: "multiple_choice", prompt: "Pick two.", choices, correctChoiceId: "B" },
+    { ...common, kind: "true_false", prompt: "The sky is green.", correct: false },
+    { ...common, kind: "multiple_select", prompt: "Pick one and three.", choices, correctChoiceIds: ["A", "C"] },
+    ...(options.withWrittenQuestion
+      ? [
+          {
+            skillId,
+            difficulty: "INTERMEDIATE",
+            estimatedMinutes: 10,
+            kind: "practical_task",
+            description: "Explain.",
+            requirements: ["Write a paragraph."],
+            deliverables: ["A paragraph."],
+            evaluationCriteria: [SECRET],
+          },
+        ]
+      : []),
+  ];
+  return contents.map((c) => questionContentSchema.parse(c));
+}
 
 /**
  * A takeable assessment for Milestone 7: one multiple choice (correct "B"), one true/false
@@ -189,46 +230,14 @@ export async function createObjectiveAssessment(
     difficulty?: "BEGINNER" | "INTERMEDIATE" | "ADVANCED" | "EXPERT";
   },
 ) {
-  const choices = [
-    { id: "A", text: "One" },
-    { id: "B", text: "Two" },
-    { id: "C", text: "Three" },
-  ];
   const assessment = await db.assessment.create({
     data: { ownerType: "PLATFORM", visibility: options.visibility ?? "PUBLIC" },
   });
-  const questions = [
-    {
-      position: 1,
-      type: "SINGLE_CHOICE" as const,
-      prompt: "Pick two.",
-      options: { kind: "multiple_choice", choices },
-      answerKey: { kind: "multiple_choice", correctChoiceId: "B", note: SECRET },
-      explanation: SECRET,
-      skillId: options.skillId,
-    },
-    {
-      position: 2,
-      type: "SINGLE_CHOICE" as const,
-      prompt: "The sky is green.",
-      options: { kind: "true_false" },
-      answerKey: { kind: "true_false", correct: false, note: SECRET },
-      explanation: SECRET,
-      skillId: options.skillId,
-    },
-    {
-      position: 3,
-      type: "MULTIPLE_CHOICE" as const,
-      prompt: "Pick one and three.",
-      options: { kind: "multiple_select", choices },
-      answerKey: { kind: "multiple_select", correctChoiceIds: ["A", "C"], note: SECRET },
-      explanation: SECRET,
-      skillId: options.skillId,
-    },
-    ...(options.withWrittenQuestion
-      ? [{ position: 4, type: "LONG_TEXT" as const, prompt: "Explain.", options: { kind: "practical_task" }, answerKey: { kind: "practical_task", note: SECRET }, explanation: null, skillId: options.skillId }]
-      : []),
-  ];
+  // Encoded exactly as the authoring API stores questions.
+  const questions = fixtureQuestionContents(options.skillId, { withWrittenQuestion: options.withWrittenQuestion }).map((content, i) => {
+    const row = encodeQuestion(content) as QuestionRow;
+    return { ...row, position: i + 1, options: row.options as Prisma.InputJsonValue, answerKey: row.answerKey as Prisma.InputJsonValue };
+  });
   const version = await db.assessmentVersion.create({
     data: {
       assessmentId: assessment.id,

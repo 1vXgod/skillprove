@@ -1,6 +1,7 @@
 import { createSign, generateKeyPairSync, randomUUID } from "node:crypto";
 import { createPrismaClient, type PrismaClient } from "@skillprove/database";
-import { candidateAttemptSchema, takeableAssessmentListSchema } from "@skillprove/validation";
+import { encodeQuestion } from "@skillprove/assessment-engine";
+import { candidateAttemptSchema, questionContentSchema, takeableAssessmentListSchema } from "@skillprove/validation";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { resetClerkForTests } from "../../../lib/auth/clerk";
 import { POST as startAttemptRoute } from "./me/assessments/[assessmentId]/attempts/route";
@@ -103,11 +104,27 @@ describe.skipIf(!isLocal)("attempt API routes", () => {
         difficulty: "BEGINNER",
         maxAttempts,
         durationMinutes: 10,
+        // Parsed by the authoring schema and encoded by the authoring codec, so scoring can read it back.
         questions: {
           create: [
-            { position: 1, type: "SINGLE_CHOICE", prompt: "Pick B.", options: { kind: "multiple_choice", choices: [{ id: "A", text: "A" }, { id: "B", text: "B" }] }, answerKey: { kind: "multiple_choice", correctChoiceId: "B", note: SECRET }, explanation: SECRET, skillId: skill.id },
-            { position: 2, type: "SINGLE_CHOICE", prompt: "False?", options: { kind: "true_false" }, answerKey: { kind: "true_false", correct: false, note: SECRET }, explanation: SECRET, skillId: skill.id },
-          ],
+            { kind: "multiple_choice", prompt: "Pick B.", choices: [{ id: "A", text: "A" }, { id: "B", text: "B" }], correctChoiceId: "B" },
+            { kind: "true_false", prompt: "False?", correct: false },
+          ].map((question, i) => {
+            const row = encodeQuestion(
+              questionContentSchema.parse({ ...question, skillId: skill.id, difficulty: "BEGINNER", estimatedMinutes: 1, explanation: SECRET }),
+            );
+            return {
+              position: i + 1,
+              type: "SINGLE_CHOICE" as const,
+              prompt: row.prompt,
+              options: row.options as object,
+              answerKey: row.answerKey as object,
+              explanation: row.explanation,
+              skillId: row.skillId,
+              difficulty: "BEGINNER" as const,
+              estimatedMinutes: row.estimatedMinutes,
+            };
+          }),
         },
         skills: { create: { skillId: skill.id, weight: 100 } },
       },

@@ -515,6 +515,9 @@ importers:
       '@skillprove/config':
         specifier: workspace:*
         version: link:../config
+      '@skillprove/validation':
+        specifier: workspace:*
+        version: link:../validation
       '@types/node':
         specifier: 'catalog:'
         version: 24.19.2
