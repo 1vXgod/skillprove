@@ -18,7 +18,7 @@ Decisions and their reasons: [docs/decisions/README.md](docs/decisions/README.md
 | `packages/config` | Shared TypeScript and ESLint config |
 | `packages/permissions` | Pure role rules. The API's guards apply them |
 | `packages/ai` | Provider-independent AI generation: `AiProvider`, the Gemini adapter, prompts, the validate-and-repair runner, and a mock in `/testing` |
-| `packages/assessment-engine` | Pure assessment logic: question codec, weights, publish readiness, content-safety screen. No scoring |
+| `packages/assessment-engine` | Pure assessment logic: question codec, weights, publish readiness, content-safety screen, automatic scoring of objective questions |
 
 ## Commands
 
