@@ -1,4 +1,5 @@
-import { decodeQuestion, encodeQuestion } from "@skillprove/assessment-engine";
+import { CONFIDENCE_PER_ANSWERED_QUESTION, decodeQuestion, encodeQuestion } from "@skillprove/assessment-engine";
+import { VERIFIED_LEVEL_MIN_CONFIDENCE } from "@skillprove/shared";
 import { describe, expect, it } from "vitest";
 import { UnsafeTestDatabaseError } from "../test-database-guard";
 import { checkDemoDatabaseUrl, DEMO_ASSESSMENTS, demoQuestionContent, parseProductionHosts } from "./demo";
@@ -59,6 +60,12 @@ describe("demo seed guard", () => {
 });
 
 describe("demo assessments", () => {
+  it("include one that alone can reach the confidence a Skill Passport level needs", () => {
+    const needed = VERIFIED_LEVEL_MIN_CONFIDENCE / CONFIDENCE_PER_ANSWERED_QUESTION;
+    const perSkill = DEMO_ASSESSMENTS.flatMap((demo) => Object.keys(demo.skills).map((skill) => demo.questions.filter((q) => q.skill === skill).length));
+    expect(Math.max(...perSkill)).toBeGreaterThanOrEqual(needed);
+  });
+
   it("are valid authoring content that scoring can read back, with weights totalling 100", () => {
     for (const demo of DEMO_ASSESSMENTS) {
       expect(Object.values(demo.skills).reduce((a, b) => a + b, 0)).toBe(100);

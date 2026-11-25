@@ -6,7 +6,7 @@ import type { QuestionRow } from "../repositories/assessments";
 import { assertExpectedBranch, checkTestDatabaseUrl, UnsafeTestDatabaseError } from "../test-database-guard";
 
 /*
- * Development-only demo data (Milestone 7): a demo company and three published, public, fully
+ * Development-only demo data (Milestone 7): a demo company and four published, public, fully
  * objective assessments, so the candidate flow can be tried on a phone. Never run against
  * production. Accepted targets: a local database; a named, server-confirmed Neon branch that is
  * not an application database (the database-test rules); or the configured development
@@ -153,6 +153,30 @@ export const DEMO_ASSESSMENTS: readonly DemoAssessment[] = [
       { kind: "multiple_choice", skill: "typescript", prompt: "Which type accepts any value but must be narrowed before use?", choices: abc("any", "unknown", "never"), correctChoiceId: "B", explanation: "unknown is the type-safe counterpart of any." },
       { kind: "true_false", skill: "typescript", prompt: "Type annotations are checked at runtime in the browser.", correct: false, explanation: "Types are erased when TypeScript compiles to JavaScript." },
       { kind: "multiple_choice", skill: "typescript", prompt: "How do you mark the prop `title` as optional?", choices: abc("title?: string", "title: string?", "optional title: string"), correctChoiceId: "A", explanation: "A question mark after the property name makes it optional." },
+    ],
+  },
+  {
+    // Ten questions for one skill: answering all of them reaches confidence 50, the minimum for
+    // the Skill Passport to show a level, so a level can be seen in demos.
+    id: "de300000-0000-4000-8000-000000000004",
+    title: "JavaScript intermediate",
+    description: "Scope, closures, promises, objects and array methods.",
+    language: "en",
+    difficulty: "INTERMEDIATE",
+    durationMinutes: 20,
+    maxAttempts: 3,
+    skills: { javascript: 100 },
+    questions: [
+      { kind: "multiple_choice", skill: "javascript", prompt: "What does this log? for (var i = 0; i < 3; i++) setTimeout(() => console.log(i));", choices: abc("0 1 2", "3 3 3", "undefined three times"), correctChoiceId: "B", explanation: "var is function-scoped, so every callback sees the final value 3; let would give 0 1 2." },
+      { kind: "true_false", skill: "javascript", prompt: "A closure can read variables of its outer function after that function has returned.", correct: true, explanation: "Closures keep a reference to the scope they were created in." },
+      { kind: "multiple_choice", skill: "javascript", prompt: "What does Promise.all do when one of its promises rejects?", choices: abc("Waits for the rest, then resolves", "Rejects as soon as that promise rejects", "Ignores the rejected promise"), correctChoiceId: "B", explanation: "Promise.all rejects with the first rejection; Promise.allSettled waits for all." },
+      { kind: "multiple_select", skill: "javascript", prompt: "Which array methods return a new array instead of changing the original?", choices: abc("map", "filter", "sort", "splice"), correctChoiceIds: ["A", "B"], explanation: "sort and splice change the array in place." },
+      { kind: "multiple_choice", skill: "javascript", prompt: "Inside a regular function called as obj.method(), what is `this`?", choices: abc("obj", "The global object, always", "The function itself"), correctChoiceId: "A", explanation: "For a method call, this is the object before the dot." },
+      { kind: "true_false", skill: "javascript", prompt: "Arrow functions have their own `this`.", correct: false, explanation: "Arrow functions use the `this` of the scope they were defined in." },
+      { kind: "multiple_choice", skill: "javascript", prompt: "What is the value of [1, 2, 3].reduce((sum, n) => sum + n, 10)?", choices: abc("6", "16", "10"), correctChoiceId: "B", explanation: "reduce starts from 10 and adds 1, 2 and 3." },
+      { kind: "multiple_select", skill: "javascript", prompt: "Which of these copy an object one level deep?", choices: abc("{ ...obj }", "Object.assign({}, obj)", "const copy = obj", "structuredClone(obj)"), correctChoiceIds: ["A", "B"], explanation: "Spread and Object.assign copy one level; assignment copies nothing, and structuredClone copies deeply." },
+      { kind: "multiple_choice", skill: "javascript", prompt: "What does `await` do inside an async function?", choices: abc("Blocks the whole program until the promise settles", "Pauses that function until the promise settles", "Turns the promise into a callback"), correctChoiceId: "B", explanation: "Only the async function pauses; other code keeps running." },
+      { kind: "true_false", skill: "javascript", prompt: "Object keys declared with `const obj = {}` cannot be changed.", correct: false, explanation: "const stops reassigning the variable, not changing the object it points to." },
     ],
   },
 ];
