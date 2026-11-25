@@ -1,0 +1,186 @@
+import { createSign, generateKeyPairSync, randomUUID } from "node:crypto";
+import { createPrismaClient, type PrismaClient } from "@skillprove/database";
+import { candidateAttemptSchema, takeableAssessmentListSchema } from "@skillprove/validation";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { resetClerkForTests } from "../../../lib/auth/clerk";
+import { POST as startAttemptRoute } from "./me/assessments/[assessmentId]/attempts/route";
+import { GET as listAssessments } from "./me/assessments/route";
+import { GET as getAttempt } from "./me/attempts/[attemptId]/route";
+
+/**
+ * The real route handlers, guards, Clerk token verification and repositories, against a
+ * local database. Tokens are signed with a throwaway key, so Clerk is never contacted.
+ * Only localhost databases are accepted here.
+ */
+const url = process.env.TEST_DATABASE_URL;
+const isLocal = (() => {
+  if (!url) return false;
+  const host = new URL(url).hostname;
+  if (!["localhost", "127.0.0.1", "[::1]"].includes(host)) {
+    throw new Error("Refusing to run API database tests against a non-local database. See docs/database.md.");
+  }
+  return true;
+})();
+
+const holder = vi.hoisted(() => ({ db: null as PrismaClient | null }));
+vi.mock("../../../lib/db", () => ({ getDb: () => holder.db }));
+
+const { privateKey, publicKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
+const ISSUER = "https://test-instance.clerk.accounts.dev";
+
+const encode = (value: unknown) => Buffer.from(JSON.stringify(value)).toString("base64url");
+function tokenFor(subject: string) {
+  const now = Math.floor(Date.now() / 1000);
+  const unsigned = `${encode({ alg: "RS256", typ: "JWT", kid: "k" })}.${encode({ iss: ISSUER, sub: subject, sid: "sess", iat: now - 5, nbf: now - 5, exp: now + 120 })}`;
+  return `${unsigned}.${createSign("RSA-SHA256").update(unsigned).sign(privateKey).toString("base64url")}`;
+}
+
+type Handler = (request: Request, context: never) => Promise<Response>;
+
+async function call(handler: Handler, options: { token?: string; method?: string; params?: Record<string, string> } = {}) {
+  const request = new Request("http://localhost:4000/api/v1/test", {
+    method: options.method ?? "GET",
+    headers: { ...(options.token ? { authorization: `Bearer ${options.token}` } : {}), "content-type": "application/json" },
+  });
+  const response = await handler(request, { params: Promise.resolve(options.params ?? {}) } as never);
+  const text = await response.text();
+  return { status: response.status, text, body: JSON.parse(text) as { success: boolean; data?: unknown; error?: { code: string } } };
+}
+
+const SECRET = "secret-answer-material";
+const savedEnv = { ...process.env };
+
+describe.skipIf(!isLocal)("attempt API routes", () => {
+  beforeAll(() => {
+    process.env.CLERK_SECRET_KEY = "test-only-not-a-real-secret";
+    process.env.CLERK_PUBLISHABLE_KEY = `pk_test_${Buffer.from("test-instance.clerk.accounts.dev$").toString("base64")}`;
+    process.env.CLERK_JWT_KEY = publicKey.export({ type: "spki", format: "pem" }).toString();
+    process.env.CORS_ALLOWED_ORIGINS = "http://localhost:3000";
+    resetClerkForTests();
+    holder.db = createPrismaClient(url ?? "");
+  });
+  afterAll(async () => {
+    await holder.db?.$disconnect();
+    process.env = savedEnv;
+    resetClerkForTests();
+  });
+
+  const db = () => {
+    if (!holder.db) throw new Error("No test database.");
+    return holder.db;
+  };
+
+  /** A user already synced from Clerk, optionally with a candidate profile. */
+  async function signedIn(options: { profile?: boolean } = { profile: true }) {
+    const subject = `user_${randomUUID().replaceAll("-", "")}`;
+    const user = await db().user.create({ data: { authSubject: subject, email: `${randomUUID()}@test.invalid` } });
+    if (options.profile) await db().candidateProfile.create({ data: { userId: user.id, fullName: "Test Candidate", privacySettings: { create: {} } } });
+    return { user, token: tokenFor(subject) };
+  }
+
+  /** A published, public assessment with one multiple choice and one true/false question. */
+  async function takeableAssessment(maxAttempts = 2) {
+    const category = await db().skillCategory.create({ data: { slug: `category-${randomUUID()}` } });
+    const skill = await db().skill.create({
+      data: { slug: `skill-${randomUUID()}`, categoryId: category.id, translations: { create: { locale: "en", name: "Test skill" } } },
+    });
+    const assessment = await db().assessment.create({ data: { ownerType: "PLATFORM", visibility: "PUBLIC" } });
+    const version = await db().assessmentVersion.create({
+      data: {
+        assessmentId: assessment.id,
+        version: 1,
+        title: "Route test assessment",
+        format: "MULTIPLE_CHOICE",
+        difficulty: "BEGINNER",
+        maxAttempts,
+        durationMinutes: 10,
+        questions: {
+          create: [
+            { position: 1, type: "SINGLE_CHOICE", prompt: "Pick B.", options: { kind: "multiple_choice", choices: [{ id: "A", text: "A" }, { id: "B", text: "B" }] }, answerKey: { kind: "multiple_choice", correctChoiceId: "B", note: SECRET }, explanation: SECRET, skillId: skill.id },
+            { position: 2, type: "SINGLE_CHOICE", prompt: "False?", options: { kind: "true_false" }, answerKey: { kind: "true_false", correct: false, note: SECRET }, explanation: SECRET, skillId: skill.id },
+          ],
+        },
+        skills: { create: { skillId: skill.id, weight: 100 } },
+      },
+    });
+    const rubric = await db().assessmentRubricVersion.create({
+      data: { assessmentVersionId: version.id, version: 1, criteria: { create: { key: "correctness", title: "Correctness", weight: 100 } } },
+    });
+    await db().assessmentRubricVersion.update({ where: { id: rubric.id }, data: { publishedAt: new Date() } });
+    await db().assessmentVersion.update({ where: { id: version.id }, data: { status: "PUBLISHED", publishedAt: new Date() } });
+    return assessment;
+  }
+
+  it("requires a valid session on every route", async () => {
+    const params = { assessmentId: randomUUID(), attemptId: randomUUID() };
+    expect((await call(listAssessments)).status).toBe(401);
+    expect((await call(startAttemptRoute, { method: "POST", params })).status).toBe(401);
+    expect((await call(getAttempt, { params })).status).toBe(401);
+  });
+
+  it("lists takeable assessments in the documented shape", async () => {
+    const { token } = await signedIn();
+    const assessment = await takeableAssessment();
+    const response = await call(listAssessments, { token });
+    expect(response.status).toBe(200);
+    const list = takeableAssessmentListSchema.parse(response.body.data);
+    expect(list.items.find((a) => a.assessmentId === assessment.id)).toMatchObject({ questionCount: 2, attemptsUsed: 0, openAttemptId: null });
+  });
+
+  it("asks for a profile first, then starts once (201) and returns the same attempt on a repeat (200)", async () => {
+    const assessment = await takeableAssessment();
+    const noProfile = await signedIn({ profile: false });
+    const refused = await call(startAttemptRoute, { token: noProfile.token, method: "POST", params: { assessmentId: assessment.id } });
+    expect(refused.status).toBe(409);
+    expect(refused.body.error?.code).toBe("PROFILE_REQUIRED");
+
+    const { token } = await signedIn();
+    const first = await call(startAttemptRoute, { token, method: "POST", params: { assessmentId: assessment.id } });
+    const again = await call(startAttemptRoute, { token, method: "POST", params: { assessmentId: assessment.id } });
+    expect(first.status).toBe(201);
+    expect(again.status).toBe(200);
+    const attempt = candidateAttemptSchema.parse(first.body.data);
+    expect(candidateAttemptSchema.parse(again.body.data).id).toBe(attempt.id);
+    expect(attempt).toMatchObject({ status: "IN_PROGRESS", attemptNumber: 1, maxAttempts: 2 });
+    expect(attempt.questions).toHaveLength(2);
+    expect(attempt.expiresAt).not.toBeNull();
+  });
+
+  it("never sends answer keys or explanations", async () => {
+    const { token } = await signedIn();
+    const assessment = await takeableAssessment();
+    const started = await call(startAttemptRoute, { token, method: "POST", params: { assessmentId: assessment.id } });
+    const attemptId = candidateAttemptSchema.parse(started.body.data).id;
+    const read = await call(getAttempt, { token, params: { attemptId } });
+
+    for (const raw of [started.text, read.text]) {
+      expect(raw).not.toContain(SECRET);
+      expect(raw).not.toMatch(/answerKey|correctChoiceId|"correct"|explanation/);
+    }
+  });
+
+  it("hides other people's attempts and unknown IDs behind the same 404", async () => {
+    const owner = await signedIn();
+    const stranger = await signedIn();
+    const assessment = await takeableAssessment();
+    const started = await call(startAttemptRoute, { token: owner.token, method: "POST", params: { assessmentId: assessment.id } });
+    const attemptId = candidateAttemptSchema.parse(started.body.data).id;
+
+    expect((await call(getAttempt, { token: stranger.token, params: { attemptId } })).status).toBe(404);
+    expect((await call(getAttempt, { token: owner.token, params: { attemptId: "not-a-uuid" } })).status).toBe(404);
+    expect((await call(getAttempt, { token: owner.token, params: { attemptId: randomUUID() } })).status).toBe(404);
+    expect((await call(startAttemptRoute, { token: owner.token, method: "POST", params: { assessmentId: randomUUID() } })).status).toBe(404);
+    expect((await call(startAttemptRoute, { token: owner.token, method: "POST", params: { assessmentId: "x" } })).status).toBe(404);
+  });
+
+  it("refuses a new attempt when every attempt is used", async () => {
+    const { token } = await signedIn();
+    const assessment = await takeableAssessment(1);
+    const started = await call(startAttemptRoute, { token, method: "POST", params: { assessmentId: assessment.id } });
+    await db().assessmentAttempt.update({ where: { id: candidateAttemptSchema.parse(started.body.data).id }, data: { status: "ABANDONED" } });
+
+    const refused = await call(startAttemptRoute, { token, method: "POST", params: { assessmentId: assessment.id } });
+    expect(refused.status).toBe(409);
+    expect(refused.body.error?.code).toBe("ATTEMPTS_EXHAUSTED");
+  });
+});

@@ -83,4 +83,21 @@ describe("withErrorHandling", () => {
     expect(response.status).toBe(503);
     expect(log).not.toHaveBeenCalled();
   });
+
+  it("maps each attempt failure to a fixed response the app can act on", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const respond = async (reason: string) => {
+      const error = Object.assign(new Error("Attempt data error"), { name: "AttemptDataError", reason });
+      const response = await withErrorHandling(() => {
+        throw error;
+      })();
+      const body = (await response.json()) as { error: { code: string } };
+      return [response.status, body.error.code];
+    };
+    expect(await respond("not_found")).toEqual([404, "NOT_FOUND"]);
+    expect(await respond("profile_required")).toEqual([409, "PROFILE_REQUIRED"]);
+    expect(await respond("attempts_exhausted")).toEqual([409, "ATTEMPTS_EXHAUSTED"]);
+    expect(await respond("not_in_progress")).toEqual([409, "CONFLICT"]);
+    expect(await respond("something_else")).toEqual([500, "INTERNAL_ERROR"]);
+  });
 });

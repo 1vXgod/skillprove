@@ -10,6 +10,10 @@ export const API_ERROR_CODES = [
   "SERVICE_UNAVAILABLE",
   "RATE_LIMITED",
   "INTERNAL_ERROR",
+  /** Taking an assessment needs a candidate profile. Clients ask the user to create one. */
+  "PROFILE_REQUIRED",
+  /** Every allowed attempt at an assessment has been used. */
+  "ATTEMPTS_EXHAUSTED",
 ] as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODES)[number];
