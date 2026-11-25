@@ -8,8 +8,12 @@ const URL_VARIABLES = ["DATABASE_URL", "DIRECT_URL"];
 
 /** Messages never include connection strings, because they end up in logs. */
 export class UnsafeTestDatabaseError extends Error {
-  constructor(reason: string) {
-    super(`Refusing to run database tests: ${reason} See docs/database.md.`);
+  /** `action` only changes the wording, for other tools that share these rules (the demo seed). */
+  constructor(
+    readonly reason: string,
+    action = "run database tests",
+  ) {
+    super(`Refusing to ${action}: ${reason} See docs/database.md.`);
     this.name = "UnsafeTestDatabaseError";
   }
 }

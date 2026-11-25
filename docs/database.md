@@ -205,6 +205,17 @@ Prisma cannot express these, so they live at the end of migration `2026110310000
 - Removing an entry from the data file does not delete it from the database.
 - Edit `packages/database/src/seed/skill-taxonomy-data.ts` to change the list.
 
+### Demo data (development only)
+
+`pnpm db:seed:demo` adds a demo company ("SkillProve Demo") and three published, public, fully objective assessments (JavaScript basics, Pyetje SQL, React with TypeScript) so the candidate flow can be tried on a phone. Run `pnpm db:seed` first, since it uses those skills.
+
+- Dev database: run with `DEMO_ALLOW_DEV_DATABASE=1`; future production will be listed in `PRODUCTION_DATABASE_HOSTS` and always refused.
+- With the opt-in and no `DEMO_DATABASE_URL`, it seeds the configured development database (`DIRECT_URL`, else `DATABASE_URL`, which is Neon `main`). It prints the host only, never the URL.
+- `NODE_ENV=production` and any host in `PRODUCTION_DATABASE_HOSTS` (comma-separated, empty for now) are refused even with the opt-in.
+- Without the opt-in, `DEMO_DATABASE_URL` follows the database-test rules and is refused before connecting unless it is local, or a Neon branch named by `DEMO_NEON_BRANCH_ID` that is not an application database; the server then confirms the branch.
+- It is safe to repeat: the assessments have fixed IDs and existing ones are left alone, because published versions cannot change.
+- To try it on a phone: `pnpm db:seed`, then `DEMO_ALLOW_DEV_DATABASE=1 pnpm db:seed:demo` (in PowerShell, set `$env:DEMO_ALLOW_DEV_DATABASE = "1"` first).
+
 ## Tests
 
 `src/tests/*.db.test.ts` here and `apps/api/src/**/*.db.test.ts` need a migrated database through `TEST_DATABASE_URL`, and otherwise skip. The API ones accept only a local database. Turbo runs the API tests after the database tests, because the local `prisma dev` server cannot serve two test processes at once. They add rows and do not clean up, since several tables are append-only, so use a throwaway or dedicated database.
