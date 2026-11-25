@@ -8,6 +8,7 @@ import { SignedInGate } from "../components/shell/signed-in-gate";
 import { Alert, AppText, Badge, Button, Card, CardHeader, EmptyState, Separator, Skeleton } from "../components/ui";
 import { errorMessage, queryKeys, useApiClient } from "../lib/use-api";
 import { useI18n } from "../theme/preferences-provider";
+import { spacing } from "@skillprove/shared/design";
 
 export default function SkillPassportScreen() {
   return (
@@ -153,10 +154,10 @@ function VerifiedSkill({ skill }: { skill: VerifiedSkillWithEvidence }) {
 }
 
 const styles = StyleSheet.create({
-  gap: { gap: 16 },
-  gapSmall: { gap: 6 },
+  gap: { gap: spacing[4] },
+  gapSmall: { gap: spacing[1.5] },
   flex: { flex: 1 },
-  inline: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 8 },
-  row: { flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 10 },
-  verified: { paddingVertical: 8 },
+  inline: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: spacing[2] },
+  row: { flexDirection: "row", alignItems: "center", gap: spacing[2], paddingVertical: spacing[3] },
+  verified: { paddingVertical: spacing[2] },
 });
