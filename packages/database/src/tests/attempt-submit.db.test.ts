@@ -20,9 +20,15 @@ describe.skipIf(hasNoTestDatabase)("submitting an attempt", () => {
     return { user, attemptId, questionIds: questions.map((q) => q.id) };
   }
 
-  /** Moves the hard cutoff (deadline plus grace) relative to now. */
+  /**
+   * Moves the hard cutoff (deadline plus grace) relative to now. The start moves an hour back
+   * too, because the database requires expires_at to be after started_at.
+   */
   const setCutoff = (attemptId: string, offsetMs: number) =>
-    db.assessmentAttempt.update({ where: { id: attemptId }, data: { expiresAt: new Date(Date.now() + offsetMs) } });
+    db.assessmentAttempt.update({
+      where: { id: attemptId },
+      data: { startedAt: new Date(Date.now() - 3_600_000), expiresAt: new Date(Date.now() + offsetMs) },
+    });
 
   it("stores only answers to this attempt's questions, and closes the attempt", async () => {
     const { user, attemptId, questionIds } = await started();

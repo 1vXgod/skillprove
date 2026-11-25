@@ -95,7 +95,11 @@ describe.skipIf(hasNoTestDatabase)("taking assessments: list, start and view", (
     const [user, skill] = [await createCandidate(db), await createSkill(db)];
     const { assessment } = await createObjectiveAssessment(db, { skillId: skill.id, maxAttempts: 2 });
     const first = await startAttempt(db, user.id, assessment.id);
-    await db.assessmentAttempt.update({ where: { id: first.attemptId }, data: { expiresAt: new Date(Date.now() - 1000) } });
+    // Started an hour ago: the database requires expires_at to be after started_at.
+    await db.assessmentAttempt.update({
+      where: { id: first.attemptId },
+      data: { startedAt: new Date(Date.now() - 3_600_000), expiresAt: new Date(Date.now() - 1000) },
+    });
 
     expect((await getCandidateAttempt(db, user.id, first.attemptId))?.status).toBe("EXPIRED");
     const second = await startAttempt(db, user.id, assessment.id);
