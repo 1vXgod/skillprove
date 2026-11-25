@@ -4,7 +4,7 @@ import { z } from "zod";
 import { presentJob } from "../../../../../../../../lib/ai/job-access";
 import { processGenerationJob } from "../../../../../../../../lib/ai/process-job";
 import { getAiProvider, getGenerationLimits } from "../../../../../../../../lib/ai/provider";
-import { runInBackground } from "../../../../../../../../lib/ai/schedule";
+import { runInBackground } from "../../../../../../../../lib/background";
 import { requireAssessmentAccess } from "../../../../../../../../lib/assessments/access";
 import { withAuth } from "../../../../../../../../lib/auth/guards";
 import { badRequest, notFound, ok, unavailable } from "../../../../../../../../lib/http";

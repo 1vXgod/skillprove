@@ -53,6 +53,7 @@ Pjesa e kandidatit që *merr* vlerësime nuk ekziston ende.
   - `node-forge` (3 mesatare, 1 e ulët: GHSA-w4xr-hqv8-ch44, GHSA-6cv4-p8m7-4r25, GHSA-j8rw-jp99-435v, GHSA-6889-vf6x-f3g5), përmes Expo CLI → `@expo/code-signing-certificates`. Përditësoje me `pnpm exec expo install --fix` kur Expo ta rregullojë.
   - `glob` (mesatare, GHSA-3g3m-2fjr-6pw4), përmes `@expo/config-plugins`. Rregullohet bashkë me përditësimin e Expo-s.
   - `minimatch` (mesatare, GHSA-g3hv-75wg-m249), përmes `typescript-eslint`, `eslint-config-next` dhe paketave të Expo-s. Rregullohet kur këto të kalojnë në `minimatch` ≥ 11.0.1.
+- **Rivlerësimi nga administratori:** një veprim për administratorin që rivlerëson tentativat me vlerësim automatik `FAILED`, pasi të rregullohen të dhënat. Kërkon rolin e administratorit (shih VISION §3).
 - **Test ndoshta i paqëndrueshëm:** testet e `@skillprove/api-client` dështuan një herë lokalisht më 2026-11-25 dhe kaluan kur u rinisën. Hetoje nëse ndodh përsëri.
 
 ## Milestones (emërtimet 1–5 janë të Claude-it, jo të projektit)

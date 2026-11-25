@@ -19,10 +19,12 @@
   "dependencies": {
     "@prisma/adapter-pg": "7.10.1",
     "@prisma/client": "7.10.1",
+    "@skillprove/assessment-engine": "workspace:*",
     "@skillprove/shared": "workspace:*"
   },
   "devDependencies": {
     "@skillprove/config": "workspace:*",
+    "@skillprove/validation": "workspace:*",
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "prisma": "7.10.1",

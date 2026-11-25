@@ -1,6 +1,7 @@
 import { createSign, generateKeyPairSync, randomUUID } from "node:crypto";
 import { createPrismaClient, type PrismaClient } from "@skillprove/database";
-import { candidateAttemptSchema, takeableAssessmentListSchema } from "@skillprove/validation";
+import { encodeQuestion } from "@skillprove/assessment-engine";
+import { candidateAttemptSchema, questionContentSchema, takeableAssessmentListSchema } from "@skillprove/validation";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { resetClerkForTests } from "../../../lib/auth/clerk";
 import { POST as startAttemptRoute } from "./me/assessments/[assessmentId]/attempts/route";
@@ -23,8 +24,15 @@ const isLocal = (() => {
   return true;
 })();
 
-const holder = vi.hoisted(() => ({ db: null as PrismaClient | null }));
+const holder = vi.hoisted(() => ({ db: null as PrismaClient | null, background: [] as (() => Promise<void>)[] }));
 vi.mock("../../../lib/db", () => ({ getDb: () => holder.db }));
+// Work scheduled for after the response is collected, not run, so a test can prove the
+// request itself never scores, then run the scoring explicitly.
+vi.mock("../../../lib/background", () => ({
+  runInBackground: (task: () => Promise<void>) => {
+    holder.background.push(task);
+  },
+}));
 
 const { privateKey, publicKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
 const ISSUER = "https://test-instance.clerk.accounts.dev";
@@ -96,11 +104,27 @@ describe.skipIf(!isLocal)("attempt API routes", () => {
         difficulty: "BEGINNER",
         maxAttempts,
         durationMinutes: 10,
+        // Parsed by the authoring schema and encoded by the authoring codec, so scoring can read it back.
         questions: {
           create: [
-            { position: 1, type: "SINGLE_CHOICE", prompt: "Pick B.", options: { kind: "multiple_choice", choices: [{ id: "A", text: "A" }, { id: "B", text: "B" }] }, answerKey: { kind: "multiple_choice", correctChoiceId: "B", note: SECRET }, explanation: SECRET, skillId: skill.id },
-            { position: 2, type: "SINGLE_CHOICE", prompt: "False?", options: { kind: "true_false" }, answerKey: { kind: "true_false", correct: false, note: SECRET }, explanation: SECRET, skillId: skill.id },
-          ],
+            { kind: "multiple_choice", prompt: "Pick B.", choices: [{ id: "A", text: "A" }, { id: "B", text: "B" }], correctChoiceId: "B" },
+            { kind: "true_false", prompt: "False?", correct: false },
+          ].map((question, i) => {
+            const row = encodeQuestion(
+              questionContentSchema.parse({ ...question, skillId: skill.id, difficulty: "BEGINNER", estimatedMinutes: 1, explanation: SECRET }),
+            );
+            return {
+              position: i + 1,
+              type: "SINGLE_CHOICE" as const,
+              prompt: row.prompt,
+              options: row.options as object,
+              answerKey: row.answerKey as object,
+              explanation: row.explanation,
+              skillId: row.skillId,
+              difficulty: "BEGINNER" as const,
+              estimatedMinutes: row.estimatedMinutes,
+            };
+          }),
         },
         skills: { create: { skillId: skill.id, weight: 100 } },
       },
@@ -199,6 +223,24 @@ describe.skipIf(!isLocal)("attempt API routes", () => {
     const again = await call(submitRoute, { token, method: "POST", params, body: { answers: {} } });
     expect(again.status).toBe(409);
     expect(again.body.error?.code).toBe("CONFLICT");
+  });
+
+  it("scores after the response is sent, from the stored answers only", async () => {
+    const { token, attempt } = await startedAttempt();
+    const [mc] = attempt.questions;
+    holder.background = [];
+
+    const submitted = await call(submitRoute, { token, method: "POST", params: { attemptId: attempt.id }, body: { answers: { [mc!.id]: "B" }, score: 100 } });
+    expect(submitted.status).toBe(200);
+    expect(submitted.text).not.toMatch(/score|percent|correct/i);
+    expect(await db().evaluation.count({ where: { attemptId: attempt.id } })).toBe(0);
+
+    expect(holder.background).toHaveLength(1);
+    await holder.background[0]!();
+    const evaluation = await db().evaluation.findFirstOrThrow({ where: { attemptId: attempt.id }, include: { criterionScores: true } });
+    // One of two correct, whatever the body claimed. The criterion has no skill, so it gets the overall result.
+    expect(Number(evaluation.overallScore)).toBe(50);
+    expect(evaluation.criterionScores.map((c) => Number(c.score))).toEqual([50]);
   });
 
   it("rejects malformed answers before touching the attempt", async () => {

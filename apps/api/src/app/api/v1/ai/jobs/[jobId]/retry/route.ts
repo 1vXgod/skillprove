@@ -1,7 +1,7 @@
 import { getJob, requeueJob } from "@skillprove/database";
 import { presentJob, requireJobAccess } from "../../../../../../../lib/ai/job-access";
 import { processGenerationJob } from "../../../../../../../lib/ai/process-job";
-import { runInBackground } from "../../../../../../../lib/ai/schedule";
+import { runInBackground } from "../../../../../../../lib/background";
 import { getEnv } from "../../../../../../../lib/env";
 import { withAuth } from "../../../../../../../lib/auth/guards";
 import { notFound, ok } from "../../../../../../../lib/http";

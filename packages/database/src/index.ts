@@ -74,3 +74,4 @@ export * from "./repositories/assessments";
 export * from "./repositories/ai-jobs";
 export { AttemptDataError, type AttemptDataErrorReason } from "./repositories/attempt-errors";
 export { attemptDeadline, getCandidateAttempt, listTakeableAssessments, startAttempt, submitAttempt, DEFAULT_ATTEMPT_HOURS } from "./repositories/attempts";
+export { scoreAttempt, type ScoreAttemptResult } from "./repositories/attempt-scoring";
