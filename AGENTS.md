@@ -5,6 +5,12 @@ Ky dokument i tregon agjentit (dhe çdo zhvilluesi të ri) çfarë është Skill
 ## Ideja
 SkillProve i ndihmon kandidatët të **dëshmojnë** aftësitë e tyre, jo vetëm t'i deklarojnë. Një CV tregon çfarë thotë dikush; SkillProve synon të tregojë çfarë është e vërtetë. Fillon në Kosovë, në shqip dhe anglisht. Tri biseda me të rinj (shih [BISEDAT.md](BISEDAT.md)) konfirmuan se CV-ja nuk mjafton, se do të bënin teste praktike të shkurtra dhe të drejta, dhe se duan të vendosin vetë kush e sheh profilin.
 
+## Vizioni i produktit
+- [docs/VISION.md](docs/VISION.md): vizioni afatgjatë i plotë (anglisht).
+- [docs/STATUS.md](docs/STATUS.md): gjendja reale, krahasuar me vizionin, dhe roadmap-i (anglisht).
+
+**Rregull:** VISION.md është objektivi afatgjatë; ndërto vetëm atë që mbulon milestone-i aktual; mos thuaj kurrë që një veçori është gati derisa testet e saj të kalojnë.
+
 ## Rrjedha kryesore
 `Regjistrimi → Profili im → Skill Passport → Privatësia` (shih [HARTA.md](HARTA.md)).
 
