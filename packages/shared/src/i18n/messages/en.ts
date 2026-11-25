@@ -90,6 +90,7 @@ export const en = {
     profile: "Profile",
     skillPassport: "Skill Passport",
     privacy: "Privacy",
+    takeAssessment: "Take an assessment",
   },
   auth: {
     signIn: "Sign in",
@@ -742,6 +743,17 @@ export const en = {
       readOnlyNotice: "Assessments are created and edited on the SkillProve website. Here you can follow their status.",
       jobs: "Generation status",
     },
+  },
+  take: {
+    title: "Take an assessment",
+    description: "Choose an assessment to verify your skills. Your results go to your Skill Passport.",
+    empty: "There are no assessments to take right now.",
+    questions: "{count} questions",
+    minutes: "{minutes} min",
+    noTimeLimit: "No time limit",
+    attempts: "{used} of {max} attempts used",
+    inProgress: "In progress",
+    noAttemptsLeft: "No attempts left",
   },
 };
 

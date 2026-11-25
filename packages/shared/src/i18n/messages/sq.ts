@@ -88,6 +88,7 @@ export const sq: Messages = {
     profile: "Profili",
     skillPassport: "Pasaporta e aftësive",
     privacy: "Privatësia",
+    takeAssessment: "Bëj një vlerësim",
   },
   auth: {
     signIn: "Kyçu",
@@ -740,5 +741,16 @@ export const sq: Messages = {
       readOnlyNotice: "Vlerësimet krijohen dhe ndryshohen në faqen e SkillProve. Këtu mund të ndiqni gjendjen e tyre.",
       jobs: "Gjendja e gjenerimit",
     },
+  },
+  take: {
+    title: "Bëj një vlerësim",
+    description: "Zgjidhni një vlerësim për të verifikuar aftësitë tuaja. Rezultatet shkojnë në Pasaportën e aftësive.",
+    empty: "Nuk ka vlerësime për t'u bërë tani.",
+    questions: "{count} pyetje",
+    minutes: "{minutes} min",
+    noTimeLimit: "Pa kufi kohe",
+    attempts: "{used} nga {max} tentativa të përdorura",
+    inProgress: "Në vazhdim",
+    noAttemptsLeft: "Nuk ka më tentativa",
   },
 };
