@@ -16,7 +16,8 @@
     "db:migrate:dev": "pnpm --filter @skillprove/database db:migrate:dev",
     "db:migrate:deploy": "pnpm --filter @skillprove/database db:migrate:deploy",
     "db:migrate:status": "pnpm --filter @skillprove/database db:migrate:status",
-    "db:seed": "pnpm --filter @skillprove/database db:seed"
+    "db:seed": "pnpm --filter @skillprove/database db:seed",
+    "db:seed:demo": "pnpm --filter @skillprove/database db:seed:demo"
   },
   "devDependencies": {
     "turbo": "^2.11.10"

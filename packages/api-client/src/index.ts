@@ -6,6 +6,9 @@ import {
   assessmentDetailSchema,
   assessmentListSchema,
   assessmentPreviewSchema,
+  attemptResultSchema,
+  candidateAttemptSchema,
+  takeableAssessmentListSchema,
   generationStartSchema,
   publishResultSchema,
   rubricSchema,
@@ -29,6 +32,10 @@ import {
   type AssessmentDetail,
   type AssessmentList,
   type AssessmentPreview,
+  type AttemptAnswers,
+  type AttemptResult,
+  type CandidateAttempt,
+  type TakeableAssessmentList,
   type AssessmentUpdate,
   type AvailabilityInput,
   type GenerationRequest,
@@ -147,6 +154,16 @@ export interface ApiClient {
   getSkillPassport(): Promise<SkillPassport>;
 
   getCandidate(profileId: string): Promise<CandidateView>;
+
+  // Taking assessments (candidates). Scores are computed on the server from stored answers;
+  // nothing here can send one.
+  listTakeableAssessments(): Promise<TakeableAssessmentList>;
+  /** Starts an attempt, or returns the one already in progress, so a double tap uses no extra attempt. */
+  startAttempt(assessmentId: string): Promise<CandidateAttempt>;
+  getAttempt(attemptId: string): Promise<CandidateAttempt>;
+  submitAttempt(attemptId: string, answers: AttemptAnswers): Promise<CandidateAttempt>;
+  /** `pending` until scored; poll until `scored` or `failed`. */
+  getAttemptResult(attemptId: string): Promise<AttemptResult>;
 
   // Assessments (company members). The AI provider key never reaches clients: generation is a job.
   listAssessments(companyId: string, query?: { page?: number; pageSize?: number; status?: string }): Promise<AssessmentList>;
@@ -275,6 +292,12 @@ export function createApiClient({ baseUrl, getToken, fetch: fetchFn, locale }: A
 
     getCandidate: (profileId) => get(`/candidates/${segment(profileId)}`, candidateViewSchema, true),
 
+    listTakeableAssessments: () => get("/me/assessments", takeableAssessmentListSchema, true),
+    startAttempt: (assessmentId) => send("POST", `/me/assessments/${segment(assessmentId)}/attempts`, candidateAttemptSchema, undefined),
+    getAttempt: (attemptId) => get(`/me/attempts/${segment(attemptId)}`, candidateAttemptSchema, true),
+    submitAttempt: (attemptId, answers) => send("POST", `/me/attempts/${segment(attemptId)}/submit`, candidateAttemptSchema, { answers }),
+    getAttemptResult: (attemptId) => get(`/me/attempts/${segment(attemptId)}/result`, attemptResultSchema, true),
+
     listAssessments: (companyId, query) => get(`/companies/${segment(companyId)}/assessments`, assessmentListSchema, true, query),
     createAssessment: (companyId, input) => send("POST", `/companies/${segment(companyId)}/assessments`, assessmentDetailSchema, input),
     startGeneration: (companyId, input, idempotencyKey) =>
@@ -314,7 +337,16 @@ export function createApiClient({ baseUrl, getToken, fetch: fetchFn, locale }: A
 
 const VALIDATION_KEYS = VALIDATION_MESSAGES;
 export type ValidationMessageKey = `validation.${(typeof VALIDATION_KEYS)[number]}`;
-export type ErrorMessageKey = ValidationMessageKey | "errors.conflict" | "errors.network" | "errors.generic" | "errors.rateLimited" | "errors.aiUnavailable";
+export type ErrorMessageKey =
+  | ValidationMessageKey
+  | "errors.conflict"
+  | "errors.network"
+  | "errors.generic"
+  | "errors.rateLimited"
+  | "errors.aiUnavailable"
+  | "errors.profileRequired"
+  | "errors.attemptsExhausted"
+  | "errors.attemptExpired";
 
 /** The translation key for a field's validation code, or undefined for anything unrecognised. */
 export function validationMessageKey(code: string | undefined): ValidationMessageKey | undefined {
@@ -331,6 +363,9 @@ export function errorMessageKey(error: unknown): ErrorMessageKey {
   if (error.code === "NETWORK_ERROR") return "errors.network";
   if (error.code === "RATE_LIMITED") return "errors.rateLimited";
   if (error.code === "SERVICE_UNAVAILABLE") return "errors.aiUnavailable";
+  if (error.code === "PROFILE_REQUIRED") return "errors.profileRequired";
+  if (error.code === "ATTEMPTS_EXHAUSTED") return "errors.attemptsExhausted";
+  if (error.code === "ATTEMPT_EXPIRED") return "errors.attemptExpired";
   if (error.code === "CONFLICT" && !error.fields) return "errors.conflict";
   if (error.code === "CONFLICT" || error.code === "BAD_REQUEST") {
     return validationMessageKey(Object.values(error.fields ?? {})[0]) ?? "errors.generic";
