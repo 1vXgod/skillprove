@@ -48,6 +48,12 @@ Pjesa e kandidatit që *merr* vlerësime nuk ekziston ende.
 - **Kërkimi i aftësive pa theks:** përdoruesit shqiptarë shpesh shkruajnë "e" për "ë" dhe "c" për "ç", p.sh. "te dhena" nuk e gjen "Të dhëna". Kërkimi duhet t'i trajtojë si të njëjta (`packages/database/src/repositories/skills.ts`).
 - **Variantet me disa fjalë:** "React Js" nuk e gjen React, sepse alias-et janë "reactjs" dhe "react.js". Normalizo hapësirat dhe pikat si në alias-e, ashtu edhe në kërkim.
 - **Katalogu i aftësive është i vogël:** ka vetëm 35 aftësi. Zgjeroje para përdoruesve të vërtetë (më shumë teknologji, dizajn, marketing, gjuhë dhe aftësi të buta) në `packages/database/src/seed/skill-taxonomy-data.ts`.
+- **Varësi me dobësi të njohura (`pnpm audit`, 2026-11-25, pas Next.js 16.4.5):** asnjëra nuk është në kodin që u shërben përdoruesve. Të gjitha vijnë nga mjetet e zhvillimit dhe të build-it. Rregulloji kur paketat prind të nxjerrin version me rregullimin, jo me `overrides` të paprovuar.
+  - `effect` (e lartë, GHSA-7589-6fvf-x4pw), përmes `prisma` → `@prisma/config`. Prit një version 7.x të Prisma-s që përdor `effect` ≥ 3.22.1. Mos kalo në 8.x (shih Gotchas te `CLAUDE.md`).
+  - `node-forge` (3 mesatare, 1 e ulët: GHSA-w4xr-hqv8-ch44, GHSA-6cv4-p8m7-4r25, GHSA-j8rw-jp99-435v, GHSA-6889-vf6x-f3g5), përmes Expo CLI → `@expo/code-signing-certificates`. Përditësoje me `pnpm exec expo install --fix` kur Expo ta rregullojë.
+  - `glob` (mesatare, GHSA-3g3m-2fjr-6pw4), përmes `@expo/config-plugins`. Rregullohet bashkë me përditësimin e Expo-s.
+  - `minimatch` (mesatare, GHSA-g3hv-75wg-m249), përmes `typescript-eslint`, `eslint-config-next` dhe paketave të Expo-s. Rregullohet kur këto të kalojnë në `minimatch` ≥ 11.0.1.
+- **Test ndoshta i paqëndrueshëm:** testet e `@skillprove/api-client` dështuan një herë lokalisht më 2026-11-25 dhe kaluan kur u rinisën. Hetoje nëse ndodh përsëri.
 
 ## Milestones (emërtimet 1–5 janë të Claude-it, jo të projektit)
 Në dokumente emërtohen vetëm Milestone 6 dhe 7. Pjesa tjetër është rindërtuar nga migrimet, commit-et dhe dokumentet.
@@ -60,6 +66,6 @@ Në dokumente emërtohen vetëm Milestone 6 dhe 7. Pjesa tjetër është rindër
 | 4 | Profili i kandidatit, Skill Passport, privatësia | ✅ Gati |
 | 5 | Design system dhe i18n (shqip/anglisht) | ✅ Gati |
 | 6 | Krijimi i vlerësimeve (me dorë ose me AI) | ✅ Gati |
-| 7 | Marrja dhe vlerësimi i testeve, rezultatet e verifikuara | 🔄 Në punë (hapat 1–2 nga 16) |
+| 7 | Marrja dhe vlerësimi i testeve, rezultatet e verifikuara | 🔄 Në punë (hapat 1–8 nga 16) |
 
 Roadmap-i nga milestone 8 e tutje (vendosur më 2026-11-25: M8 regjistrimi i kompanive → M9 ftesat → M10 rezultatet për kompanitë → M11 kërkimi → M12 vlerësimi me AI me rishikim nga njeriu → …) është te [docs/STATUS.md](docs/STATUS.md#roadmap).
