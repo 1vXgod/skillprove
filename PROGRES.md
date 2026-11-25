@@ -1,5 +1,7 @@
 # PROGRES — SkillProve
 
+> Gjendja e plotë veçori për veçori, krahasuar me [vizionin](docs/VISION.md), dhe roadmap-i nga milestone 8 e tutje janë te [docs/STATUS.md](docs/STATUS.md). Ky skedar mban shënimet e punës dhe hapin tjetër.
+
 Gjendja sipas kodit, e verifikuar më 2026-11-18. `pnpm lint` dhe `pnpm typecheck` kalojnë; `pnpm test` kalon me 71 teste API dhe 20 teste databaze, ndërsa **34 teste API dhe 103 teste databaze u anashkaluan** (mungon baza testuese) dhe nuk llogariten si të kaluara.
 
 ## Çfarë funksionon
@@ -29,7 +31,7 @@ Pjesa e kandidatit që *merr* vlerësime nuk ekziston ende.
 
 ## Nuk është nisur
 - Marrja e vlerësimeve nga kandidati, dorëzimet, vlerësimi dhe rezultati i verifikuar (Milestone 7).
-- Ndarja e profilit sipas kompanisë: vendim më 2026-11-18 ta heqim për tani. Privatësia = dukshmëri + kalime për detajet. Mund të vijë më vonë (milestone 8).
+- Ndarja e profilit sipas kompanisë: vendim më 2026-11-18 ta heqim për tani. Privatësia = dukshmëri + kalime për detajet. Mund të vijë më vonë (tani milestone 17 te STATUS.md).
 - Kërkimi i kandidatëve nga kompanitë, mjetet e punësimit, pagesat.
 
 ## Probleme të njohura
@@ -42,7 +44,7 @@ Pjesa e kandidatit që *merr* vlerësime nuk ekziston ende.
 3. Fillo Milestone 7 me hapa të vegjël (nisja e tentativës, dorëzimi, vlerësimi, rezultati i verifikuar).
    Vendim më 2026-11-25: vlerësimi në Milestone 7 është **vetëm automatik**, për pyetjet objektive. Vlerësimi me AI me rishikim nga njeriu vjen më vonë.
 
-## Milestones (emërtimet 1–5 dhe 7–12 janë të Claude-it, jo të projektit)
+## Milestones (emërtimet 1–5 janë të Claude-it, jo të projektit)
 Në dokumente emërtohen vetëm Milestone 6 dhe 7. Pjesa tjetër është rindërtuar nga migrimet, commit-et dhe dokumentet.
 
 | # | Milestone | Statusi |
@@ -53,9 +55,6 @@ Në dokumente emërtohen vetëm Milestone 6 dhe 7. Pjesa tjetër është rindër
 | 4 | Profili i kandidatit, Skill Passport, privatësia | ✅ Gati |
 | 5 | Design system dhe i18n (shqip/anglisht) | ✅ Gati |
 | 6 | Krijimi i vlerësimeve (me dorë ose me AI) | ✅ Gati |
-| 7 | Marrja dhe vlerësimi i testeve, rezultatet e verifikuara | ⏭️ Tjetri |
-| 8 | Privatësia: ndarja sipas kompanisë (veçori e mundshme në të ardhmen) | 💤 E shtyrë |
-| 9 | Pjesa e kompanisë: kërkimi i kandidatëve, dashboard, anëtarët | ⏳ Jo e nisur |
-| 10 | Mjetet e punësimit: aplikime, intervista, njoftime | ⏳ Jo e nisur |
-| 11 | Gatishmëria për prodhim: Sentry, ruajtja e skedarëve, radhë punësh, rate limiting, baza e prodhimit, përditësimi i Next.js | ⏳ Jo e nisur |
-| 12 | Pagesat/abonimet dhe tregjet jashtë Kosovës | ❌ Jashtë tani |
+| 7 | Marrja dhe vlerësimi i testeve, rezultatet e verifikuara | 🔄 Në punë (hapat 1–2 nga 16) |
+
+Roadmap-i nga milestone 8 e tutje (vendosur më 2026-11-25: M8 regjistrimi i kompanive → M9 ftesat → M10 rezultatet për kompanitë → M11 kërkimi → M12 vlerësimi me AI me rishikim nga njeriu → …) është te [docs/STATUS.md](docs/STATUS.md#roadmap).
