@@ -6,7 +6,8 @@ import { useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { Screen } from "../../components/shell/screen";
 import { SignedInGate } from "../../components/shell/signed-in-gate";
-import { Alert, AppText, Badge, Button, Card, EmptyState, Modal, Skeleton, type Tone } from "../../components/ui";
+import { Alert, AppText, Badge, Button, Card, EmptyState, Modal, type Tone } from "../../components/ui";
+import { QueryState } from "../../components/query-state";
 import { takeableState, type TakeableState } from "@skillprove/shared";
 import { errorMessage, queryKeys, useApiClient } from "../../lib/use-api";
 import { useI18n } from "../../theme/preferences-provider";
@@ -60,24 +61,7 @@ function TakeableList() {
     </View>
   );
 
-  if (list.isPending) {
-    return (
-      <View style={styles.gap} accessibilityLabel={t("common.loading")}>
-        {header}
-        <Skeleton height={112} />
-        <Skeleton height={112} />
-      </View>
-    );
-  }
-  if (list.isError) {
-    return (
-      <View style={styles.gap}>
-        {header}
-        <Alert tone="error" title={t("errors.loadFailed")} message={errorMessage(t, list.error)} />
-        <Button label={t("common.tryAgain")} variant="outline" onPress={() => void list.refetch()} />
-      </View>
-    );
-  }
+  if (!list.isSuccess) return <QueryState query={list} skeleton={[112, 112]} header={header} />;
 
   const items = list.data.items;
   return (

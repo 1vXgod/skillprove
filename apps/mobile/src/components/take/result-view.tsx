@@ -6,9 +6,10 @@ import { router } from "expo-router";
 import { useEffect } from "react";
 import { StyleSheet, View } from "react-native";
 import { resultPollInterval, skillStanding } from "@skillprove/assessment-engine";
-import { errorMessage, queryKeys, useApiClient } from "../../lib/use-api";
+import { queryKeys, useApiClient } from "../../lib/use-api";
 import { useI18n } from "../../theme/preferences-provider";
-import { Alert, AppText, Badge, Button, Card, CardHeader, EmptyState, Separator, Spinner } from "../ui";
+import { AppText, Badge, Button, Card, CardHeader, EmptyState, Separator, Spinner } from "../ui";
+import { OfflineNotice, QueryState } from "../query-state";
 
 /**
  * The result of a submitted attempt (Milestone 7, slice 15). Polls while scoring runs, then shows
@@ -47,19 +48,14 @@ export function ResultView({ attemptId, title }: { attemptId: string; title: str
     </View>
   );
 
-  if (result.isError) {
+  // While the first request runs the calculating view shows, so only offline and failed apply here.
+  if (!result.isSuccess && !result.isLoading) return <QueryState query={result} header={heading} />;
+  if (!result.isSuccess || result.data.state === "pending") {
     return (
       <View style={styles.gap}>
         {heading}
-        <Alert tone="error" title={t("errors.loadFailed")} message={errorMessage(t, result.error)} />
-        <Button label={t("common.tryAgain")} variant="outline" onPress={() => void result.refetch()} />
-      </View>
-    );
-  }
-  if (result.isPending || result.data.state === "pending") {
-    return (
-      <View style={styles.gap}>
-        {heading}
+        {/* Checking for the result again waits for the connection. */}
+        <OfflineNotice visible={result.fetchStatus === "paused"} />
         <View style={styles.calculating} accessibilityLiveRegion="polite">
           <Spinner />
           <AppText variant="h3">{t("take.calculating")}</AppText>

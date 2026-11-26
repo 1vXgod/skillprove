@@ -35,7 +35,7 @@ Pjesa e kandidatit që *merr* vlerësime nuk ekziston ende.
 - Kërkimi i kandidatëve nga kompanitë, mjetet e punësimit, pagesat.
 
 ## Probleme të njohura
-- Ekranet mobile nuk kanë teste automatike. Në Android u kontrollua me dorë hyrja dhe skeda Profili (2026-11-25); pjesa tjetër e rrjedhës në telefon nuk është konfirmuar ende. iOS i paverifikuar.
+- Ekranet mobile nuk kanë teste automatike. Të gjitha kontrollet me dorë në telefon u bënë në një iPhone (iOS, Expo Go); Android nuk është verifikuar.
 - Baza e zhvillimit (Neon `main`) ishte 2 migrime prapa (`20261104120000_candidate_interests_technologies`, `20261105100000_assessment_generation`), prandaj skeda Profili jepte gabim 500 në web dhe mobile. U aplikuan me `pnpm db:migrate:deploy` më 2026-11-25; `migrate status` tani thotë që skema është e përditësuar. Do të shtohet një kontroll në `/health/ready` për migrimet e paaplikuara.
 
 ## Hapi tjetër

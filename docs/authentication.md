@@ -55,7 +55,9 @@ To refill the publishable and secret keys, run `npx clerk@latest env pull --app 
 
 The webhook variable uses Clerk's official name, `CLERK_WEBHOOK_SIGNING_SECRET`. Variables with a `NEXT_PUBLIC_` or `EXPO_PUBLIC_` prefix are public, so a secret must never have one.
 
-## Android testing with Expo Go
+## Phone testing with Expo Go
+
+Manual checks so far were done on an iPhone (iOS) with Expo Go; Android has not been verified. After a code change, reload the app (press `r` in the Metro terminal) before testing, or the phone keeps the old bundle.
 
 1. Add keys to `apps/mobile/.env` and `apps/api/.env.local`.
 2. Run the API and mobile apps as in the README. Restart Expo after changing `.env`.

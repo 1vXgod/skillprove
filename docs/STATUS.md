@@ -16,7 +16,7 @@ SkillProve helps people prove their skills instead of only claiming them. A cand
 | ❌ | Not built |
 | ❓ | Could not verify from the code |
 
-**Tests:** CI #6 (the merge run of PR #3, 2026-11-25) passed everything: `@skillprove/database` 123/123 and `@skillprove/api` 105/105 with **0 skipped**, plus `db:migrate:deploy`, the production build and the browser tests (`test:e2e`). Locally, without a test database, the 137 database and route tests are still skipped; they count because CI ran them. Mobile screens have no automated tests. Mobile rows marked ✅ combine the API tests in CI with a full check by hand on an Android phone on 2026-11-25 (sign-in, profile, Skill Passport, privacy and preview). iOS has not been verified.
+**Tests:** CI #6 (the merge run of PR #3, 2026-11-25) passed everything: `@skillprove/database` 123/123 and `@skillprove/api` 105/105 with **0 skipped**, plus `db:migrate:deploy`, the production build and the browser tests (`test:e2e`). Locally, without a test database, the 137 database and route tests are still skipped; they count because CI ran them. Mobile screens have no automated tests. Mobile rows marked ✅ combine the API tests in CI with a full check by hand on an iPhone (iOS, Expo Go) on 2026-11-25 (sign-in, profile, Skill Passport, privacy and preview). Every manual phone check in this file was done on that iPhone; Android has not been verified.
 
 **Dev database:** on 2026-11-25 the development database (Neon `main`) was found two migrations behind (`20261104120000_candidate_interests_technologies`, `20261105100000_assessment_generation`). That made the Profile tab fail with a 500 on web and mobile. Both were applied with `pnpm db:migrate:deploy`, and `migrate status` now reports the schema up to date.
 
@@ -53,11 +53,11 @@ SkillProve helps people prove their skills instead of only claiming them. A cand
 | Web: notifications | 🗄️ | `Notification` model only |
 | Web: account and security settings | 🔄 | `/account` shows email, status and company memberships. Security settings live on Clerk's hosted pages |
 | Web: platform administration | ❌ | See §3 administrators |
-| Mobile: candidate registration and sign-in | ✅ | Clerk hosted pages through the browser (`components/account-panel.tsx`). Confirmed by hand on Android on 2026-11-25. No automated test; iOS not verified |
+| Mobile: candidate registration and sign-in | ✅ | Clerk hosted pages through the browser (`components/account-panel.tsx`). Confirmed by hand on an iPhone (iOS, Expo Go) on 2026-11-25. No automated test; Android not verified |
 | Mobile: company account access | 🔄 | Read-only assessment list, details and generation status (`app/assessments/`) |
-| Mobile: candidate profile and profile editing | ✅ | `app/profile/*`. API tests passed in CI #6. Confirmed by hand on Android on 2026-11-25: a profile saved on the phone appears on the web. No automated screen tests; iOS not verified |
-| Mobile: Skill Passport | ✅ | `app/skill-passport.tsx`. API tests passed in CI #6. Confirmed by hand on Android on 2026-11-25, including adding a skill from the catalogue (after the dev database was seeded). No automated screen tests; iOS not verified |
-| Mobile: privacy settings and profile preview | ✅ | `app/profile/privacy.tsx`. API tests passed in CI #6. Toggles and preview confirmed by hand on Android on 2026-11-25. No automated screen tests; iOS not verified |
+| Mobile: candidate profile and profile editing | ✅ | `app/profile/*`. API tests passed in CI #6. Confirmed by hand on an iPhone (iOS, Expo Go) on 2026-11-25: a profile saved on the phone appears on the web. No automated screen tests; Android not verified |
+| Mobile: Skill Passport | ✅ | `app/skill-passport.tsx`. API tests passed in CI #6. Confirmed by hand on an iPhone (iOS, Expo Go) on 2026-11-25, including adding a skill from the catalogue (after the dev database was seeded). No automated screen tests; Android not verified |
+| Mobile: privacy settings and profile preview | ✅ | `app/profile/privacy.tsx`. API tests passed in CI #6. Toggles and preview confirmed by hand on an iPhone (iOS, Expo Go) on 2026-11-25. No automated screen tests; Android not verified |
 | Mobile: assessment invitations | ❌ | |
 | Mobile: assessment completion | ❌ | Milestone 7 |
 | Mobile: assessment results | ❌ | Milestone 7 |
@@ -127,7 +127,7 @@ SkillProve helps people prove their skills instead of only claiming them. A cand
 | Verified skill details (score, date, difficulty, status, verification) | 🔄 | Display tested with sample data (CI #6); no real scores exist until Milestone 7 |
 | Verified scores are immutable | ✅ | Database triggers plus a single write path (`recordVerifiedSkillScore`). "discards direct edits to a verified score", "refuses a calculation without evidence", "never overwrites a completed evaluation" and related tests passed in CI #6 |
 | Private by default | ✅ | "creates a profile with the most private defaults" and "hides a private profile from every company" passed in CI #6 |
-| Profile preview ("what companies see") | ✅ | `GET /me/profile/preview`, on the privacy screen on web and mobile. "previews the filtered view for the candidate" and the privacy browser test passed in CI #6. Mobile screen confirmed by hand on Android (2026-11-25) |
+| Profile preview ("what companies see") | ✅ | `GET /me/profile/preview`, on the privacy screen on web and mobile. "previews the filtered view for the candidate" and the privacy browser test passed in CI #6. Mobile screen confirmed by hand on an iPhone (iOS, Expo Go) (2026-11-25); Android not verified |
 
 ### §5 Company platform
 
@@ -180,10 +180,10 @@ SkillProve helps people prove their skills instead of only claiming them. A cand
 | Feature | Status | Evidence / notes |
 |---|---|---|
 | Web: Next.js, React, TypeScript, Tailwind, shared design system, responsive | ✅ | `apps/web`. Builds in CI |
-| Mobile: React Native, Expo, TypeScript, Expo Router, shared tokens and API contracts | ✅ | `apps/mobile` (Expo SDK 58). iOS not verified |
+| Mobile: React Native, Expo, TypeScript, Expo Router, shared tokens and API contracts | ✅ | `apps/mobile` (Expo SDK 58). Checked by hand on an iPhone (iOS, Expo Go); Android not verified |
 | Backend: Next.js REST API, shared logic, Zod, server-side authorization | ✅ | `apps/api`, `packages/validation`, `packages/permissions` |
 | Database: PostgreSQL on Neon with Prisma | ✅ | `packages/database` |
-| Clerk authentication, sessions, webhook sync, roles | ✅ | Identity sync and role tests passed in CI #6; sign-in used by hand on web and Android |
+| Clerk authentication, sessions, webhook sync, roles | ✅ | Identity sync and role tests passed in CI #6; sign-in used by hand on the web and on an iPhone (iOS, Expo Go); Android not verified |
 | Social sign-in | ❓ | No code involved: Clerk's hosted pages show whichever providers are enabled in the Clerk dashboard. Check Clerk Dashboard > User & Authentication > Social connections |
 | Cloudflare R2 storage | ❌ | `FileAsset` model only |
 | Expo push, email | ❌ | |
@@ -311,9 +311,9 @@ Decisions (2026-11-25):
 | 10 | Result endpoint, lazy expiry, re-trigger after about a minute. Decided 2026-11-26: a permanent scoring error (such as an unreadable question) is recorded as a `FAILED` evaluation and the result state is `failed`, with no retry; a temporary error records nothing and is retried | ✅ `9bd1564`, CI green |
 | 11 | api-client methods | ✅ `e57b872`, PR #10, CI green |
 | 12 | **Dev-only demo seed:** a demo company and 2–3 published, fully objective `PUBLIC` assessments (multiple choice, true/false, multiple select; a couple of skills; mixed difficulty) for testing on a phone. Refuses to run unless the database is local or a Neon branch named explicitly by ID that the server confirms is not `main`, and always when `NODE_ENV=production`. Database test: running it twice creates no duplicates, and the guard refuses unsafe targets | ✅ `95c638f`, PR #10, CI green; run on the dev database 2026-11-26 |
-| 13 | Mobile: browse assessments | ✅ `7e21dfd`, PR #11; checked on an Android phone with the demo data |
+| 13 | Mobile: browse assessments | ✅ `7e21dfd`, PR #11; checked on an iPhone (iOS, Expo Go) with the demo data |
 | 14 | Mobile: take an assessment. Confirm before starting ("the timer starts now, this uses 1 of N attempts") | |
-| 15 | Mobile: result screen and Skill Passport changes | `5fb469b`. Checked on an Android phone 2026-11-26: JavaScript intermediate 10/10 answered, result shown; Skill Passport shows JavaScript level Intermediate (score 50/100, confidence 50%), TypeScript and React "More assessments needed". Combining checked the same day: JavaScript basics 60% (3/5, weight 1.0) plus the latest JavaScript intermediate retake 60% (6/10, weight 1.2) gave score 60, confidence 75% and 2 evidence items, as `auto-v1` predicts |
+| 15 | Mobile: result screen and Skill Passport changes | `5fb469b`. Checked on an iPhone (iOS, Expo Go) 2026-11-26: JavaScript intermediate 10/10 answered, result shown; Skill Passport shows JavaScript level Intermediate (score 50/100, confidence 50%), TypeScript and React "More assessments needed". Combining checked the same day: JavaScript basics 60% (3/5, weight 1.0) plus the latest JavaScript intermediate retake 60% (6/10, weight 1.2) gave score 60, confidence 75% and 2 evidence items, as `auto-v1` predicts |
 | 16 | Navigation, mobile and web: show company authoring only to company members, under a "Company" section; for candidates, "Assessments" means browse and take. Today candidates who open "Assessments" see "You are not a member of a company yet." (found on the phone, 2026-11-26) | ✅ `c9e7960`, PR #16; the Company section was confirmed on a member account after the demo-member seed (`93718d8`) |
 | 17 | Web: browse assessments (as slice 13). Also add the "Level" row (or "More assessments needed") to the web Skill Passport, which mobile already has | |
 | 18 | Web: take an assessment, with the same confirmation (as slice 14), including "the timer keeps running" | |
@@ -324,6 +324,7 @@ Decisions (2026-11-25):
 ### Loading, offline and timeouts (found on the phone, 2026-11-26)
 
 - **Problem:** in airplane mode, mobile Edit profile showed skeletons forever. TanStack Query learns about connectivity from browser events, which React Native lacks, so it never knew the phone was offline, and the request never finished.
-- **Request timeout** (`api-client-timeout`): every API request, including getting the session token, fails after 15 s with `TIMEOUT`, shown as the network error with Try again. Unit tests in `@skillprove/api-client`. **Checked on an Android phone on 2026-11-26** (built from the timeout branch, without the offline message): in airplane mode, the Profile tab (profile overview) showed "This could not be loaded / SkillProve could not be reached" with Try again; back online, the profile loaded. Edit profile on that branch still has the bug slice A fixes (a failed load shows the create form), so it was not used for this check.
+- **Request timeout** (`api-client-timeout`): every API request, including getting the session token, fails after 15 s with `TIMEOUT`, shown as the network error with Try again. Unit tests in `@skillprove/api-client`. **Checked on an iPhone (iOS, Expo Go) on 2026-11-26** (built from the timeout branch, without the offline message): in airplane mode, the Profile tab (profile overview) showed "This could not be loaded / SkillProve could not be reached" with Try again; back online, the profile loaded. Edit profile on that branch still has the bug slice A fixes (a failed load shows the create form), so it was not used for this check.
 - **Offline state** (`mobile-profile-load-errors`): `expo-network` feeds TanStack's online manager, so offline queries pause and resume by themselves; the mobile profile editing screens show "No connection. Check your internet." with Try again, and the web shows it in the app shell. Failed loads no longer look like "no profile yet". Unit tests for `loadState` and the connectivity mapping; browser test for the web notice. The "No connection" message has **not yet been checked on a phone**; re-test once both branches are on `main`.
-- **Still to do:** use the same loading / offline / error states on every mobile screen (profile overview, Skill Passport, Take, attempt, result, company).
+- **General mobile load state** (`mobile-load-states`): every mobile screen uses one loading / offline / error component. **Checked on an iPhone (iOS, Expo Go) on 2026-11-26:** in airplane mode, Profile, Assessments and Skill Passport showed "This could not be loaded / SkillProve could not be reached" with Try again instead of loading forever, but **not** the "No connection" message, so iOS airplane mode is not yet detected as offline. **Re-tested the same day after reloading the app:** Skill Passport, Assessments and Profile showed "No connection. Check your internet." (the query was paused and TanStack knew the phone was offline). The first failure was a stale bundle: the app had not been reloaded after the change. Whether the screens loaded by themselves after airplane mode was turned off was not reported.
+- **Phone testing is on iOS:** the manual phone checks in this section were done on an iPhone with Expo Go. Android is not verified.
