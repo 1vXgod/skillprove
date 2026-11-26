@@ -36,7 +36,7 @@ export default async function AuthLayout({ children }: { children: ReactNode }) 
         </h1>
         <p className="type-body text-muted-foreground">{t("auth.notConfiguredBody")}</p>
         <Link href="/" className={buttonClasses({ variant: "link", className: "self-start" })}>
-          {t("auth.backToStatus")}
+          {t("auth.backToHome")}
         </Link>
       </main>
     );

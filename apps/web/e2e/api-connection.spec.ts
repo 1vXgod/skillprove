@@ -4,12 +4,14 @@ import { expect, test } from "@playwright/test";
 import { createTranslator } from "@skillprove/shared/i18n";
 
 const HEALTH_URL = "http://localhost:4100/api/v1/health";
+// The connection check lives on the internal design-system page, not on any page users see.
+const STATUS_PAGE = "/design-system";
 // Albanian is the default language.
 const t = createTranslator("sq");
 
 test("an allowed origin reads the API from a real browser", async ({ page }) => {
   const healthResponse = page.waitForResponse(HEALTH_URL);
-  await page.goto("/");
+  await page.goto(STATUS_PAGE);
 
   const response = await healthResponse;
   expect(response.headers()["access-control-allow-origin"]).toBe("http://localhost:3100");
@@ -17,7 +19,7 @@ test("an allowed origin reads the API from a real browser", async ({ page }) => 
 });
 
 test("the database error state appears when no database is configured", async ({ page }) => {
-  await page.goto("/");
+  await page.goto(STATUS_PAGE);
   await expect(page.getByTestId("database-status")).toHaveText(t("status.unavailable"));
 });
 
@@ -62,6 +64,6 @@ test("the API refuses private routes from a browser with no token", async ({ req
 
 test("the browser blocks an origin that is not allowed", async ({ page }) => {
   // Same server, but 127.0.0.1 is a different origin from the allowed http://localhost:3100.
-  await page.goto("http://127.0.0.1:3100/");
+  await page.goto(`http://127.0.0.1:3100${STATUS_PAGE}`);
   await expect(page.getByTestId("api-status")).toHaveText(t("status.unavailable"));
 });

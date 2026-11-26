@@ -1,4 +1,5 @@
 import {
+  breakpoints,
   colors,
   durations,
   easing,
@@ -48,7 +49,10 @@ function staticDeclarations(): string {
 function typeClasses(): string {
   return TYPE_STYLES.map((style) => {
     const t = typography[style];
-    return `.type-${kebab(style)}{font-size:${t.fontSize / 16}rem;line-height:${t.lineHeight / 16}rem;font-weight:${t.fontWeight};letter-spacing:${t.letterSpacing}em;}`;
+    const name = `.type-${kebab(style)}`;
+    const base = `${name}{font-size:${t.fontSize / 16}rem;line-height:${t.lineHeight / 16}rem;font-weight:${t.fontWeight};letter-spacing:${t.letterSpacing}em;}`;
+    if (!t.wide) return base;
+    return `${base}@media (min-width:${breakpoints.md / 16}rem){${name}{font-size:${t.wide.fontSize / 16}rem;line-height:${t.wide.lineHeight / 16}rem;}}`;
   }).join("");
 }
 

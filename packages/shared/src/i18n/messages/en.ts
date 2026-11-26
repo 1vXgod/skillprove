@@ -101,7 +101,7 @@ export const en = {
     notConfiguredTitle: "Sign-in is not available yet",
     notConfiguredBody: "Authentication has not been configured for this environment.",
     notConfiguredMobile: "Sign-in has not been configured for this build.",
-    backToStatus: "Back to system status",
+    backToHome: "Back to the home page",
     signInFailed: "Sign-in could not be completed. Please try again.",
   },
   account: {
@@ -121,9 +121,29 @@ export const en = {
       ANONYMIZED: "Deleted",
     },
   },
+  landing: {
+    eyebrow: "Skills, verified",
+    heroTitleLead: "Don't just claim your skills.",
+    heroTitleAccent: "Prove them.",
+    heroBody: "SkillProve connects people and companies through verified skills, not just CVs. Take skill assessments, and your results become a Skill Passport that companies can trust.",
+    forCandidates: "For candidates",
+    candidateSteps: {
+      profile: { title: "Create your profile", body: "Add your experience, education and the skills you have." },
+      assess: { title: "Take assessments", body: "Answer skill assessments on the web or on your phone." },
+      passport: { title: "Get your Skill Passport", body: "Your results become verified skills that nobody can edit by hand, not even you." },
+    },
+    forCompanies: "For companies",
+    comingSoon: "Coming soon",
+    companyIntro: "Company accounts are on their way.",
+    companySteps: {
+      create: { title: "Create assessments", body: "Build skill assessments by hand or with AI help, with clear scoring criteria." },
+      invite: { title: "Invite candidates", body: "Send assessments to the people you want to hire." },
+      compare: { title: "Compare verified results", body: "See what candidates have shown they can do, within their privacy choices." },
+    },
+    footer: "© {year} SkillProve · Kosovo",
+  },
   status: {
     title: "System status",
-    description: "Foundation check. The company platform has not been built yet.",
     descriptionMobile: "Foundation check. The candidate app has not been built yet.",
     api: "API",
     database: "Database",
@@ -132,7 +152,6 @@ export const en = {
     unavailable: "Unavailable",
     checkAgain: "Check again",
     noApiUrl: "No API URL configured",
-    openAccount: "Your account",
   },
   profile: {
     title: "Your profile",

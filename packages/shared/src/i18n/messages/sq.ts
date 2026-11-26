@@ -99,7 +99,7 @@ export const sq: Messages = {
     notConfiguredTitle: "Kyçja ende nuk është në dispozicion",
     notConfiguredBody: "Autentikimi nuk është konfiguruar për këtë mjedis.",
     notConfiguredMobile: "Kyçja nuk është konfiguruar për këtë version.",
-    backToStatus: "Kthehu te gjendja e sistemit",
+    backToHome: "Kthehu në faqen kryesore",
     signInFailed: "Kyçja nuk u përfundua. Provo përsëri.",
   },
   account: {
@@ -119,9 +119,29 @@ export const sq: Messages = {
       ANONYMIZED: "I fshirë",
     },
   },
+  landing: {
+    eyebrow: "Aftësi të verifikuara",
+    heroTitleLead: "Mos thuaj vetëm që di.",
+    heroTitleAccent: "Dëshmoje.",
+    heroBody: "SkillProve i lidh njerëzit me kompanitë përmes aftësive të verifikuara, jo vetëm përmes CV-ve. Bëj vlerësime dhe rezultatet e tua kthehen në një Pasaportë aftësish që kompanitë mund ta besojnë.",
+    forCandidates: "Për kandidatët",
+    candidateSteps: {
+      profile: { title: "Krijo profilin", body: "Shto përvojën, shkollimin dhe aftësitë që ke." },
+      assess: { title: "Bëj vlerësime", body: "Përgjigju vlerësimeve në web ose në telefon." },
+      passport: { title: "Merr Pasaportën e aftësive", body: "Rezultatet bëhen aftësi të verifikuara që askush s'mund t'i ndryshojë me dorë, as ti vetë." },
+    },
+    forCompanies: "Për kompanitë",
+    comingSoon: "Së shpejti",
+    companyIntro: "Llogaritë për kompani po vijnë.",
+    companySteps: {
+      create: { title: "Krijo vlerësime", body: "Ndërto vlerësime me dorë ose me ndihmën e AI-së, me kritere të qarta." },
+      invite: { title: "Fto kandidatë", body: "Dërgoju vlerësime njerëzve që do të punësosh." },
+      compare: { title: "Krahaso rezultatet e verifikuara", body: "Shih çfarë kanë treguar kandidatët se dinë, brenda zgjedhjeve të tyre të privatësisë." },
+    },
+    footer: "© {year} SkillProve · Kosovë",
+  },
   status: {
     title: "Gjendja e sistemit",
-    description: "Kontroll i themelit. Platforma për kompani ende nuk është ndërtuar.",
     descriptionMobile: "Kontroll i themelit. Aplikacioni për kandidatë ende nuk është ndërtuar.",
     api: "API",
     database: "Baza e të dhënave",
@@ -130,7 +150,6 @@ export const sq: Messages = {
     unavailable: "E padisponueshme",
     checkAgain: "Kontrollo përsëri",
     noApiUrl: "Nuk është konfiguruar URL-ja e API-së",
-    openAccount: "Llogaria jote",
   },
   profile: {
     title: "Profili yt",

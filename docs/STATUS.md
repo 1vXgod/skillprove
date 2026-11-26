@@ -278,7 +278,7 @@ M1–M7 stay as they are. M8 onward is reordered by dependency, core loop first.
 | 13 | Notifications: Expo push and email | Vision §7 | Not started |
 | 14 | Files and media (Cloudflare R2): profile photos, file submissions | Vision §4 photo, §11 file access | Not started |
 | 15 | Platform administration: users, companies, moderation, AI usage, audit log viewer | Vision §3 administrators | Not started |
-| 16 | Production readiness: monitoring, general rate limiting, job queue, production database, landing page, toasts | Launch | Not started |
+| 16 | Production readiness: monitoring, general rate limiting, job queue, production database, toasts, and a **privacy policy and terms of use** (required before real users, since SkillProve stores personal data; the landing page footer links to them once they exist) | Launch | Not started. The landing page is being built in the M7 polish pass |
 | 17 | Shareable Skill Passport, per-company sharing (old M8) | Vision §3 sharing | Postponed |
 | 18 | Entitlements, pricing, more countries | Vision §8, §10 | Out of scope for now |
 

@@ -8,5 +8,7 @@ export async function getRequestPreferences() {
   return {
     locale: parseLocale(store.get(PREFERENCE_COOKIES.locale)?.value),
     theme: parseThemePreference(store.get(PREFERENCE_COOKIES.theme)?.value),
+    /** False until the visitor picks a theme, so a page can choose its own default (the landing page is dark). */
+    themeChosen: store.has(PREFERENCE_COOKIES.theme),
   };
 }

@@ -39,6 +39,8 @@ const TEXT_PAIRS: [keyof ColorTokens, keyof ColorTokens, number][] = [
   ["destructive", "destructiveSubtle", 4.5],
   ["info", "surface", 4.5],
   ["info", "infoSubtle", 4.5],
+  ["gradientFrom", "background", 4.5],
+  ["gradientTo", "background", 4.5],
   ["ring", "background", 3],
   ["ring", "surface", 3],
   ["input", "surface", 1.4],
@@ -98,6 +100,12 @@ describe("designTokensCss", () => {
   it("generates a class per type style", () => {
     expect(css).toContain(".type-h1{font-size:1.875rem;");
     expect(css).toContain(".type-body-small{");
+  });
+
+  it("gives the hero headline a larger size from the md breakpoint only", () => {
+    expect(css).toContain(".type-hero{font-size:2.75rem;");
+    expect(css).toContain("@media (min-width:48rem){.type-hero{font-size:4.75rem;");
+    expect(typography.hero.wide!.lineHeight).toBeGreaterThan(typography.hero.wide!.fontSize);
   });
 });
 
