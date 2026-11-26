@@ -10,6 +10,7 @@ import { clearAnswers, loadAnswers, saveAnswers } from "../../lib/attempt-store"
 import { useI18n } from "../../lib/i18n";
 import { errorMessage, queryKeys, useApiClient } from "../../lib/use-api";
 import { ChevronLeftIcon, ChevronRightIcon, ClipboardIcon } from "../icons";
+import { ResultView } from "./result-view";
 import { Alert, Badge, Button, buttonClasses, Card, CardContent, Checkbox, Dialog, EmptyState, Progress, Radio, RadioGroup, Skeleton } from "../ui";
 
 /**
@@ -51,11 +52,12 @@ export function AttemptView({ attemptId }: { attemptId: string }) {
   return <Taking attempt={attempt.data} />;
 }
 
-/** A submitted or expired attempt. The result screen is slice 19. */
+/** A submitted attempt shows its result; an expired one says so. */
 function Finished({ attempt }: { attempt: CandidateAttempt }) {
   const { t } = useI18n();
   // Answers saved in the browser are no use once the attempt is closed.
   useEffect(() => clearAnswers(attempt.id), [attempt.id]);
+  if (attempt.status === "SUBMITTED") return <ResultView attemptId={attempt.id} title={attempt.title} />;
   return (
     <div className="flex flex-col gap-6">
       <h1 className="type-h1 text-foreground">{attempt.title}</h1>

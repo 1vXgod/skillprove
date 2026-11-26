@@ -28,6 +28,7 @@ export const queryKeys = {
   skillSearch: (locale: string, q: string) => ["skill-search", locale, q] as const,
   takeable: (locale: string) => ["takeable-assessments", locale] as const,
   attempt: (id: string) => ["attempt", id] as const,
+  attemptResult: (id: string, locale: string) => ["attempt-result", id, locale] as const,
 };
 
 export { fieldErrorsOf };

@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { useEffect } from "react";
 import { StyleSheet, View } from "react-native";
-import { resultPollInterval, skillStanding } from "../../lib/result";
+import { resultPollInterval, skillStanding } from "@skillprove/assessment-engine";
 import { errorMessage, queryKeys, useApiClient } from "../../lib/use-api";
 import { useI18n } from "../../theme/preferences-provider";
 import { Alert, AppText, Badge, Button, Card, CardHeader, EmptyState, Separator, Spinner } from "../ui";

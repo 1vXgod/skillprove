@@ -1,4 +1,5 @@
 import { expect, test, type Page, type Route } from "@playwright/test";
+import { verifiedSkillLevel } from "@skillprove/shared";
 import { createTranslator } from "@skillprove/shared/i18n";
 import type { OwnProfile, ProfilePreview, SkillPassport } from "@skillprove/validation";
 
@@ -285,6 +286,19 @@ test.describe("assessments to take", () => {
     { id: "B", text: "4" },
     { id: "C", text: "5" },
   ];
+  const result = (attemptId: string, overrides: Record<string, unknown>) => ({
+    attemptId,
+    state: "scored",
+    submittedAt: NOW,
+    scoredAt: NOW,
+    questionCount: 3,
+    percent: 67,
+    skills: [
+      { skillId: "11111111-1111-4111-8111-111111111111", name: "SQL", questionCount: 2, answeredCount: 2, percent: 100 },
+      { skillId: "99999999-9999-4999-8999-999999999999", name: "JavaScript", questionCount: 1, answeredCount: 0, percent: 0 },
+    ],
+    ...overrides,
+  });
   const attempt = (overrides: Record<string, unknown>) => ({
     id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
     assessmentId: "66666666-6666-4666-8666-666666666666",
@@ -378,6 +392,7 @@ test.describe("assessments to take", () => {
     const requests = await mockApi(page, {
       [`GET /me/attempts/${id}`]: () => okJson(attempt({ id })),
       [`POST /me/attempts/${id}/submit`]: () => okJson(attempt({ id, status: "SUBMITTED", submittedAt: new Date().toISOString() })),
+      [`GET /me/attempts/${id}/result`]: () => okJson(result(id, { state: "pending", scoredAt: null, percent: null, skills: [] })),
     });
     await page.goto(`${HARNESS}?screen=attempt&id=${id}`);
     await hydrated(page);
@@ -404,7 +419,7 @@ test.describe("assessments to take", () => {
     await expect(dialog.getByText(t("take.submitUnanswered", { count: 1 }))).toBeVisible();
     await dialog.getByRole("button", { name: t("take.submit") }).click();
 
-    await expect(page.getByText(t("take.finishedTitle"))).toBeVisible();
+    await expect(page.getByText(t("take.calculating"))).toBeVisible();
     const submit = requests.find((r) => r.method === "POST");
     expect(submit?.body).toEqual({ answers: { "dddddddd-dddd-4ddd-8ddd-ddddddddddd1": "B", "dddddddd-dddd-4ddd-8ddd-ddddddddddd2": false } });
     expect(await page.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith("sp-attempt-answers.")))).toEqual([]);
@@ -415,11 +430,51 @@ test.describe("assessments to take", () => {
     const requests = await mockApi(page, {
       [`GET /me/attempts/${id}`]: () => okJson(attempt({ id, expiresAt: new Date(Date.now() + 2000).toISOString() })),
       [`POST /me/attempts/${id}/submit`]: () => okJson(attempt({ id, status: "SUBMITTED", submittedAt: new Date().toISOString() })),
+      [`GET /me/attempts/${id}/result`]: () => okJson(result(id, { state: "pending", scoredAt: null, percent: null, skills: [] })),
     });
     await page.goto(`${HARNESS}?screen=attempt&id=${id}`);
     await hydrated(page);
-    await expect(page.getByText(t("take.finishedTitle"))).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(t("take.calculating"))).toBeVisible({ timeout: 10_000 });
     expect(requests.filter((r) => r.method === "POST")).toHaveLength(1);
+  });
+
+  test("shows the result once scored: overall, per skill and Passport level, never which answers were right", async ({ page }) => {
+    const id = "f0f0f0f0-f0f0-4f0f-8f0f-f0f0f0f0f0f0";
+    let polls = 0;
+    await mockApi(page, {
+      [`GET /me/attempts/${id}`]: () => okJson(attempt({ id, status: "SUBMITTED", submittedAt: NOW })),
+      // Pending first, then scored: the screen polls.
+      [`GET /me/attempts/${id}/result`]: () => okJson(polls++ === 0 ? result(id, { state: "pending", scoredAt: null, percent: null, skills: [] }) : result(id, {})),
+      "GET /me/skill-passport": () => okJson(passport),
+    });
+    await page.goto(`${HARNESS}?screen=attempt&id=${id}`);
+    await hydrated(page);
+    await expect(page.getByText(t("take.calculating"))).toBeVisible();
+
+    await expect(page.getByText(t("take.overall"))).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText("67%")).toBeVisible();
+    const sql = page.getByRole("main").getByRole("listitem").filter({ has: page.getByRole("heading", { name: "SQL" }) });
+    await expect(sql.getByText("100%")).toBeVisible();
+    const level = verifiedSkillLevel(72, 64);
+    await expect(sql.getByText(level ? t(`passport.levels.${level}`) : t("passport.moreAssessmentsNeeded"))).toBeVisible();
+    // A skill with no verified score shows no level row.
+    const js = page.getByRole("main").getByRole("listitem").filter({ has: page.getByRole("heading", { name: "JavaScript" }) });
+    await expect(js.getByText(t("take.passportLevel"))).toHaveCount(0);
+    // Questions and choices are not repeated here.
+    await expect(page.getByText("Cili është rezultati i 2 + 2?")).toHaveCount(0);
+    await expect(page.getByRole("link", { name: t("take.openPassport") })).toHaveAttribute("href", "/skill-passport");
+  });
+
+  test("says when a result could not be calculated", async ({ page }) => {
+    const id = "f1f1f1f1-f1f1-4f1f-8f1f-f1f1f1f1f1f1";
+    await mockApi(page, {
+      [`GET /me/attempts/${id}`]: () => okJson(attempt({ id, status: "SUBMITTED", submittedAt: NOW })),
+      [`GET /me/attempts/${id}/result`]: () => okJson(result(id, { state: "failed", scoredAt: null, percent: null, skills: [] })),
+    });
+    await page.goto(`${HARNESS}?screen=attempt&id=${id}`);
+    await hydrated(page);
+    await expect(page.getByText(t("take.failedTitle"))).toBeVisible();
+    await expect(page.getByText(t("take.failedBody"))).toBeVisible();
   });
 
   test("says so when there is nothing to take", async ({ page }) => {

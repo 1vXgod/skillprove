@@ -2,6 +2,7 @@ export * from "./attempt";
 export * from "./codec";
 export * from "./generated";
 export * from "./readiness";
+export * from "./result";
 export * from "./safety";
 export * from "./scoring";
 export * from "./verified-formula";
