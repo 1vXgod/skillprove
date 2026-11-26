@@ -213,6 +213,11 @@ dialog.sp-dialog::backdrop {
   }
 }
 
+/* On the navy sidebar the accent uses light blues, so it reads against the dark background. */
+.sp-gradient-on-navy {
+  background-image: linear-gradient(100deg, var(--sp-sidebar-muted), var(--sp-sidebar-foreground));
+}
+
 /* Glass: translucent, blurred, with a thin glowing edge. `.sp-glass-hover` adds the hover glow. */
 .sp-glass {
   border: 1px solid var(--sp-glass-border);
