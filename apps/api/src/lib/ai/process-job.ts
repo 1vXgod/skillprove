@@ -57,6 +57,12 @@ export function staleJobAfterMs() {
   return env.GENERATION_PROVIDER_TIMEOUT_MS * env.GENERATION_MAX_PROVIDER_ATTEMPTS + 30_000;
 }
 
+/** Which model answered: IDs and model names only, never content. */
+function logAnsweringModel(jobId: string, configured: string, answered: string) {
+  const fallback = answered !== configured;
+  console.info("AI job answered", JSON.stringify({ jobId, model: answered, ...(fallback ? { fallbackFrom: configured } : {}) }));
+}
+
 export interface ProcessDeps {
   /** Replaceable in tests. */
   sleep?: (ms: number) => Promise<void>;
@@ -107,7 +113,8 @@ export async function processGenerationJob(db: PrismaClient, jobId: string, deps
         name: names.find((n) => n.id === s.skillId)?.name ?? "Skill",
         expectedLevel: s.expectedLevel,
       }));
-      const { value, usage } = await generateAssessment(options, request, promptSkills);
+      const { value, usage, model } = await generateAssessment(options, request, promptSkills);
+      logAnsweringModel(jobId, provider.model, model);
 
       // A job cancelled while the provider was working is discarded, but its spend is still recorded.
       const current = await getJob(db, jobId);
@@ -133,7 +140,7 @@ export async function processGenerationJob(db: PrismaClient, jobId: string, deps
         questions: value.questions.map(encodeQuestion) as never,
         criteria: value.rubric.criteria.map((c) => ({ ...c, skillId: c.skillId ?? null })),
       });
-      if (!(await completeJob(db, jobId, usageOf(usage), assessmentId))) {
+      if (!(await completeJob(db, jobId, usageOf(usage), assessmentId, model))) {
         await softDeleteAssessment(db, companyId, assessmentId, userId);
         await recordUsageOnly(db, jobId, usageOf(usage));
       }
@@ -154,12 +161,13 @@ export async function processGenerationJob(db: PrismaClient, jobId: string, deps
     const promptSkills = names.map((n) => ({ id: n.id, name: n.name, expectedLevel: record.working.difficulty }));
     const language: GenerationRequest["language"] = record.working.language === "en" ? "en" : "sq";
     const difficulty = (["BEGINNER", "INTERMEDIATE", "ADVANCED"] as const).find((d) => d === record.working.difficulty) ?? "INTERMEDIATE";
-    const { value, usage } = await regenerateQuestion(
+    const { value, usage, model } = await regenerateQuestion(
       options,
       { language, difficulty, assessmentType: record.working.assessmentType ?? "KNOWLEDGE", additionalInstructions: target.additionalInstructions },
       promptSkills,
       { kind: content.kind, skillId: content.skillId, currentQuestionSummary: questionText(content) },
     );
+    logAnsweringModel(jobId, provider.model, model);
     const current = await getJob(db, jobId);
     if (current?.status !== "RUNNING") {
       await recordUsageOnly(db, jobId, usageOf(usage));
@@ -167,7 +175,7 @@ export async function processGenerationJob(db: PrismaClient, jobId: string, deps
     }
     const replaced = await replaceQuestionIfDraft(db, companyId, target.assessmentId, target.questionId, encodeQuestion(value) as never);
     if (!replaced) await failJob(db, jobId, { code: "invalid_job", message: failureMessage("invalid_job") }, usageOf(usage));
-    else await completeJob(db, jobId, usageOf(usage), target.assessmentId);
+    else await completeJob(db, jobId, usageOf(usage), target.assessmentId, model);
   } catch (error) {
     if (error instanceof GenerationError) {
       await failJob(db, jobId, { code: error.code, message: failureMessage(error.code) }, usageOf(error.usage));

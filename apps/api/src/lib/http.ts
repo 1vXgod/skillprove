@@ -95,6 +95,8 @@ function fromAssessmentDataError(error: unknown): ApiError | null {
       return new ApiError("CONFLICT", "This request key was already used with different details.", 409);
     case "job_state":
       return new ApiError("CONFLICT", "This job cannot be changed in its current state.", 409);
+    case "retries_exhausted":
+      return new ApiError("RETRIES_EXHAUSTED", "This generation has no retries left. Start a new generation.", 409);
     case "not_ready":
       return new ApiError("BAD_REQUEST", "The assessment is not ready to publish.", 400, Object.fromEntries((field ?? "").split(",").filter(Boolean).map((key) => [key, "notReady"])));
     case "invalid_reference":

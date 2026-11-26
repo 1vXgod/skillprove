@@ -23,6 +23,8 @@ export const API_ERROR_CODES = [
   "ATTEMPTS_EXHAUSTED",
   /** The attempt's time ran out before it was submitted. */
   "ATTEMPT_EXPIRED",
+  /** A failed generation job has used every retry. Clients suggest starting a new generation. */
+  "RETRIES_EXHAUSTED",
 ] as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODES)[number];

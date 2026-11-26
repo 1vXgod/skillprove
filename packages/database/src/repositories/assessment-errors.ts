@@ -9,6 +9,8 @@ export type AssessmentDataErrorReason =
   | "not_ready"
   | "job_conflict"
   | "job_state"
+  /** A failed job has used every allowed retry. */
+  | "retries_exhausted"
   | "rate_limited";
 
 /** An expected failure from assessment code. The API maps it to a safe response by `reason`. */

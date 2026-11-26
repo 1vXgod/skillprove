@@ -46,6 +46,8 @@ export interface GenerationOutcome<T> {
   value: T;
   usage: AiUsage;
   attempts: number;
+  /** The model whose answer was accepted. */
+  model: string;
 }
 
 const PROVIDER_CODE_MAP = {
@@ -82,6 +84,7 @@ async function runValidated<T>(
   let prompt = basePrompt;
   let attempts = 0;
   let lastError: GenerationError | null = null;
+  let model = options.provider.model;
 
   while (attempts < options.maxAttempts) {
     if (options.signal?.aborted) throw new GenerationError("cancelled", usage, attempts);
@@ -97,6 +100,7 @@ async function runValidated<T>(
       });
       usage = addUsage(usage, response.usage);
       text = response.text;
+      model = response.model ?? options.provider.model;
     } catch (error) {
       if (!(error instanceof AiProviderError)) throw new GenerationError("provider_unavailable", usage, attempts);
       lastError = new GenerationError(PROVIDER_CODE_MAP[error.code], usage, attempts);
@@ -108,7 +112,7 @@ async function runValidated<T>(
     let problems: string[];
     try {
       const result = validate(parseJsonText(text));
-      if (result.ok) return { value: result.value, usage, attempts };
+      if (result.ok) return { value: result.value, usage, attempts, model };
       problems = result.problems;
     } catch {
       problems = ["notValidJson"];

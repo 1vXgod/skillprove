@@ -346,7 +346,8 @@ export type ErrorMessageKey =
   | "errors.aiUnavailable"
   | "errors.profileRequired"
   | "errors.attemptsExhausted"
-  | "errors.attemptExpired";
+  | "errors.attemptExpired"
+  | "errors.retriesExhausted";
 
 /** The translation key for a field's validation code, or undefined for anything unrecognised. */
 export function validationMessageKey(code: string | undefined): ValidationMessageKey | undefined {
@@ -366,6 +367,7 @@ export function errorMessageKey(error: unknown): ErrorMessageKey {
   if (error.code === "PROFILE_REQUIRED") return "errors.profileRequired";
   if (error.code === "ATTEMPTS_EXHAUSTED") return "errors.attemptsExhausted";
   if (error.code === "ATTEMPT_EXPIRED") return "errors.attemptExpired";
+  if (error.code === "RETRIES_EXHAUSTED") return "errors.retriesExhausted";
   if (error.code === "CONFLICT" && !error.fields) return "errors.conflict";
   if (error.code === "CONFLICT" || error.code === "BAD_REQUEST") {
     return validationMessageKey(Object.values(error.fields ?? {})[0]) ?? "errors.generic";

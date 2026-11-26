@@ -148,6 +148,8 @@ export async function completeJob(
   jobId: string,
   usage: JobUsage,
   assessmentId: string | null,
+  /** The model that actually answered, when it was a fallback rather than the one the job started with. */
+  answeredBy: string | null = null,
   now = new Date(),
 ) {
   const { count } = await db.aIJob.updateMany({
@@ -155,6 +157,7 @@ export async function completeJob(
     data: {
       status: "SUCCEEDED",
       assessmentId,
+      ...(answeredBy ? { modelName: answeredBy } : {}),
       inputTokens: usage.inputTokens,
       outputTokens: usage.outputTokens,
       estimatedCost: usage.estimatedCost,
@@ -180,5 +183,7 @@ export async function requeueJob(db: PrismaClient, jobId: string, maxRetries: nu
     where: { id: jobId, status: "FAILED", retryCount: { lt: maxRetries } },
     data: { status: "QUEUED", errorCode: null, errorMessage: null, startedAt: null, finishedAt: null, retryCount: { increment: 1 } },
   });
-  if (count !== 1) throw new AssessmentDataError("job_state");
+  if (count === 1) return;
+  const job = await db.aIJob.findUnique({ where: { id: jobId }, select: { status: true, retryCount: true } });
+  throw new AssessmentDataError(job?.status === "FAILED" && job.retryCount >= maxRetries ? "retries_exhausted" : "job_state");
 }

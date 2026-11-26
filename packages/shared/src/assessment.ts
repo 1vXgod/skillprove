@@ -82,7 +82,8 @@ export const GENERATION_LIMIT_DEFAULTS = {
   perUserPerDay: 10,
   perCompanyPerDay: 40,
   maxConcurrentPerCompany: 3,
-  providerTimeoutMs: 45_000,
+  /** Long enough for a full assessment from a busy free-tier Flash model (45 s timed out, 2026-11-26). */
+  providerTimeoutMs: 90_000,
   maxProviderAttempts: 3,
   maxJobRetries: 2,
 } as const;

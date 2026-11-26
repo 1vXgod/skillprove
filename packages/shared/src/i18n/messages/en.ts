@@ -58,6 +58,7 @@ export const en = {
     profileRequired: "Create your profile before taking an assessment.",
     attemptsExhausted: "You have used every attempt for this assessment.",
     attemptExpired: "Time ran out before this attempt was submitted.",
+    retriesExhausted: "No retries left. Start a new generation.",
   },
   language: {
     label: "Language",

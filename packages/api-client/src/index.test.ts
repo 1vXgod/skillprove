@@ -216,6 +216,7 @@ describe("assessment calls", () => {
     const { errorMessageKey } = await import("./index");
     expect(errorMessageKey(new ApiClientError("RATE_LIMITED", "x", 429))).toBe("errors.rateLimited");
     expect(errorMessageKey(new ApiClientError("SERVICE_UNAVAILABLE", "x", 503))).toBe("errors.aiUnavailable");
+    expect(errorMessageKey(new ApiClientError("RETRIES_EXHAUSTED", "x", 409))).toBe("errors.retriesExhausted");
   });
 });
 

@@ -24,6 +24,8 @@ export interface AiUsage {
 export interface AiJsonResponse {
   text: string;
   usage: AiUsage;
+  /** The model that produced this answer, when a provider can fall back to another one. */
+  model?: string;
 }
 
 /** Safe, stable codes. A provider's own message text is never copied into an error, a log or a response. */

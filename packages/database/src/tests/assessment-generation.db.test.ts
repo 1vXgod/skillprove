@@ -148,7 +148,9 @@ describe.skipIf(hasNoTestDatabase)("assessment generation data", () => {
       const { job } = await create(company.id, user.id, null);
       expect(await claimJob(db, job.id)).toBe(true);
       expect(await claimJob(db, job.id)).toBe(false);
-      expect(await completeJob(db, job.id, { inputTokens: 10, outputTokens: 5, estimatedCost: 0.000123 }, null)).toBe(true);
+      expect(await completeJob(db, job.id, { inputTokens: 10, outputTokens: 5, estimatedCost: 0.000123 }, null, "fallback-model")).toBe(true);
+      // The model that actually answered replaces the one the job started with.
+      expect((await db.aIJob.findUniqueOrThrow({ where: { id: job.id } })).modelName).toBe("fallback-model");
       const done = await db.aIJob.findUniqueOrThrow({ where: { id: job.id } });
       expect(done).toMatchObject({ status: "SUCCEEDED", inputTokens: 10, outputTokens: 5 });
       expect(Number(done.estimatedCost)).toBeCloseTo(0.000123);
@@ -169,7 +171,11 @@ describe.skipIf(hasNoTestDatabase)("assessment generation data", () => {
       await requeueJob(db, job.id, 1);
       await claimJob(db, job.id);
       await failJob(db, job.id, { code: "provider_timeout", message: "m" }, noUsage);
-      await expect(requeueJob(db, job.id, 1)).rejects.toMatchObject({ reason: "job_state" });
+      await expect(requeueJob(db, job.id, 1)).rejects.toMatchObject({ reason: "retries_exhausted" });
+      // A job that has not failed cannot be retried, whatever its count.
+      const { job: running } = await create(company.id, user.id, null, { n: 8 });
+      await claimJob(db, running.id);
+      await expect(requeueJob(db, running.id, 1)).rejects.toMatchObject({ reason: "job_state" });
 
       const { job: stuck } = await create(company.id, user.id, null, { n: 9 });
       await claimJob(db, stuck.id, new Date(Date.now() - 3_600_000));
