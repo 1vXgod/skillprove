@@ -118,7 +118,7 @@ async function hydrated(page: Page) {
 }
 
 test.describe("signed-out access", () => {
-  for (const path of ["/profile", "/skill-passport", "/profile/privacy"]) {
+  for (const path of ["/profile", "/skill-passport", "/profile/privacy", "/take"]) {
     test(`${path} is not shown without a session`, async ({ page }) => {
       const response = await page.goto(path);
       const url = page.url();
@@ -210,6 +210,9 @@ test.describe("skill passport", () => {
     await expect(verified.getByText(t("passport.scoreOutOf", { score: "72" }))).toBeVisible();
     await expect(verified.getByText(t("passport.outdated"))).toBeVisible();
     await expect(verified.getByText(t("passport.outdatedBody"))).toBeVisible();
+    // Score 72 at confidence 64 is high enough to name a level.
+    await expect(verified.getByText(t("passport.verifiedLevel"))).toBeVisible();
+    await expect(verified.getByText(t("passport.levels.ADVANCED"))).toBeVisible();
     // A verified result has no controls: it cannot be edited or removed by the candidate.
     await expect(verified.getByRole("button")).toHaveCount(0);
 
@@ -273,5 +276,55 @@ test.describe("privacy settings", () => {
       await page.waitForLoadState("networkidle");
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
     }
+  });
+});
+
+test.describe("assessments to take", () => {
+  const item = (overrides: Record<string, unknown>) => ({
+    assessmentId: "66666666-6666-4666-8666-666666666666",
+    versionId: "77777777-7777-4777-8777-777777777777",
+    title: "JavaScript basics",
+    description: "Variables, types, arrays and functions.",
+    language: "en",
+    difficulty: "BEGINNER",
+    durationMinutes: 10,
+    questionCount: 5,
+    skills: [{ skillId: "11111111-1111-4111-8111-111111111111", name: "JavaScript" }],
+    maxAttempts: 3,
+    attemptsUsed: 0,
+    openAttemptId: null,
+    ...overrides,
+  });
+
+  test("lists each assessment with its details and whether it can be taken", async ({ page }) => {
+    await mockApi(page, {
+      "GET /me/assessments": () =>
+        okJson({
+          items: [
+            item({}),
+            item({ assessmentId: "88888888-8888-4888-8888-888888888888", title: "Pyetje SQL", attemptsUsed: 1, openAttemptId: "99999999-9999-4999-8999-999999999999" }),
+            item({ assessmentId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", title: "React", durationMinutes: null, attemptsUsed: 2, maxAttempts: 2 }),
+          ],
+        }),
+    });
+    await page.goto(`${HARNESS}?screen=take`);
+    await hydrated(page);
+
+    const card = (title: string) => page.getByRole("listitem").filter({ has: page.getByRole("heading", { name: title }) });
+    await expect(card("JavaScript basics").getByText(t("passport.difficulty.BEGINNER"))).toBeVisible();
+    await expect(card("JavaScript basics").getByText("JavaScript", { exact: true })).toBeVisible();
+    await expect(card("JavaScript basics").getByText(t("take.attempts", { used: 0, max: 3 }), { exact: false })).toBeVisible();
+    await expect(card("Pyetje SQL").getByText(t("take.inProgress"))).toBeVisible();
+    await expect(card("React").getByText(t("take.noAttemptsLeft"))).toBeVisible();
+    await expect(card("React").getByText(t("take.noTimeLimit"), { exact: false })).toBeVisible();
+    // Browsing only for now: nothing here starts an attempt.
+    await expect(page.getByRole("main").getByRole("button")).toHaveCount(0);
+  });
+
+  test("says so when there is nothing to take", async ({ page }) => {
+    await mockApi(page, { "GET /me/assessments": () => okJson({ items: [] }) });
+    await page.goto(`${HARNESS}?screen=take`);
+    await hydrated(page);
+    await expect(page.getByText(t("take.empty"))).toBeVisible();
   });
 });

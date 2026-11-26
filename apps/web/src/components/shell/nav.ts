@@ -26,8 +26,8 @@ export function navSections({ isCompanyMember, showDesignSystem }: { isCompanyMe
       items: [
         { label: "nav.profile", icon: "user", href: "/profile" },
         { label: "nav.skillPassport", icon: "passport", href: "/skill-passport" },
-        // Browse and take on the web are Milestone 7 slices 17-19; the phone app has them now.
-        { label: "nav.assessments", icon: "assessments" },
+        // Browse and take: assessments a candidate can take (company authoring is under Company).
+        { label: "nav.assessments", icon: "assessments", href: "/take" },
         { label: "nav.account", icon: "account", href: "/account" },
       ],
     },

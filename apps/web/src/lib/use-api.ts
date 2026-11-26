@@ -26,6 +26,7 @@ export const queryKeys = {
   passport: (locale: string) => ["skill-passport", locale] as const,
   preview: (locale: string) => ["profile-preview", locale] as const,
   skillSearch: (locale: string, q: string) => ["skill-search", locale, q] as const,
+  takeable: (locale: string) => ["takeable-assessments", locale] as const,
 };
 
 export { fieldErrorsOf };

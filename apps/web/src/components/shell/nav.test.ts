@@ -9,8 +9,8 @@ describe("navSections", () => {
     const sections = summary({ isCompanyMember: false, showDesignSystem: false });
     expect(sections).toHaveLength(1);
     expect(sections.flatMap((s) => s.items).some(([, href]) => href === "/assessments")).toBe(false);
-    // Candidate assessments are listed, not yet linked on the web.
-    expect(sections[0]!.items).toContainEqual(["nav.assessments", null]);
+    // "Assessments" for candidates means browse and take.
+    expect(sections[0]!.items).toContainEqual(["nav.assessments", "/take"]);
   });
 
   it("adds a Company section with authoring for company members", () => {
