@@ -32,6 +32,10 @@
   --color-info: var(--sp-info);
   --color-info-subtle: var(--sp-info-subtle);
   --color-overlay: var(--sp-overlay);
+  --color-glow-primary: var(--sp-glow-primary);
+  --color-glow-secondary: var(--sp-glow-secondary);
+  --color-gradient-from: var(--sp-gradient-from);
+  --color-gradient-to: var(--sp-gradient-to);
 
   --radius-sm: var(--sp-radius-sm);
   --radius-md: var(--sp-radius-md);
@@ -104,5 +108,197 @@ dialog.sp-dialog::backdrop {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/*
+ * Landing page (Vision §2): dark-first, with soft light and glass. Colours come from the theme
+ * tokens; only opacity differs by theme, so the glow is softer on light backgrounds. Every
+ * animation is slow and decorative; reduced motion turns it off (see also the global rule above).
+ */
+:root,
+[data-theme="light"] {
+  --landing-glow: 0.28;
+  --landing-grid: 0.55;
+}
+[data-theme="dark"] {
+  --landing-glow: 0.7;
+  --landing-grid: 0.35;
+}
+@media (prefers-color-scheme: dark) {
+  [data-theme="system"] {
+    --landing-glow: 0.7;
+    --landing-grid: 0.35;
+  }
+}
+
+/* A slowly drifting mesh of two brand-coloured glows behind the hero. */
+.landing-mesh {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.landing-mesh::before,
+.landing-mesh::after {
+  content: "";
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(72px);
+  opacity: var(--landing-glow);
+  will-change: transform;
+}
+.landing-mesh::before {
+  width: min(44rem, 120vw);
+  height: min(44rem, 120vw);
+  left: -12rem;
+  top: -18rem;
+  background: radial-gradient(circle, var(--sp-glow-primary), transparent 65%);
+  animation: landing-drift 24s ease-in-out infinite alternate;
+}
+.landing-mesh::after {
+  width: min(38rem, 110vw);
+  height: min(38rem, 110vw);
+  right: -14rem;
+  top: 2rem;
+  background: radial-gradient(circle, var(--sp-glow-secondary), transparent 65%);
+  animation: landing-drift 30s ease-in-out infinite alternate-reverse;
+}
+@keyframes landing-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(6rem, 3rem, 0) scale(1.15);
+  }
+}
+
+/* A faint brand glow behind each section's cards, so the glass has something to blur. */
+.landing-section-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--landing-glow);
+  background:
+    radial-gradient(ellipse 45% 40% at 30% 65%, color-mix(in srgb, var(--sp-glow-primary) 35%, transparent), transparent 70%),
+    radial-gradient(ellipse 40% 35% at 75% 45%, color-mix(in srgb, var(--sp-glow-secondary) 35%, transparent), transparent 70%);
+}
+
+/* A faint grid that fades out from the top centre. */
+.landing-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--landing-grid);
+  background-image:
+    linear-gradient(var(--sp-border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--sp-border) 1px, transparent 1px);
+  background-size: 3rem 3rem;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 20%, transparent 75%);
+}
+
+/* The headline's key word. Forced-colours mode gets plain text. */
+.text-gradient {
+  background: linear-gradient(100deg, var(--sp-gradient-from), var(--sp-gradient-to));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+@media (forced-colors: active) {
+  .text-gradient {
+    background: none;
+    color: CanvasText;
+  }
+}
+
+/* Translucent, blurred cards with a thin glowing border that brightens on hover. */
+.glass-card {
+  position: relative;
+  border: 1px solid color-mix(in srgb, var(--sp-glow-primary) 22%, var(--sp-border));
+  border-radius: var(--sp-radius-xl);
+  background: color-mix(in srgb, var(--sp-surface) 60%, transparent);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: blur(16px) saturate(140%);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--sp-foreground) 7%, transparent);
+  transition:
+    border-color var(--sp-duration-slow) var(--sp-ease-standard),
+    box-shadow var(--sp-duration-slow) var(--sp-ease-standard),
+    transform var(--sp-duration-slow) var(--sp-ease-standard);
+}
+.glass-card:hover {
+  border-color: color-mix(in srgb, var(--sp-glow-primary) 60%, var(--sp-border));
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--sp-foreground) 10%, transparent),
+    0 1.25rem 3rem -1.5rem color-mix(in srgb, var(--sp-glow-primary) 55%, transparent);
+  transform: translateY(-2px);
+}
+
+/* A soft glow under the main call to action. */
+.glow-button {
+  box-shadow: 0 0.5rem 2rem -0.5rem color-mix(in srgb, var(--sp-glow-primary) 70%, transparent);
+}
+
+/* The hero fades up once on load; sections fade in as they scroll into view where supported. */
+.landing-enter {
+  animation: landing-rise 700ms var(--sp-ease-standard) both;
+}
+.landing-enter-late {
+  animation: landing-rise 700ms var(--sp-ease-standard) 150ms both;
+}
+@keyframes landing-rise {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@supports (animation-timeline: view()) {
+  .reveal {
+    animation: landing-rise linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 25%;
+  }
+}
+
+/* The "verified" mark made of light: rings that breathe slowly around a check. */
+.verified-orb .orb-ring {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: orb-breathe 6s ease-in-out infinite;
+}
+.verified-orb .orb-ring:nth-of-type(2) {
+  animation-delay: -2s;
+}
+.verified-orb .orb-ring:nth-of-type(3) {
+  animation-delay: -4s;
+}
+@keyframes orb-breathe {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.02);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-mesh::before,
+  .landing-mesh::after,
+  .verified-orb .orb-ring,
+  .landing-enter,
+  .landing-enter-late,
+  .reveal,
+  .glass-card {
+    animation: none !important;
+    transition: none !important;
+  }
+  .glass-card:hover {
+    transform: none;
   }
 }

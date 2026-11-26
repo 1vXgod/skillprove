@@ -60,7 +60,11 @@ test.describe("preferences", () => {
 test("renders without page errors or hydration mismatches", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  page.on("console", (message) => message.type() === "error" && errors.push(message.text()));
+  page.on("console", (message) => {
+    // The page's connection check asks /health/ready, which answers 503 when the test server has
+    // no database: that is the state it exists to show, not a page error.
+    if (message.type() === "error" && !message.location().url.endsWith("/api/v1/health/ready")) errors.push(message.text());
+  });
   await page.goto(URL);
   await page.waitForLoadState("networkidle");
   expect(errors).toEqual([]);

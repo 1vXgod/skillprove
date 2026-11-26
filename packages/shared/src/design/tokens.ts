@@ -36,6 +36,12 @@ export interface ColorTokens {
   info: string;
   infoSubtle: string;
   overlay: string;
+  /** Soft light behind hero areas (the landing page). Used at low opacity, never for text. */
+  glowPrimary: string;
+  glowSecondary: string;
+  /** The two ends of the gradient on a headline's key word. Each meets AA as text on `background`. */
+  gradientFrom: string;
+  gradientTo: string;
 }
 
 /**
@@ -70,6 +76,10 @@ export const colors: Record<ThemeName, ColorTokens> = {
     info: "#2453c4",
     infoSubtle: "#e8eefb",
     overlay: "rgba(13, 16, 24, 0.5)",
+    glowPrimary: "#2f5be0",
+    glowSecondary: "#222c6e",
+    gradientFrom: "#222c6e",
+    gradientTo: "#2f5be0",
   },
   dark: {
     background: "#0c0f15",
@@ -98,6 +108,10 @@ export const colors: Record<ThemeName, ColorTokens> = {
     info: "#7fb0ff",
     infoSubtle: "#142238",
     overlay: "rgba(0, 0, 0, 0.6)",
+    glowPrimary: "#2f5be0",
+    glowSecondary: "#4b5fd6",
+    gradientFrom: "#c0c8ff",
+    gradientTo: "#6f93ff",
   },
 };
 
@@ -109,6 +123,7 @@ export const fontFamilies = {
 } as const;
 
 export const TYPE_STYLES = [
+  "hero",
   "display",
   "h1",
   "h2",
@@ -130,9 +145,12 @@ export interface TypeToken {
   fontWeight: 400 | 500 | 600 | 700;
   /** Em units. */
   letterSpacing: number;
+  /** Web only: a larger size from the `md` breakpoint up, for headlines that must still fit a 360 px phone. */
+  wide?: { fontSize: number; lineHeight: number };
 }
 
 export const typography: Record<TypeStyle, TypeToken> = {
+  hero: { fontSize: 44, lineHeight: 48, fontWeight: 700, letterSpacing: -0.03, wide: { fontSize: 76, lineHeight: 80 } },
   display: { fontSize: 40, lineHeight: 48, fontWeight: 600, letterSpacing: -0.022 },
   h1: { fontSize: 30, lineHeight: 38, fontWeight: 600, letterSpacing: -0.02 },
   h2: { fontSize: 24, lineHeight: 32, fontWeight: 600, letterSpacing: -0.016 },

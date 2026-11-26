@@ -4,6 +4,7 @@ import { colors, radius, spacing, TYPE_STYLES, typography, type ColorTokens, typ
 import { useState, type ReactNode } from "react";
 import { useI18n } from "../lib/i18n";
 import { useTheme } from "../lib/theme";
+import { ConnectionStatus } from "./connection-status";
 import { InboxIcon, MoreIcon, SettingsIcon } from "./icons";
 import {
   Alert,
@@ -119,6 +120,12 @@ export function DesignSystemShowcase({ formatting }: { formatting: FormattingSam
         <h1 className="type-display text-foreground">{t("designSystem.title")}</h1>
         <p className="max-w-2xl type-body-large text-muted-foreground">{t("designSystem.description")}</p>
       </header>
+
+      {/* Internal check that this build reads the API across origins (the browser CORS test uses
+          it). It used to be the public home page; users no longer see it. */}
+      <Section id="ds-connection" title={t("status.title")}>
+        <ConnectionStatus />
+      </Section>
 
       <Section id="ds-colors" title={t("designSystem.colors")}>
         <Swatches theme={theme} />
