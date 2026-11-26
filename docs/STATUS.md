@@ -320,3 +320,10 @@ Decisions (2026-11-25):
 | 19 | Web: result screen with the Skill Passport level per skill (as slice 15) | |
 | 20 | Authoring notice, web and mobile: when a company publishes (or views) an assessment that contains short-answer, scenario or practical questions, say that candidates cannot take it yet, because automatic scoring covers only multiple choice, true/false and multiple select until AI evaluation with human review (Milestone 12). Today such an assessment publishes without a warning and silently never appears to candidates | |
 | 21 | Docs: `assessments.md`, `PROGRES.md`, this file | |
+
+### Loading, offline and timeouts (found on the phone, 2026-11-26)
+
+- **Problem:** in airplane mode, mobile Edit profile showed skeletons forever. TanStack Query learns about connectivity from browser events, which React Native lacks, so it never knew the phone was offline, and the request never finished.
+- **Request timeout** (`api-client-timeout`): every API request, including getting the session token, fails after 15 s with `TIMEOUT`, shown as the network error with Try again. Unit tests in `@skillprove/api-client`. **Checked on an Android phone on 2026-11-26** (built from the timeout branch, without the offline message): in airplane mode, Edit profile showed "This could not be loaded / SkillProve could not be reached" with Try again; back online, the profile loaded.
+- **Offline state** (`mobile-profile-load-errors`): `expo-network` feeds TanStack's online manager, so offline queries pause and resume by themselves; the mobile profile editing screens show "No connection. Check your internet." with Try again, and the web shows it in the app shell. Failed loads no longer look like "no profile yet". Unit tests for `loadState` and the connectivity mapping; browser test for the web notice. The "No connection" message has **not yet been checked on a phone**; re-test once both branches are on `main`.
+- **Still to do:** use the same loading / offline / error states on every mobile screen (profile overview, Skill Passport, Take, attempt, result, company).
