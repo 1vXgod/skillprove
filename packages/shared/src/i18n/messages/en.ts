@@ -183,6 +183,22 @@ export const en = {
       US: "United States",
     },
   },
+  completeness: {
+    title: "Profile completeness",
+    percent: "{percent}% complete",
+    complete: "Your profile is complete.",
+    items: {
+      profile: "Create your profile",
+      headline: "Add a headline",
+      skills: "Add your skills",
+      experience: "Add work experience",
+      biography: "Write a short bio",
+      location: "Add your city",
+      education: "Add your education",
+      languages: "Add the languages you speak",
+      preferences: "Choose the kind of work you want",
+    },
+  },
   availability: {
     title: "Availability",
     edit: "Edit availability",

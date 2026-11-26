@@ -34,3 +34,4 @@ export * from "./assessment";
 export * from "./verified-score";
 export * from "./takeable";
 export * from "./load-state";
+export * from "./profile-completeness";
