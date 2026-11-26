@@ -35,3 +35,4 @@ export * from "./verified-score";
 export * from "./takeable";
 export * from "./load-state";
 export * from "./profile-completeness";
+export * from "./home";

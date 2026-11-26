@@ -9,7 +9,8 @@ describe("navSections", () => {
     const sections = summary({ isCompanyMember: false, showDesignSystem: false });
     expect(sections).toHaveLength(1);
     expect(sections.flatMap((s) => s.items).some(([, href]) => href === "/assessments")).toBe(false);
-    // "Assessments" for candidates means browse and take.
+    // Home comes first; "Assessments" for candidates means browse and take.
+    expect(sections[0]!.items[0]).toEqual(["nav.home", "/home"]);
     expect(sections[0]!.items).toContainEqual(["nav.assessments", "/take"]);
   });
 

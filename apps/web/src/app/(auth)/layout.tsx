@@ -47,8 +47,8 @@ export default async function AuthLayout({ children }: { children: ReactNode }) 
       appearance={appearance}
       signInUrl="/sign-in"
       signUpUrl="/sign-up"
-      signInFallbackRedirectUrl="/account"
-      signUpFallbackRedirectUrl="/account"
+      signInFallbackRedirectUrl="/home"
+      signUpFallbackRedirectUrl="/home"
       afterSignOutUrl="/"
     >
       {children}

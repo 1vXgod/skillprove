@@ -103,7 +103,7 @@ export function SkillRow({ icon, title, detail, badge, href }: { icon?: ReactNod
  * The navy hero card from the reference: a serif headline, a line of text, one action, and the
  * light mark. White text on navy and brand blue meets AA.
  */
-export function HeroCard({ title, body, action, markId = "hero-card-mark", className }: { title: ReactNode; body?: string; action?: ReactNode; markId?: string; className?: string }) {
+export function HeroCard({ title, body, action, mark = true, markId = "hero-card-mark", className }: { title: ReactNode; body?: string; action?: ReactNode; mark?: boolean; markId?: string; className?: string }) {
   return (
     <section className={cn("relative isolate overflow-hidden rounded-xl bg-linear-to-br from-sidebar to-glow-primary p-6 text-sidebar-foreground shadow-card sm:p-8", className)}>
       <div className="flex items-center gap-6">
@@ -112,7 +112,7 @@ export function HeroCard({ title, body, action, markId = "hero-card-mark", class
           {body && <p className="max-w-md type-body text-sidebar-muted">{body}</p>}
           {action}
         </div>
-        <LightMark id={markId} className="hidden w-32 shrink-0 sm:block" />
+        {mark && <LightMark id={markId} className="hidden w-32 shrink-0 sm:block" />}
       </div>
     </section>
   );

@@ -1,6 +1,6 @@
 import type { MessageKey } from "@skillprove/shared/i18n";
 /** Icon names; the shell maps them to components, so this module stays free of JSX. */
-export type NavIcon = "user" | "passport" | "assessments" | "account" | "candidates" | "jobs" | "designSystem";
+export type NavIcon = "home" | "user" | "passport" | "assessments" | "account" | "candidates" | "jobs" | "designSystem";
 
 export interface NavItem {
   label: MessageKey;
@@ -24,6 +24,7 @@ export function navSections({ isCompanyMember, showDesignSystem }: { isCompanyMe
   const sections: NavSection[] = [
     {
       items: [
+        { label: "nav.home", icon: "home", href: "/home" },
         { label: "nav.profile", icon: "user", href: "/profile" },
         { label: "nav.skillPassport", icon: "passport", href: "/skill-passport" },
         // Browse and take: assessments a candidate can take (company authoring is under Company).

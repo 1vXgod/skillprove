@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SkillPassportView } from "../../../components/passport/skill-passport";
+import { HomeDashboard } from "../../../components/home/home-dashboard";
 import { PrivacySettings } from "../../../components/privacy/privacy-settings";
 import { ProfileOverview } from "../../../components/profile/profile-overview";
 import { AppShell } from "../../../components/shell/app-shell";
@@ -46,6 +47,8 @@ export default async function CandidateScreensPage({ searchParams }: { searchPar
               <PageHeader title={t("take.title")} description={t("take.description")} />
               <TakeableList />
             </>
+          ) : screen === "home" ? (
+            <HomeDashboard />
           ) : screen === "attempt" && id ? (
             <AttemptView attemptId={id} />
           ) : screen === "privacy" ? (

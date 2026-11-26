@@ -1,9 +1,11 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse, type NextFetchEvent, type NextRequest } from "next/server";
 
-const isProtectedRoute = createRouteMatcher(["/account(.*)", "/profile(.*)", "/skill-passport(.*)", "/take(.*)"]);
+const isProtectedRoute = createRouteMatcher(["/home(.*)", "/account(.*)", "/profile(.*)", "/skill-passport(.*)", "/take(.*)"]);
 
 const clerk = clerkMiddleware(async (auth, request) => {
+  // Signed in, the landing page has nothing for you: go to your home.
+  if (request.nextUrl.pathname === "/" && (await auth()).userId) return NextResponse.redirect(new URL("/home", request.url));
   if (isProtectedRoute(request)) await auth.protect();
 }, { signInUrl: "/sign-in", signUpUrl: "/sign-up" });
 
