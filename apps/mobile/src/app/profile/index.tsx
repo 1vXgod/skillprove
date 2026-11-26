@@ -7,7 +7,8 @@ import { useState, type ReactNode } from "react";
 import { StyleSheet, View } from "react-native";
 import { Screen } from "../../components/shell/screen";
 import { SignedInGate } from "../../components/shell/signed-in-gate";
-import { Alert, AppText, Avatar, Badge, Button, Card, CardHeader, EmptyState, Modal, Separator, Skeleton } from "../../components/ui";
+import { Alert, AppText, Avatar, Badge, Button, Card, CardHeader, EmptyState, Modal, Separator } from "../../components/ui";
+import { QueryState } from "../../components/query-state";
 import { errorMessage, queryKeys, useApiClient } from "../../lib/use-api";
 import { useI18n } from "../../theme/preferences-provider";
 import { spacing } from "@skillprove/shared/design";
@@ -27,22 +28,7 @@ function ProfileContent() {
   const client = useApiClient();
   const profile = useQuery({ queryKey: queryKeys.ownProfile, queryFn: client.getOwnProfile, retry: false });
 
-  if (profile.isPending) {
-    return (
-      <View style={styles.gap} accessibilityLabel={t("common.loading")}>
-        <Skeleton height={96} />
-        <Skeleton height={160} />
-      </View>
-    );
-  }
-  if (profile.isError) {
-    return (
-      <View style={styles.gap}>
-        <Alert tone="error" title={t("errors.loadFailed")} message={errorMessage(t, profile.error)} />
-        <Button label={t("common.tryAgain")} variant="outline" onPress={() => void profile.refetch()} />
-      </View>
-    );
-  }
+  if (!profile.isSuccess) return <QueryState query={profile} skeleton={[96, 160]} />;
   if (!profile.data) {
     return (
       <Card>

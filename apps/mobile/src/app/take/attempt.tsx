@@ -9,6 +9,7 @@ import { Screen } from "../../components/shell/screen";
 import { SignedInGate } from "../../components/shell/signed-in-gate";
 import { ResultView } from "../../components/take/result-view";
 import { Alert, AppText, Badge, Button, Card, Checkbox, EmptyState, Modal, Progress, RadioGroup, Skeleton } from "../../components/ui";
+import { OfflineNotice, QueryState } from "../../components/query-state";
 import { answersToSubmit, formatCountdown, isAnswered, secondsLeft, toggleChoice, unansweredCount, type Answers } from "@skillprove/assessment-engine";
 import { clearAnswers, loadAnswers, saveAnswers } from "../../lib/attempt-store";
 import { errorMessage, queryKeys, useApiClient } from "../../lib/use-api";
@@ -27,7 +28,6 @@ export default function AttemptScreen() {
 const backToList = () => router.replace("/take");
 
 function AttemptContent() {
-  const { t } = useI18n();
   const client = useApiClient();
   const { attemptId } = useLocalSearchParams<{ attemptId: string }>();
   const attempt = useQuery({
@@ -39,22 +39,7 @@ function AttemptContent() {
     staleTime: Infinity,
   });
 
-  if (attempt.isPending) {
-    return (
-      <View style={styles.gap} accessibilityLabel={t("common.loading")}>
-        <Skeleton height={32} />
-        <Skeleton height={160} />
-      </View>
-    );
-  }
-  if (attempt.isError) {
-    return (
-      <View style={styles.gap}>
-        <Alert tone="error" title={t("errors.loadFailed")} message={errorMessage(t, attempt.error)} />
-        <Button label={t("common.tryAgain")} variant="outline" onPress={() => void attempt.refetch()} />
-      </View>
-    );
-  }
+  if (!attempt.isSuccess) return <QueryState query={attempt} skeleton={[32, 160]} />;
   if (attempt.data.status !== "IN_PROGRESS") return <Finished attempt={attempt.data} />;
   return <Taking attempt={attempt.data} />;
 }
@@ -166,6 +151,8 @@ function Taking({ attempt }: { attempt: CandidateAttempt }) {
       </View>
       {autoSubmitted.current && submit.isPending && <Alert tone="info" message={t("take.timeUp")} />}
       {submit.isError && <Alert tone="error" message={errorMessage(t, submit.error)} />}
+      {/* A submit sent offline waits and goes out when the connection returns. */}
+      <OfflineNotice visible={submit.isPaused} />
     </View>
   );
 

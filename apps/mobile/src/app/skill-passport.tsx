@@ -6,8 +6,9 @@ import { router } from "expo-router";
 import { StyleSheet, View } from "react-native";
 import { Screen } from "../components/shell/screen";
 import { SignedInGate } from "../components/shell/signed-in-gate";
-import { Alert, AppText, Badge, Button, Card, CardHeader, EmptyState, Separator, Skeleton } from "../components/ui";
-import { errorMessage, queryKeys, useApiClient } from "../lib/use-api";
+import { Alert, AppText, Badge, Button, Card, CardHeader, EmptyState, Separator } from "../components/ui";
+import { QueryState } from "../components/query-state";
+import { queryKeys, useApiClient } from "../lib/use-api";
 import { useI18n } from "../theme/preferences-provider";
 import { spacing } from "@skillprove/shared/design";
 
@@ -32,16 +33,8 @@ function PassportContent() {
         {t("passport.title")}
       </AppText>
       <AppText tone="mutedForeground">{t("passport.description")}</AppText>
-      {passport.isPending ? (
-        <View style={styles.gap} accessibilityLabel={t("common.loading")}>
-          <Skeleton height={120} />
-          <Skeleton height={120} />
-        </View>
-      ) : passport.isError ? (
-        <>
-          <Alert tone="error" title={t("errors.loadFailed")} message={errorMessage(t, passport.error)} />
-          <Button label={t("common.tryAgain")} variant="outline" onPress={() => void passport.refetch()} />
-        </>
+      {!passport.isSuccess ? (
+        <QueryState query={passport} skeleton={[120, 120]} />
       ) : (
         <Sections passport={passport.data} />
       )}

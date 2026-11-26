@@ -17,7 +17,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { FormActions } from "../../components/profile/form-actions";
-import { ProfileLoadState } from "../../components/profile/profile-load-state";
+import { QueryState } from "../../components/query-state";
 import { useForm } from "../../components/profile/use-form";
 import { Screen } from "../../components/shell/screen";
 import { SignedInGate } from "../../components/shell/signed-in-gate";
@@ -43,7 +43,7 @@ function Loader() {
   const profile = useQuery({ queryKey: queryKeys.ownProfile, queryFn: client.getOwnProfile, retry: false });
 
   if (!section) return <Alert tone="error" message={t("errors.loadFailed")} />;
-  if (!profile.isSuccess) return <ProfileLoadState profile={profile} />;
+  if (!profile.isSuccess) return <QueryState query={profile} />;
   if (!profile.data) return <AppText tone="mutedForeground">{t("profile.createDescription")}</AppText>;
   const item = params.id ? findItem(profile.data, section, params.id) : null;
   if (params.id && !item) return <Alert tone="error" message={t("errors.loadFailed")} />;

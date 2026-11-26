@@ -4,8 +4,9 @@ import { router } from "expo-router";
 import { Pressable, StyleSheet, View } from "react-native";
 import { Screen } from "../../components/shell/screen";
 import { SignedInGate } from "../../components/shell/signed-in-gate";
-import { Alert, AppText, Badge, Button, Card, EmptyState, Skeleton } from "../../components/ui";
-import { errorMessage, queryKeys, useApiClient } from "../../lib/use-api";
+import { AppText, Badge, Card, EmptyState } from "../../components/ui";
+import { QueryState } from "../../components/query-state";
+import { queryKeys, useApiClient } from "../../lib/use-api";
 import { useI18n } from "../../theme/preferences-provider";
 import { controlHeights, spacing } from "@skillprove/shared/design";
 
@@ -43,25 +44,9 @@ function AssessmentsContent() {
     </View>
   );
 
-  if (me.isPending || (companyId !== null && list.isPending)) {
-    return (
-      <View style={styles.gap} accessibilityLabel={t("common.loading")}>
-        {header}
-        <Skeleton height={96} />
-        <Skeleton height={96} />
-      </View>
-    );
-  }
-  const failed = me.isError ? me : list.isError ? list : null;
-  if (failed) {
-    return (
-      <View style={styles.gap}>
-        {header}
-        <Alert tone="error" title={t("errors.loadFailed")} message={errorMessage(t, failed.error)} />
-        <Button label={t("common.tryAgain")} variant="outline" onPress={() => void failed.refetch()} />
-      </View>
-    );
-  }
+  // The list only runs for a company member, so it is waited for only then.
+  const unready = [me, ...(companyId !== null ? [list] : [])].find((query) => !query.isSuccess);
+  if (unready) return <QueryState query={unready} skeleton={[96, 96]} header={header} />;
   if (!companyId) {
     return (
       <View style={styles.gap}>

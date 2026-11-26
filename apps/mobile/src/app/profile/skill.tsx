@@ -7,7 +7,8 @@ import { FormActions } from "../../components/profile/form-actions";
 import { useForm } from "../../components/profile/use-form";
 import { Screen } from "../../components/shell/screen";
 import { SignedInGate } from "../../components/shell/signed-in-gate";
-import { Alert, AppText, Badge, Button, Input, Modal, RadioGroup, Select, Spinner } from "../../components/ui";
+import { Alert, AppText, Badge, Button, Input, Modal, RadioGroup, Select } from "../../components/ui";
+import { QueryState } from "../../components/query-state";
 import { errorMessage, queryKeys, useApiClient, yearsValue } from "../../lib/use-api";
 import { useI18n } from "../../theme/preferences-provider";
 
@@ -27,8 +28,7 @@ function Loader() {
   const { skillId } = useLocalSearchParams<{ skillId?: string }>();
   const client = useApiClient();
   const passport = useQuery({ queryKey: queryKeys.passport(locale), queryFn: client.getSkillPassport, retry: false });
-  if (passport.isPending) return <Spinner />;
-  if (passport.isError) return <Alert tone="error" message={errorMessage(t, passport.error)} />;
+  if (!passport.isSuccess) return <QueryState query={passport} />;
   const existing = passport.data.selfReported;
   if (!skillId) return <AddSkill existing={new Set(existing.map((s) => s.skill.id))} />;
   const skill = existing.find((s) => s.skill.id === skillId);
@@ -76,10 +76,8 @@ function AddSkill({ existing }: { existing: Set<string> }) {
       </AppText>
       <AppText tone="mutedForeground">{t("passport.selfReportedNote")}</AppText>
       <Input label={t("passport.searchSkills")} value={query} onChangeText={setQuery} autoCapitalize="none" autoCorrect={false} returnKeyType="search" />
-      {results.isPending ? (
-        <Spinner />
-      ) : results.isError ? (
-        <Alert tone="error" message={errorMessage(t, results.error)} />
+      {!results.isSuccess ? (
+        <QueryState query={results} skeleton={[56]} />
       ) : options.length === 0 ? (
         <AppText variant="bodySmall" tone="mutedForeground">
           {t("passport.noResults")}

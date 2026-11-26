@@ -2,7 +2,7 @@ import { AVAILABILITY_STATUSES, EMPLOYMENT_TYPES, WORK_MODES } from "@skillprove
 import { availabilityInputSchema, type OwnProfile } from "@skillprove/validation";
 import { useQuery } from "@tanstack/react-query";
 import { FormActions } from "../../components/profile/form-actions";
-import { ProfileLoadState } from "../../components/profile/profile-load-state";
+import { QueryState } from "../../components/query-state";
 import { useForm } from "../../components/profile/use-form";
 import { Screen } from "../../components/shell/screen";
 import { SignedInGate } from "../../components/shell/signed-in-gate";
@@ -24,7 +24,7 @@ function Loader() {
   const { t } = useI18n();
   const client = useApiClient();
   const profile = useQuery({ queryKey: queryKeys.ownProfile, queryFn: client.getOwnProfile, retry: false });
-  if (!profile.isSuccess) return <ProfileLoadState profile={profile} />;
+  if (!profile.isSuccess) return <QueryState query={profile} />;
   if (!profile.data) return <AppText tone="mutedForeground">{t("profile.createDescription")}</AppText>;
   return <AvailabilityForm profile={profile.data} />;
 }

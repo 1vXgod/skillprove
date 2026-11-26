@@ -4,8 +4,9 @@ import { router, useLocalSearchParams } from "expo-router";
 import { StyleSheet, View } from "react-native";
 import { Screen } from "../../components/shell/screen";
 import { SignedInGate } from "../../components/shell/signed-in-gate";
-import { Alert, AppText, Badge, Button, Card, CardHeader, Skeleton } from "../../components/ui";
-import { errorMessage, queryKeys, useApiClient } from "../../lib/use-api";
+import { Alert, AppText, Badge, Button, Card, CardHeader } from "../../components/ui";
+import { QueryState } from "../../components/query-state";
+import { queryKeys, useApiClient } from "../../lib/use-api";
 import { useI18n } from "../../theme/preferences-provider";
 import { controlHeights, spacing } from "@skillprove/shared/design";
 
@@ -29,22 +30,7 @@ function DetailContent() {
   const detail = useQuery({ queryKey: queryKeys.assessment(id, locale), queryFn: () => client.getAssessment(id), retry: false });
   const versions = useQuery({ queryKey: queryKeys.versions(id), queryFn: () => client.listVersions(id), retry: false });
 
-  if (detail.isPending) {
-    return (
-      <View style={styles.gap} accessibilityLabel={t("assessments.editor.loading")}>
-        <Skeleton height={64} />
-        <Skeleton height={160} />
-      </View>
-    );
-  }
-  if (detail.isError) {
-    return (
-      <View style={styles.gap}>
-        <Alert tone="error" title={t("errors.loadFailed")} message={errorMessage(t, detail.error)} />
-        <Button label={t("common.tryAgain")} variant="outline" onPress={() => void detail.refetch()} />
-      </View>
-    );
-  }
+  if (!detail.isSuccess) return <QueryState query={detail} skeleton={[64, 160]} />;
   const a = detail.data;
   return (
     <View style={styles.gap}>
@@ -83,10 +69,8 @@ function DetailContent() {
 
       <Card>
         <CardHeader title={t("assessments.versions.title")} description={t("assessments.versions.immutable")} />
-        {versions.isPending ? (
-          <Skeleton height={48} />
-        ) : versions.isError ? (
-          <Alert tone="error" message={errorMessage(t, versions.error)} />
+        {!versions.isSuccess ? (
+          <QueryState query={versions} skeleton={[48]} />
         ) : (
           versions.data.items.map((v) => (
             <View key={v.id} style={styles.versionRow}>

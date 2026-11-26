@@ -6,7 +6,8 @@ import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { Screen } from "../../components/shell/screen";
 import { SignedInGate } from "../../components/shell/signed-in-gate";
-import { Alert, AppText, Badge, Button, Card, CardHeader, RadioGroup, Separator, Skeleton, Spinner, Switch } from "../../components/ui";
+import { Alert, AppText, Badge, Button, Card, CardHeader, RadioGroup, Separator, Switch } from "../../components/ui";
+import { QueryState } from "../../components/query-state";
 import { errorMessage, queryKeys, useApiClient } from "../../lib/use-api";
 import { useI18n } from "../../theme/preferences-provider";
 
@@ -27,8 +28,7 @@ function Loader() {
   const client = useApiClient();
   const profile = useQuery({ queryKey: queryKeys.ownProfile, queryFn: client.getOwnProfile, retry: false });
   const [savedVersion, setSavedVersion] = useState<string | null>(null);
-  if (profile.isPending) return <Spinner />;
-  if (profile.isError) return <Alert tone="error" message={errorMessage(t, profile.error)} />;
+  if (!profile.isSuccess) return <QueryState query={profile} skeleton={[160, 120]} />;
   if (!profile.data) return <AppText tone="mutedForeground">{t("profile.createDescription")}</AppText>;
   const version = profile.data.privacy.updatedAt;
   return <PrivacyForm key={version} profile={profile.data} justSaved={savedVersion === version} onSaved={setSavedVersion} />;
@@ -97,10 +97,8 @@ function Preview() {
   return (
     <Card>
       <CardHeader title={t("privacy.previewTitle")} description={t("privacy.previewNote")} />
-      {preview.isPending ? (
-        <Skeleton height={120} />
-      ) : preview.isError ? (
-        <Alert tone="error" message={errorMessage(t, preview.error)} />
+      {!preview.isSuccess ? (
+        <QueryState query={preview} skeleton={[120]} />
       ) : (
         <View style={styles.rows}>
           {preview.data.visibility === "PRIVATE" && <Alert tone="info" message={t("privacy.previewPrivate")} />}
