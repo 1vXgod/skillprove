@@ -181,6 +181,22 @@ export const sq: Messages = {
       US: "Shtetet e Bashkuara",
     },
   },
+  completeness: {
+    title: "Plotësimi i profilit",
+    percent: "{percent}% i plotësuar",
+    complete: "Profili juaj është i plotë.",
+    items: {
+      profile: "Krijoni profilin",
+      headline: "Shtoni një titull profesional",
+      skills: "Shtoni aftësitë tuaja",
+      experience: "Shtoni përvojën e punës",
+      biography: "Shkruani një përshkrim të shkurtër",
+      location: "Shtoni qytetin",
+      education: "Shtoni arsimimin",
+      languages: "Shtoni gjuhët që flisni",
+      preferences: "Zgjidhni llojin e punës që kërkoni",
+    },
+  },
   availability: {
     title: "Disponueshmëria",
     edit: "Ndrysho disponueshmërinë",
