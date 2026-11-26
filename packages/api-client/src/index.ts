@@ -72,8 +72,16 @@ import {
 } from "@skillprove/validation";
 import { z } from "zod";
 
-/** `NETWORK_ERROR` and `INVALID_RESPONSE` originate in the client, never from the API. */
-export type ApiClientErrorCode = ApiErrorCode | "NETWORK_ERROR" | "INVALID_RESPONSE";
+/** `NETWORK_ERROR`, `TIMEOUT` and `INVALID_RESPONSE` originate in the client, never from the API. */
+export type ApiClientErrorCode = ApiErrorCode | "NETWORK_ERROR" | "TIMEOUT" | "INVALID_RESPONSE";
+
+/**
+ * How long a request may take, including getting the session token, before it fails with
+ * `TIMEOUT`. Every endpoint answers quickly (AI generation runs as a job after the response), so
+ * this only ends requests to an API that is unreachable but does not refuse the connection, such
+ * as a stopped server behind a tunnel. Without it they would wait forever.
+ */
+export const REQUEST_TIMEOUT_MS = 15_000;
 
 export class ApiClientError extends Error {
   constructor(
@@ -96,6 +104,8 @@ export interface ApiClientOptions {
   fetch?: typeof globalThis.fetch;
   /** The app's current language, so skill names come back translated. */
   locale?: "sq" | "en";
+  /** Defaults to `REQUEST_TIMEOUT_MS`; replaceable so tests need not wait. */
+  timeoutMs?: number;
 }
 
 export interface SectionInputs {
@@ -189,15 +199,29 @@ export interface ApiClient {
   cancelJob(jobId: string): Promise<AiJob>;
 }
 
-export function createApiClient({ baseUrl, getToken, fetch: fetchFn, locale }: ApiClientOptions): ApiClient {
+type RequestOptions = { authenticated?: boolean; body?: unknown; query?: Record<string, string | number | undefined>; headers?: Record<string, string> };
+
+export function createApiClient({ baseUrl, getToken, fetch: fetchFn, locale, timeoutMs = REQUEST_TIMEOUT_MS }: ApiClientOptions): ApiClient {
   const root = baseUrl.replace(/\/+$/, "");
 
-  async function request<T>(
-    method: "GET" | "POST" | "PUT" | "DELETE",
-    path: string,
-    schema: z.ZodType<T>,
-    options: { authenticated?: boolean; body?: unknown; query?: Record<string, string | number | undefined>; headers?: Record<string, string> } = {},
-  ): Promise<T> {
+  /** Fails with `TIMEOUT` if the whole request (token, response and body) takes too long. */
+  async function request<T>(method: "GET" | "POST" | "PUT" | "DELETE", path: string, schema: z.ZodType<T>, options: RequestOptions = {}): Promise<T> {
+    const controller = new AbortController();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timedOut = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => {
+        controller.abort();
+        reject(new ApiClientError("TIMEOUT", "The API did not respond in time."));
+      }, timeoutMs);
+    });
+    try {
+      return await Promise.race([perform(method, path, schema, options, controller.signal), timedOut]);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  async function perform<T>(method: "GET" | "POST" | "PUT" | "DELETE", path: string, schema: z.ZodType<T>, options: RequestOptions, signal: AbortSignal): Promise<T> {
     const headers: Record<string, string> = { Accept: "application/json" };
     if (options.authenticated) {
       const token = await getToken?.();
@@ -219,6 +243,7 @@ export function createApiClient({ baseUrl, getToken, fetch: fetchFn, locale }: A
         method,
         headers,
         ...(options.body === undefined ? {} : { body: JSON.stringify(options.body) }),
+        signal,
       });
     } catch {
       throw new ApiClientError("NETWORK_ERROR", "The API could not be reached.");
@@ -361,7 +386,7 @@ export function validationMessageKey(code: string | undefined): ValidationMessag
  */
 export function errorMessageKey(error: unknown): ErrorMessageKey {
   if (!(error instanceof ApiClientError)) return "errors.generic";
-  if (error.code === "NETWORK_ERROR") return "errors.network";
+  if (error.code === "NETWORK_ERROR" || error.code === "TIMEOUT") return "errors.network";
   if (error.code === "RATE_LIMITED") return "errors.rateLimited";
   if (error.code === "SERVICE_UNAVAILABLE") return "errors.aiUnavailable";
   if (error.code === "PROFILE_REQUIRED") return "errors.profileRequired";

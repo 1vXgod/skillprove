@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { CORS_ALLOWED_REQUEST_HEADERS } from "@skillprove/shared";
-import { ApiClientError, createApiClient, errorMessageKey } from "./index";
+import { ApiClientError, createApiClient, errorMessageKey, REQUEST_TIMEOUT_MS } from "./index";
 
 const health = {
   status: "ok",
@@ -21,7 +21,7 @@ describe("createApiClient", () => {
     await expect(client.getHealth()).resolves.toEqual(health);
     expect(fetch.mock.calls[0]).toEqual([
       "http://api.test/api/v1/health",
-      { method: "GET", headers: { Accept: "application/json" } },
+      { method: "GET", headers: { Accept: "application/json" }, signal: expect.any(AbortSignal) },
     ]);
   });
 
@@ -48,7 +48,7 @@ describe("createApiClient", () => {
     await client.getCurrentUser();
     expect(fetch.mock.calls[0]).toEqual([
       "http://api.test/api/v1/me",
-      { method: "GET", headers: { Accept: "application/json", Authorization: "Bearer abc" } },
+      { method: "GET", headers: { Accept: "application/json", Authorization: "Bearer abc" }, signal: expect.any(AbortSignal) },
     ]);
   });
 
@@ -315,5 +315,65 @@ describe("headers and CORS", () => {
     expect(sent).toContain("idempotency-key");
     const allowedHeaders = CORS_ALLOWED_REQUEST_HEADERS.map((h) => h.toLowerCase());
     expect([...sent].filter((h) => !allowedHeaders.includes(h))).toEqual([]);
+  });
+});
+
+describe("request timeout", () => {
+  /** A fetch that never answers until aborted, like a stopped server behind a tunnel. */
+  const hangingFetch = () =>
+    vi.fn(
+      (_url: RequestInfo | URL, init?: RequestInit) =>
+        new Promise<Response>((_, reject) => init?.signal?.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")))),
+    );
+
+  it("waits 15 seconds by default", () => {
+    expect(REQUEST_TIMEOUT_MS).toBe(15_000);
+  });
+
+  it("turns a request that never answers into a TIMEOUT error and aborts it", async () => {
+    vi.useFakeTimers();
+    try {
+      const fetch = hangingFetch();
+      const client = createApiClient({ baseUrl: "http://api.test", fetch, timeoutMs: 1000 });
+      const pending = client.getHealth();
+      const outcome = expect(pending).rejects.toMatchObject({ code: "TIMEOUT" });
+      await vi.advanceTimersByTimeAsync(1000);
+      await outcome;
+      const init = fetch.mock.calls[0]?.[1];
+      expect(init?.signal?.aborted).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("also ends a session token that never arrives", async () => {
+    vi.useFakeTimers();
+    try {
+      const fetch = vi.fn();
+      const client = createApiClient({ baseUrl: "http://api.test", fetch, timeoutMs: 1000, getToken: () => new Promise<string>(() => undefined) });
+      const outcome = expect(client.getSkillPassport()).rejects.toMatchObject({ code: "TIMEOUT" });
+      await vi.advanceTimersByTimeAsync(1000);
+      await outcome;
+      expect(fetch).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("does not affect a request that answers in time", async () => {
+    vi.useFakeTimers();
+    try {
+      const fetch = vi.fn(async () => new Response(JSON.stringify({ success: true, data: health })));
+      const client = createApiClient({ baseUrl: "http://api.test", fetch, timeoutMs: 1000 });
+      await expect(client.getHealth()).resolves.toEqual(health);
+      // The timer is cleared: nothing fires later.
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("shows the same message as a network error", () => {
+    expect(errorMessageKey(new ApiClientError("TIMEOUT", "x"))).toBe("errors.network");
   });
 });
