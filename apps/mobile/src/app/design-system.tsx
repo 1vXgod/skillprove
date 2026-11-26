@@ -13,16 +13,23 @@ import {
   CardHeader,
   Checkbox,
   EmptyState,
+  GlowBackground,
+  GradientText,
+  HeroCard,
   IconButton,
   Input,
+  LightMark,
+  Logo,
   Modal,
   PasswordInput,
   Progress,
   RadioGroup,
   Select,
   Separator,
+  SkillRow,
   Skeleton,
   Spinner,
+  StatCard,
   Switch,
   Tabs,
   Textarea,
@@ -36,6 +43,17 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
         {title}
       </AppText>
       {children}
+    </View>
+  );
+}
+
+function EffectLabel({ title, help }: { title: string; help: string }) {
+  return (
+    <View style={styles.effectLabel}>
+      <AppText variant="h4">{title}</AppText>
+      <AppText variant="bodySmall" tone="mutedForeground">
+        {help}
+      </AppText>
     </View>
   );
 }
@@ -64,6 +82,93 @@ function Showcase() {
         {t("designSystem.title")}
       </AppText>
       <AppText tone="mutedForeground">{t("designSystem.description")}</AppText>
+
+      <Section title={t("designSystem.brand")}>
+        <AppText tone="mutedForeground">{t("designSystem.brandDescription")}</AppText>
+
+        <EffectLabel title={t("designSystem.brandItems.logo")} help={t("designSystem.brandItems.logoHelp")} />
+        <Card>
+          <Logo size="lg" />
+          <Logo />
+        </Card>
+        <View style={[styles.effectPanel, { backgroundColor: palette.sidebar, borderColor: palette.sidebarBorder }]}>
+          <Logo size="lg" inverse />
+        </View>
+
+        <EffectLabel title={t("designSystem.brandItems.fonts")} help={t("designSystem.brandItems.fontsHelp")} />
+        <Card>
+          <AppText variant="hero">{t("designSystem.brandItems.fontSampleHeadline")}</AppText>
+          <GradientText variant="hero">{t("designSystem.brandItems.fontSampleAccent")}</GradientText>
+          <AppText tone="mutedForeground">{t("designSystem.brandItems.fontSampleBody")}</AppText>
+        </Card>
+
+        <EffectLabel title={t("designSystem.brandItems.stats")} help={t("designSystem.brandItems.statsHelp")} />
+        <View style={styles.marks}>
+          <StatCard icon="check-circle" value="8" label={t("designSystem.brandItems.statVerified")} />
+          <StatCard icon="user" value="78%" label={t("designSystem.brandItems.statComplete")} />
+        </View>
+
+        <EffectLabel title={t("designSystem.brandItems.skillRows")} help={t("designSystem.brandItems.skillRowsHelp")} />
+        <Card style={styles.listCard}>
+          <SkillRow icon="code" title="JavaScript" detail={"72/100 · " + t("passport.difficulty.INTERMEDIATE")} badge={<Badge tone="success" label={t("passport.verified")} />} onPress={() => undefined} />
+          <SkillRow icon="database" title="SQL" detail={"64/100 · " + t("passport.moreAssessmentsNeeded")} badge={<Badge tone="success" label={t("passport.verified")} />} onPress={() => undefined} />
+          <SkillRow icon="grid" title="Excel" detail={t("passport.levels.ADVANCED")} badge={<Badge label={t("passport.selfReported")} />} />
+        </Card>
+
+        <EffectLabel title={t("designSystem.brandItems.heroCard")} help={t("designSystem.brandItems.heroCardHelp")} />
+        <HeroCard title={t("designSystem.brandItems.heroTitle")} body={t("designSystem.brandItems.heroBody")} action={<Button label={t("designSystem.brandItems.heroAction")} variant="glow" />} />
+      </Section>
+
+      <Section title={t("designSystem.effects")}>
+        <AppText tone="mutedForeground">{t("designSystem.effectsDescription")}</AppText>
+
+        <EffectLabel title={t("designSystem.effectsItems.glowBackground")} help={t("designSystem.effectsItems.glowBackgroundHelp")} />
+        <View style={[styles.effectPanel, { backgroundColor: palette.background, borderColor: palette.border }]}>
+          <GlowBackground />
+          <View style={[styles.pill, { backgroundColor: palette.glassSurface, borderColor: palette.glassBorder }]}>
+            <AppText variant="caption" tone="mutedForeground">
+              {t("designSystem.effectsItems.sampleEyebrow")}
+            </AppText>
+          </View>
+          <AppText variant="hero">{t("designSystem.effectsItems.sampleLead")}</AppText>
+          <GradientText variant="hero">{t("designSystem.effectsItems.sampleAccent")}</GradientText>
+          <Button label={t("auth.createAccount")} variant="glow" size="lg" fullWidth />
+          <Button label={t("auth.signIn")} variant="outline" size="lg" fullWidth />
+          <View style={styles.centered}>
+            <LightMark size={160} />
+          </View>
+        </View>
+
+        <EffectLabel title={t("designSystem.effectsItems.glassCards")} help={t("designSystem.effectsItems.glassCardsHelp")} />
+        <View style={[styles.effectPanel, { backgroundColor: palette.background, borderColor: palette.border }]}>
+          <GlowBackground />
+          {(["cardOne", "cardTwo", "cardThree"] as const).map((card) => (
+            <Card key={card} variant="glass">
+              <AppText variant="h4">{t(`designSystem.effectsItems.${card}Title`)}</AppText>
+              <AppText variant="bodySmall" tone="mutedForeground">
+                {t(`designSystem.effectsItems.${card}Body`)}
+              </AppText>
+            </Card>
+          ))}
+        </View>
+
+        <EffectLabel title={t("designSystem.effectsItems.gradientText")} help={t("designSystem.effectsItems.gradientTextHelp")} />
+        <GradientText variant="hero">{t("designSystem.effectsItems.sampleAccent")}</GradientText>
+        <GradientText variant="display">{t("designSystem.effectsItems.sampleAccent")}</GradientText>
+        <GradientText variant="h2">{t("designSystem.effectsItems.sampleAccent")}</GradientText>
+
+        <EffectLabel title={t("designSystem.effectsItems.glowButton")} help={t("designSystem.effectsItems.glowButtonHelp")} />
+        <Button label={ex("designSystem.examples.primary")} fullWidth />
+        <Button label={t("designSystem.effectsItems.glowButton")} variant="glow" fullWidth />
+
+        <EffectLabel title={t("designSystem.effectsItems.lightMark")} help={t("designSystem.effectsItems.lightMarkHelp")} />
+        <View style={styles.marks}>
+          <LightMark size={160} />
+          <LightMark size={72} />
+        </View>
+
+        <Alert tone="info" message={t("designSystem.effectsItems.reducedMotion")} />
+      </Section>
 
       <Section title={t("designSystem.colors")}>
         <View style={styles.swatches}>
@@ -251,6 +356,12 @@ function Showcase() {
 }
 
 const styles = StyleSheet.create({
+  effectPanel: { overflow: "hidden", borderWidth: 1, borderRadius: radius.xl, padding: spacing[5], gap: spacing[4] },
+  effectLabel: { gap: spacing[0.5] },
+  pill: { alignSelf: "flex-start", borderWidth: 1, borderRadius: radius.full, paddingHorizontal: spacing[3], paddingVertical: spacing[1] },
+  centered: { alignItems: "center" },
+  marks: { flexDirection: "row", alignItems: "flex-end", gap: spacing[4] },
+  listCard: { padding: spacing[2], gap: 0 },
   flex: { flex: 1 },
   section: { gap: spacing[3], paddingTop: spacing[4] },
   wrap: { flexDirection: "row", flexWrap: "wrap", gap: spacing[2], alignItems: "center" },

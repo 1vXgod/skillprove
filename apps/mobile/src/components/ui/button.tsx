@@ -7,7 +7,7 @@ import { textStyle } from "../../theme/styles";
 import { AppText } from "./text";
 
 export type IconName = ComponentProps<typeof Feather>["name"];
-export type ButtonVariant = "primary" | "secondary" | "outline" | "ghost" | "destructive" | "link";
+export type ButtonVariant = "primary" | "glow" | "secondary" | "outline" | "ghost" | "destructive" | "link";
 
 const PADDING: Record<ControlSize, number> = { sm: spacing[3], md: spacing[4], lg: spacing[5] };
 
@@ -15,6 +15,7 @@ function useVariantColors(variant: ButtonVariant) {
   const { colors } = useTheme();
   const map = {
     primary: { background: colors.primary, pressed: colors.primaryHover, text: colors.primaryForeground, border: "transparent" },
+    glow: { background: colors.primary, pressed: colors.primaryHover, text: colors.primaryForeground, border: "transparent" },
     secondary: { background: colors.secondary, pressed: colors.muted, text: colors.secondaryForeground, border: "transparent" },
     outline: { background: colors.surface, pressed: colors.muted, text: colors.foreground, border: colors.input },
     ghost: { background: "transparent", pressed: colors.muted, text: colors.foreground, border: "transparent" },
@@ -36,6 +37,7 @@ interface ButtonProps extends Omit<PressableProps, "children" | "style"> {
 /** Every size keeps a 44-point touch target; small buttons extend it with hitSlop. */
 export function Button({ label, variant = "primary", size = "md", loading = false, icon, disabled, fullWidth = false, ...props }: ButtonProps) {
   const c = useVariantColors(variant);
+  const glowColor = useTheme().colors.glowPrimary;
   const height = controlHeights[size];
   const inactive = disabled || loading;
   const slop = Math.max(0, (controlHeights.touch - height) / 2);
@@ -57,6 +59,8 @@ export function Button({ label, variant = "primary", size = "md", loading = fals
           opacity: inactive ? 0.5 : 1,
           alignSelf: fullWidth ? "stretch" : "flex-start",
         },
+        // The main call to action: a soft brand glow (a coloured shadow on iOS, elevation on Android).
+        variant === "glow" && { shadowColor: glowColor, shadowOpacity: 0.6, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 6 },
       ]}
       {...props}
     >

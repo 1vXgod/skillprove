@@ -6,6 +6,8 @@ export { DropdownMenu, type MenuItem, type MenuLabelGroup, type TriggerProps } f
 export { Label } from "./field";
 export { Input, PasswordInput, Select, Textarea, type SelectOption } from "./input";
 export { Breadcrumb, Pagination, type BreadcrumbItem } from "./navigation";
+export { HeroCard, Logo, LogoMark, SkillRow, StatCard } from "./brand";
+export { GlowBackground, GradientText, LightArcs, LightMark } from "./effects";
 export { Spinner } from "./spinner";
 export { Tabs, type TabItem } from "./tabs";
 export { Tooltip } from "./tooltip";

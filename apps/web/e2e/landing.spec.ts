@@ -46,13 +46,18 @@ test.describe("landing page", () => {
     expect(calls).toEqual([]);
   });
 
-  test("is dark until the visitor chooses a theme, then follows the choice", async ({ page }) => {
+  test("is light by default, follows a chosen theme, and shows the real logo", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator("[data-landing]")).toHaveAttribute("data-theme", "dark");
-    await setPreferences(page, "sq", "light");
-    await page.reload();
-    await expect(page.locator("[data-landing]")).not.toHaveAttribute("data-theme", /.*/);
     await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+    const header = page.locator("header");
+    await expect(header.getByText("SkillProve", { exact: true })).toBeVisible();
+    await expect(header.locator('img[src="/brand/skillprove-mark.svg"]')).toBeVisible();
+    await setPreferences(page, "sq", "dark");
+    await page.reload();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+    // In dark mode the lighter variant of the mark shows instead.
+    await expect(header.locator('img[src="/brand/skillprove-mark-dark.svg"]')).toBeVisible();
+    await expect(header.locator('img[src="/brand/skillprove-mark.svg"]')).toBeHidden();
   });
 
   test("has no links in the footer", async ({ page }) => {

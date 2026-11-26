@@ -2,7 +2,7 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { cn } from "../../lib/cn";
 import { Spinner } from "./spinner";
 
-export type ButtonVariant = "primary" | "secondary" | "outline" | "ghost" | "destructive" | "link";
+export type ButtonVariant = "primary" | "glow" | "secondary" | "outline" | "ghost" | "destructive" | "link";
 export type ButtonSize = "sm" | "md" | "lg";
 
 const BASE =
@@ -10,6 +10,8 @@ const BASE =
 
 const VARIANTS: Record<ButtonVariant, string> = {
   primary: "bg-primary text-primary-foreground hover:bg-primary-hover active:bg-primary-hover",
+  // The main call to action on a page: primary with a soft brand glow underneath.
+  glow: "sp-glow-button bg-primary text-primary-foreground hover:bg-primary-hover active:bg-primary-hover",
   secondary: "bg-secondary text-secondary-foreground hover:bg-muted active:bg-muted",
   outline: "border border-input bg-surface text-foreground hover:bg-muted active:bg-muted",
   ghost: "text-foreground hover:bg-muted active:bg-muted",
