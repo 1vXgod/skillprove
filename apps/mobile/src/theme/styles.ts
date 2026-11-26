@@ -1,19 +1,24 @@
-import { colors, shadowColor, shadows, typography, type ColorTokens, type ShadowName, type ThemeName, type TypeStyle } from "@skillprove/shared/design";
+import { colors, fontFamilies, shadowColor, shadows, typography, type ColorTokens, type ShadowName, type ThemeName, type TypeStyle } from "@skillprove/shared/design";
 
 /** React Native wants string weights. */
 const WEIGHTS = { 400: "400", 500: "500", 600: "600", 700: "700" } as const;
 
 export interface NativeTextStyle {
+  fontFamily: string;
   fontSize: number;
   lineHeight: number;
   fontWeight: (typeof WEIGHTS)[keyof typeof WEIGHTS];
   letterSpacing: number;
 }
 
-/** A shared type token as a React Native text style. Letter spacing goes from em to points. */
+/**
+ * A shared type token as a React Native text style. Letter spacing goes from em to points.
+ * Custom fonts need one family per weight on iOS, so the weight picks the file.
+ */
 export function textStyle(style: TypeStyle): NativeTextStyle {
   const t = typography[style];
   return {
+    fontFamily: t.family === "display" ? fontFamilies.native.display : fontFamilies.native.sans[t.fontWeight === 400 ? 400 : t.fontWeight === 500 ? 500 : t.fontWeight === 600 ? 600 : 700],
     fontSize: t.fontSize,
     lineHeight: t.lineHeight,
     fontWeight: WEIGHTS[t.fontWeight],

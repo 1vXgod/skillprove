@@ -5,7 +5,7 @@ import { useState, type ReactNode } from "react";
 import { useI18n } from "../lib/i18n";
 import { useTheme } from "../lib/theme";
 import { ConnectionStatus } from "./connection-status";
-import { InboxIcon, MoreIcon, SettingsIcon } from "./icons";
+import { ClipboardIcon, InboxIcon, MoreIcon, SettingsIcon, SuccessIcon, UserIcon } from "./icons";
 import {
   Alert,
   AlertDialog,
@@ -21,17 +21,26 @@ import {
   Dialog,
   DropdownMenu,
   EmptyState,
+  GlowBackground,
+  GradientText,
+  HeroCard,
   IconButton,
   Input,
+  LightArcs,
+  LightMark,
+  Logo,
+  LogoMark,
   Pagination,
   PasswordInput,
   Progress,
   Radio,
   RadioGroup,
   Select,
+  SkillRow,
   Separator,
   Skeleton,
   Spinner,
+  StatCard,
   Switch,
   Tabs,
   Textarea,
@@ -48,6 +57,15 @@ function Section({ id, title, children }: { id: string; title: string; children:
       </h2>
       {children}
     </section>
+  );
+}
+
+function EffectLabel({ title, help }: { title: string; help: string }) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <h3 className="type-h4 text-foreground">{title}</h3>
+      <p className="type-body-small text-muted-foreground">{help}</p>
+    </div>
   );
 }
 
@@ -125,6 +143,124 @@ export function DesignSystemShowcase({ formatting }: { formatting: FormattingSam
           it). It used to be the public home page; users no longer see it. */}
       <Section id="ds-connection" title={t("status.title")}>
         <ConnectionStatus />
+      </Section>
+
+      <Section id="ds-brand" title={t("designSystem.brand")}>
+        <p className="max-w-2xl type-body text-muted-foreground">{t("designSystem.brandDescription")}</p>
+
+        <EffectLabel title={t("designSystem.brandItems.logo")} help={t("designSystem.brandItems.logoHelp")} />
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="flex flex-wrap items-center gap-6 rounded-xl border border-border/70 bg-surface p-6 shadow-card">
+            <Logo size="lg" />
+            <Logo />
+            <Logo size="sm" />
+          </div>
+          <div className="flex flex-wrap items-center gap-6 rounded-xl bg-sidebar p-6">
+            <Logo size="lg" inverse />
+            <LogoMark inverse className="h-12" />
+          </div>
+        </div>
+
+        <EffectLabel title={t("designSystem.brandItems.fonts")} help={t("designSystem.brandItems.fontsHelp")} />
+        <div className="flex flex-col gap-3 rounded-xl border border-border/70 bg-surface p-6 shadow-card">
+          <p className="type-hero text-foreground">
+            {t("designSystem.brandItems.fontSampleHeadline")} <GradientText>{t("designSystem.brandItems.fontSampleAccent")}</GradientText>
+          </p>
+          <p className="max-w-xl type-body-large text-muted-foreground">{t("designSystem.brandItems.fontSampleBody")}</p>
+        </div>
+
+        <EffectLabel title={t("designSystem.brandItems.stats")} help={t("designSystem.brandItems.statsHelp")} />
+        <div className="grid gap-4 sm:grid-cols-3">
+          <StatCard tone="success" icon={<SuccessIcon size={20} />} value="8" label={t("designSystem.brandItems.statVerified")} />
+          <StatCard icon={<UserIcon size={20} />} value="78%" label={t("designSystem.brandItems.statComplete")} />
+          <StatCard tone="info" icon={<ClipboardIcon size={20} />} value="5" label={t("designSystem.brandItems.statAvailable")} />
+        </div>
+
+        <EffectLabel title={t("designSystem.brandItems.skillRows")} help={t("designSystem.brandItems.skillRowsHelp")} />
+        <Card className="max-w-xl p-2">
+          <SkillRow icon={<SuccessIcon size={18} />} title="JavaScript" detail={"72/100 · " + t("passport.difficulty.INTERMEDIATE")} badge={<Badge tone="success">{t("passport.verified")}</Badge>} href="#ds-brand" />
+          <SkillRow icon={<SuccessIcon size={18} />} title="SQL" detail={"64/100 · " + t("passport.moreAssessmentsNeeded")} badge={<Badge tone="success">{t("passport.verified")}</Badge>} href="#ds-brand" />
+          <SkillRow icon={<UserIcon size={18} />} title="Excel" detail={t("passport.levels.ADVANCED")} badge={<Badge>{t("passport.selfReported")}</Badge>} />
+        </Card>
+
+        <EffectLabel title={t("designSystem.brandItems.heroCard")} help={t("designSystem.brandItems.heroCardHelp")} />
+        <HeroCard
+          markId="ds-hero-mark"
+          title={t("designSystem.brandItems.heroTitle")}
+          body={t("designSystem.brandItems.heroBody")}
+          action={<Button variant="glow">{t("designSystem.brandItems.heroAction")}</Button>}
+        />
+      </Section>
+
+      <Section id="ds-effects" title={t("designSystem.effects")}>
+        <p className="max-w-2xl type-body text-muted-foreground">{t("designSystem.effectsDescription")}</p>
+
+        <EffectLabel title={t("designSystem.effectsItems.glowBackground")} help={t("designSystem.effectsItems.glowBackgroundHelp")} />
+        <div data-testid="effects-hero" className="relative isolate grid items-center gap-8 overflow-hidden rounded-xl border border-border px-6 py-10 sm:px-10 md:grid-cols-[1.4fr_1fr]">
+          <GlowBackground grid />
+          <div className="flex flex-col items-start gap-5">
+            <span className="sp-glass rounded-full px-3 py-1 type-caption text-muted-foreground">{t("designSystem.effectsItems.sampleEyebrow")}</span>
+            <p className="type-hero text-foreground">
+              {t("designSystem.effectsItems.sampleLead")} <GradientText>{t("designSystem.effectsItems.sampleAccent")}</GradientText>
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Button variant="glow" size="lg">
+                {t("auth.createAccount")}
+              </Button>
+              <Button variant="outline" size="lg" className="sp-glass">
+                {t("auth.signIn")}
+              </Button>
+            </div>
+          </div>
+          <LightMark id="ds-mark-hero" className="mx-auto w-full max-w-56" />
+        </div>
+
+        <EffectLabel title={t("designSystem.effectsItems.glassCards")} help={t("designSystem.effectsItems.glassCardsHelp")} />
+        <div className="relative isolate overflow-hidden rounded-xl border border-border p-4 sm:p-6">
+          <GlowBackground variant="soft" />
+          <div className="grid gap-4 md:grid-cols-3 md:grid-rows-2">
+            {(
+              [
+                ["cardOneTitle", "cardOneBody", "md:col-span-2", false],
+                ["cardTwoTitle", "cardTwoBody", "md:row-span-2", true],
+                ["cardThreeTitle", "cardThreeBody", "md:col-span-2", false],
+              ] as const
+            ).map(([title, body, span, tall]) => (
+              <Card key={title} variant="glass" interactive className={`justify-between gap-6 p-6 ${span}`}>
+                <div className="flex flex-col gap-2">
+                  <h3 className="type-h4 text-foreground">{t(`designSystem.effectsItems.${title}`)}</h3>
+                  <p className="type-body-small text-muted-foreground">{t(`designSystem.effectsItems.${body}`)}</p>
+                </div>
+                {tall && <LightArcs id="ds-arcs" className="w-full" />}
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        <EffectLabel title={t("designSystem.effectsItems.gradientText")} help={t("designSystem.effectsItems.gradientTextHelp")} />
+        <div className="flex flex-col gap-2">
+          <p className="type-hero"><GradientText>{t("designSystem.effectsItems.sampleAccent")}</GradientText></p>
+          <p className="type-display"><GradientText>{t("designSystem.effectsItems.sampleAccent")}</GradientText></p>
+          <p className="type-h2"><GradientText>{t("designSystem.effectsItems.sampleAccent")}</GradientText></p>
+        </div>
+
+        <EffectLabel title={t("designSystem.effectsItems.glowButton")} help={t("designSystem.effectsItems.glowButtonHelp")} />
+        <div className="flex flex-wrap gap-3">
+          <Button>{ex("designSystem.examples.primary")}</Button>
+          <Button variant="glow">{t("designSystem.effectsItems.glowButton")}</Button>
+          <Button variant="outline" className="sp-glass">
+            {ex("designSystem.examples.outline")}
+          </Button>
+        </div>
+
+        <EffectLabel title={t("designSystem.effectsItems.lightMark")} help={t("designSystem.effectsItems.lightMarkHelp")} />
+        <div className="flex flex-wrap items-end gap-8">
+          <LightMark id="ds-mark-large" className="w-48" />
+          <LightMark id="ds-mark-small" className="w-20" />
+          <LightArcs id="ds-arcs-alone" className="w-48" />
+        </div>
+
+        <Alert tone="info">{t("designSystem.effectsItems.reducedMotion")}</Alert>
       </Section>
 
       <Section id="ds-colors" title={t("designSystem.colors")}>

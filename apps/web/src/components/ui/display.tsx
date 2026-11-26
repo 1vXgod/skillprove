@@ -13,8 +13,22 @@ export function Separator({ orientation = "horizontal", decorative = true, class
   );
 }
 
-export function Card({ className, ...props }: HTMLAttributes<HTMLElement>) {
-  return <section className={cn("flex flex-col rounded-lg border border-border bg-surface", className)} {...props} />;
+/**
+ * `solid` is the everyday card. `glass` is translucent and blurred with a glowing edge, for use over
+ * a GlowBackground; `interactive` adds the hover glow and lift (for cards that are links or buttons).
+ */
+export function Card({ className, variant = "solid", interactive = false, ...props }: HTMLAttributes<HTMLElement> & { variant?: "solid" | "glass"; interactive?: boolean }) {
+  return (
+    <section
+      className={cn(
+        "flex flex-col",
+        variant === "glass" ? "sp-glass rounded-xl" : "rounded-xl border border-border/70 bg-surface shadow-card",
+        interactive && "sp-glass-hover",
+        className,
+      )}
+      {...props}
+    />
+  );
 }
 
 export function CardHeader({ title, description, action, headingLevel = 2 }: { title: string; description?: string; action?: ReactNode; headingLevel?: 2 | 3 | 4 }) {

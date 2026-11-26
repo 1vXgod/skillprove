@@ -1,7 +1,8 @@
 import { THEME_PREFERENCES, type ThemeName, type ThemePreference } from "./tokens";
 
 export const THEME_STORAGE_KEY = "sp-theme";
-export const DEFAULT_THEME_PREFERENCE: ThemePreference = "system";
+/** Light first: the app opens light until someone picks dark or "system". */
+export const DEFAULT_THEME_PREFERENCE: ThemePreference = "light";
 
 /** Reads a stored preference, falling back to the default for anything unrecognised. */
 export function parseThemePreference(value: unknown): ThemePreference {

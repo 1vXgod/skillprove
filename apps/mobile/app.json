@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#222c6e"
+      "backgroundColor": "#f4f5fc"
     },
     "ios": {
       "bundleIdentifier": "com.skillprove.app"
@@ -19,7 +19,7 @@
       "package": "com.skillprove.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#222c6e"
+        "backgroundColor": "#ffffff"
       }
     },
     "plugins": [

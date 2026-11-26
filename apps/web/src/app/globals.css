@@ -36,6 +36,14 @@
   --color-glow-secondary: var(--sp-glow-secondary);
   --color-gradient-from: var(--sp-gradient-from);
   --color-gradient-to: var(--sp-gradient-to);
+  --color-glass-surface: var(--sp-glass-surface);
+  --color-glass-border: var(--sp-glass-border);
+  --color-sidebar: var(--sp-sidebar);
+  --color-sidebar-foreground: var(--sp-sidebar-foreground);
+  --color-sidebar-muted: var(--sp-sidebar-muted);
+  --color-sidebar-active: var(--sp-sidebar-active);
+  --color-sidebar-active-foreground: var(--sp-sidebar-active-foreground);
+  --color-sidebar-border: var(--sp-sidebar-border);
 
   --radius-sm: var(--sp-radius-sm);
   --radius-md: var(--sp-radius-md);
@@ -45,8 +53,10 @@
   --shadow-sm: var(--sp-shadow-sm);
   --shadow-md: var(--sp-shadow-md);
   --shadow-lg: var(--sp-shadow-lg);
+  --shadow-card: var(--sp-shadow-card);
 
   --font-sans: var(--sp-font-sans);
+  --font-display: var(--sp-font-display);
   --font-mono: var(--sp-font-mono);
 
   --ease-standard: var(--sp-ease-standard);
@@ -112,59 +122,46 @@ dialog.sp-dialog::backdrop {
 }
 
 /*
- * Landing page (Vision §2): dark-first, with soft light and glass. Colours come from the theme
- * tokens; only opacity differs by theme, so the glow is softer on light backgrounds. Every
- * animation is slow and decorative; reduced motion turns it off (see also the global rule above).
+ * Effects: the modern look shared by the landing page and the app (design system "Effects").
+ * Colours, strengths and timings come from the tokens (--sp-glow-*, --sp-glass-*, --sp-ambient-*),
+ * so light and dark differ only in token values. Motion is slow and decorative; reduced motion
+ * turns it off (see the global rule above and the block at the end).
  */
-:root,
-[data-theme="light"] {
-  --landing-glow: 0.28;
-  --landing-grid: 0.55;
-}
-[data-theme="dark"] {
-  --landing-glow: 0.7;
-  --landing-grid: 0.35;
-}
-@media (prefers-color-scheme: dark) {
-  [data-theme="system"] {
-    --landing-glow: 0.7;
-    --landing-grid: 0.35;
-  }
-}
 
-/* A slowly drifting mesh of two brand-coloured glows behind the hero. */
-.landing-mesh {
+/* A slowly drifting mesh of two brand-coloured glows. Put it first inside a `relative isolate` box. */
+.sp-glow-bg {
   position: absolute;
   inset: 0;
+  z-index: -1;
   overflow: hidden;
   pointer-events: none;
 }
-.landing-mesh::before,
-.landing-mesh::after {
+.sp-glow-bg::before,
+.sp-glow-bg::after {
   content: "";
   position: absolute;
   border-radius: 9999px;
   filter: blur(72px);
-  opacity: var(--landing-glow);
+  opacity: var(--sp-glow-opacity);
   will-change: transform;
 }
-.landing-mesh::before {
+.sp-glow-bg::before {
   width: min(44rem, 120vw);
   height: min(44rem, 120vw);
   left: -12rem;
   top: -18rem;
   background: radial-gradient(circle, var(--sp-glow-primary), transparent 65%);
-  animation: landing-drift 24s ease-in-out infinite alternate;
+  animation: sp-drift var(--sp-ambient-drift) ease-in-out infinite alternate;
 }
-.landing-mesh::after {
+.sp-glow-bg::after {
   width: min(38rem, 110vw);
   height: min(38rem, 110vw);
   right: -14rem;
   top: 2rem;
   background: radial-gradient(circle, var(--sp-glow-secondary), transparent 65%);
-  animation: landing-drift 30s ease-in-out infinite alternate-reverse;
+  animation: sp-drift calc(var(--sp-ambient-drift) * 1.25) ease-in-out infinite alternate-reverse;
 }
-@keyframes landing-drift {
+@keyframes sp-drift {
   from {
     transform: translate3d(0, 0, 0) scale(1);
   }
@@ -173,23 +170,25 @@ dialog.sp-dialog::backdrop {
   }
 }
 
-/* A faint brand glow behind each section's cards, so the glass has something to blur. */
-.landing-section-glow {
+/* A still, softer glow for behind a group of cards, so glass has something to blur. */
+.sp-glow-soft {
   position: absolute;
   inset: 0;
+  z-index: -1;
   pointer-events: none;
-  opacity: var(--landing-glow);
+  opacity: var(--sp-glow-opacity);
   background:
     radial-gradient(ellipse 45% 40% at 30% 65%, color-mix(in srgb, var(--sp-glow-primary) 35%, transparent), transparent 70%),
     radial-gradient(ellipse 40% 35% at 75% 45%, color-mix(in srgb, var(--sp-glow-secondary) 35%, transparent), transparent 70%);
 }
 
 /* A faint grid that fades out from the top centre. */
-.landing-grid {
+.sp-grid-bg {
   position: absolute;
   inset: 0;
+  z-index: -1;
   pointer-events: none;
-  opacity: var(--landing-grid);
+  opacity: var(--sp-grid-opacity);
   background-image:
     linear-gradient(var(--sp-border) 1px, transparent 1px),
     linear-gradient(90deg, var(--sp-border) 1px, transparent 1px);
@@ -197,35 +196,38 @@ dialog.sp-dialog::backdrop {
   mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 20%, transparent 75%);
 }
 
-/* The headline's key word. Forced-colours mode gets plain text. */
-.text-gradient {
+/* An accent word: italic headline serif in the navy-to-blue gradient. Forced colours get plain text. */
+.sp-gradient-text {
+  font-family: var(--sp-font-display);
+  font-style: italic;
+  font-weight: 400;
   background: linear-gradient(100deg, var(--sp-gradient-from), var(--sp-gradient-to));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 @media (forced-colors: active) {
-  .text-gradient {
+  .sp-gradient-text {
     background: none;
     color: CanvasText;
   }
 }
 
-/* Translucent, blurred cards with a thin glowing border that brightens on hover. */
-.glass-card {
-  position: relative;
-  border: 1px solid color-mix(in srgb, var(--sp-glow-primary) 22%, var(--sp-border));
-  border-radius: var(--sp-radius-xl);
-  background: color-mix(in srgb, var(--sp-surface) 60%, transparent);
-  -webkit-backdrop-filter: blur(16px) saturate(140%);
-  backdrop-filter: blur(16px) saturate(140%);
+/* Glass: translucent, blurred, with a thin glowing edge. `.sp-glass-hover` adds the hover glow. */
+.sp-glass {
+  border: 1px solid var(--sp-glass-border);
+  background: var(--sp-glass-surface);
+  -webkit-backdrop-filter: blur(var(--sp-glass-blur)) saturate(140%);
+  backdrop-filter: blur(var(--sp-glass-blur)) saturate(140%);
   box-shadow: inset 0 1px 0 color-mix(in srgb, var(--sp-foreground) 7%, transparent);
+}
+.sp-glass-hover {
   transition:
     border-color var(--sp-duration-slow) var(--sp-ease-standard),
     box-shadow var(--sp-duration-slow) var(--sp-ease-standard),
     transform var(--sp-duration-slow) var(--sp-ease-standard);
 }
-.glass-card:hover {
+.sp-glass-hover:hover {
   border-color: color-mix(in srgb, var(--sp-glow-primary) 60%, var(--sp-border));
   box-shadow:
     inset 0 1px 0 color-mix(in srgb, var(--sp-foreground) 10%, transparent),
@@ -233,19 +235,38 @@ dialog.sp-dialog::backdrop {
   transform: translateY(-2px);
 }
 
+/* The logo mark: the dark-mode file replaces the light one, with no script. */
+.sp-logo-dark {
+  display: none !important;
+}
+[data-theme="dark"] .sp-logo-light {
+  display: none !important;
+}
+[data-theme="dark"] .sp-logo-dark {
+  display: inline-block !important;
+}
+@media (prefers-color-scheme: dark) {
+  [data-theme="system"] .sp-logo-light {
+    display: none !important;
+  }
+  [data-theme="system"] .sp-logo-dark {
+    display: inline-block !important;
+  }
+}
+
 /* A soft glow under the main call to action. */
-.glow-button {
+.sp-glow-button {
   box-shadow: 0 0.5rem 2rem -0.5rem color-mix(in srgb, var(--sp-glow-primary) 70%, transparent);
 }
 
-/* The hero fades up once on load; sections fade in as they scroll into view where supported. */
-.landing-enter {
-  animation: landing-rise 700ms var(--sp-ease-standard) both;
+/* Fade up once on load; `.sp-reveal` fades in as it scrolls into view where supported. */
+.sp-enter {
+  animation: sp-rise var(--sp-ambient-reveal) var(--sp-ease-standard) both;
 }
-.landing-enter-late {
-  animation: landing-rise 700ms var(--sp-ease-standard) 150ms both;
+.sp-enter-late {
+  animation: sp-rise var(--sp-ambient-reveal) var(--sp-ease-standard) 150ms both;
 }
-@keyframes landing-rise {
+@keyframes sp-rise {
   from {
     opacity: 0;
     transform: translateY(1rem);
@@ -256,26 +277,26 @@ dialog.sp-dialog::backdrop {
   }
 }
 @supports (animation-timeline: view()) {
-  .reveal {
-    animation: landing-rise linear both;
+  .sp-reveal {
+    animation: sp-rise linear both;
     animation-timeline: view();
     animation-range: entry 0% cover 25%;
   }
 }
 
-/* The "verified" mark made of light: rings that breathe slowly around a check. */
-.verified-orb .orb-ring {
+/* The light mark's rings breathe slowly. */
+.sp-light-mark .sp-light-ring {
   transform-origin: center;
   transform-box: fill-box;
-  animation: orb-breathe 6s ease-in-out infinite;
+  animation: sp-breathe 6s ease-in-out infinite;
 }
-.verified-orb .orb-ring:nth-of-type(2) {
+.sp-light-mark .sp-light-ring:nth-of-type(2) {
   animation-delay: -2s;
 }
-.verified-orb .orb-ring:nth-of-type(3) {
+.sp-light-mark .sp-light-ring:nth-of-type(3) {
   animation-delay: -4s;
 }
-@keyframes orb-breathe {
+@keyframes sp-breathe {
   0%,
   100% {
     opacity: 0.35;
@@ -288,17 +309,17 @@ dialog.sp-dialog::backdrop {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .landing-mesh::before,
-  .landing-mesh::after,
-  .verified-orb .orb-ring,
-  .landing-enter,
-  .landing-enter-late,
-  .reveal,
-  .glass-card {
+  .sp-glow-bg::before,
+  .sp-glow-bg::after,
+  .sp-light-mark .sp-light-ring,
+  .sp-enter,
+  .sp-enter-late,
+  .sp-reveal,
+  .sp-glass-hover {
     animation: none !important;
     transition: none !important;
   }
-  .glass-card:hover {
+  .sp-glass-hover:hover {
     transform: none;
   }
 }

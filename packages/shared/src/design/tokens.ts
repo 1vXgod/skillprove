@@ -42,6 +42,16 @@ export interface ColorTokens {
   /** The two ends of the gradient on a headline's key word. Each meets AA as text on `background`. */
   gradientFrom: string;
   gradientTo: string;
+  /** Translucent card fill and its thin brand-tinted edge, for glass surfaces over a glow. */
+  glassSurface: string;
+  glassBorder: string;
+  /** The web app's navigation sidebar: deep navy in both themes, with its own text and active item. */
+  sidebar: string;
+  sidebarForeground: string;
+  sidebarMuted: string;
+  sidebarActive: string;
+  sidebarActiveForeground: string;
+  sidebarBorder: string;
 }
 
 /**
@@ -50,20 +60,20 @@ export interface ColorTokens {
  */
 export const colors: Record<ThemeName, ColorTokens> = {
   light: {
-    background: "#f6f7f9",
+    background: "#f4f5fc",
     surface: "#ffffff",
     surfaceRaised: "#ffffff",
-    foreground: "#161a23",
-    mutedForeground: "#596273",
-    muted: "#eef0f4",
-    border: "#e1e4ea",
-    input: "#c9ced8",
+    foreground: "#141a3d",
+    mutedForeground: "#5b6280",
+    muted: "#eef0fa",
+    border: "#e3e6f3",
+    input: "#c4cae2",
     ring: "#2f5be0",
-    primary: "#222c6e",
+    primary: "#2f5be0",
     primaryForeground: "#ffffff",
-    primaryHover: "#1a2258",
-    secondary: "#eceef6",
-    secondaryForeground: "#1e2654",
+    primaryHover: "#2549c4",
+    secondary: "#e8edfd",
+    secondaryForeground: "#1e2a6b",
     accent: "#2f5be0",
     accentForeground: "#ffffff",
     success: "#14724f",
@@ -77,24 +87,32 @@ export const colors: Record<ThemeName, ColorTokens> = {
     infoSubtle: "#e8eefb",
     overlay: "rgba(13, 16, 24, 0.5)",
     glowPrimary: "#2f5be0",
-    glowSecondary: "#222c6e",
+    glowSecondary: "#8f8cf3",
     gradientFrom: "#222c6e",
     gradientTo: "#2f5be0",
+    glassSurface: "rgba(255, 255, 255, 0.62)",
+    glassBorder: "rgba(47, 91, 224, 0.22)",
+    sidebar: "#1b2363",
+    sidebarForeground: "#ffffff",
+    sidebarMuted: "#b9c0e8",
+    sidebarActive: "#2d3891",
+    sidebarActiveForeground: "#ffffff",
+    sidebarBorder: "#28317a",
   },
   dark: {
-    background: "#0c0f15",
-    surface: "#141821",
-    surfaceRaised: "#1a1f2a",
-    foreground: "#e9ebf0",
-    mutedForeground: "#9ba3b3",
-    muted: "#1e2430",
-    border: "#272d3a",
-    input: "#3a4252",
+    background: "#080b1a",
+    surface: "#0f1430",
+    surfaceRaised: "#151b3c",
+    foreground: "#e9ecf7",
+    mutedForeground: "#a3abc8",
+    muted: "#19204a",
+    border: "#232b55",
+    input: "#3b4578",
     ring: "#7b98ff",
     primary: "#a9b4ff",
     primaryForeground: "#0f1430",
     primaryHover: "#c0c8ff",
-    secondary: "#1f2535",
+    secondary: "#1c2350",
     secondaryForeground: "#dfe3f5",
     accent: "#7b98ff",
     accentForeground: "#0c0f15",
@@ -112,14 +130,34 @@ export const colors: Record<ThemeName, ColorTokens> = {
     glowSecondary: "#4b5fd6",
     gradientFrom: "#c0c8ff",
     gradientTo: "#6f93ff",
+    glassSurface: "rgba(15, 20, 48, 0.58)",
+    glassBorder: "rgba(111, 147, 255, 0.24)",
+    sidebar: "#0b1029",
+    sidebarForeground: "#e9ecf7",
+    sidebarMuted: "#a3abc8",
+    sidebarActive: "#1c2456",
+    sidebarActiveForeground: "#ffffff",
+    sidebarBorder: "#1a2047",
   },
 };
 
+/**
+ * DM Serif Display for headlines and Plus Jakarta Sans for everything else, including the
+ * wordmark. Both cover Latin Extended, so ë and ç render. Web loads them with next/font; mobile
+ * bundles the files (assets/fonts) and needs one family name per weight.
+ */
 export const fontFamilies = {
-  /** Inter covers Latin Extended, including ë and ç. Loaded by next/font on web. */
-  web: { sans: "var(--font-inter), ui-sans-serif, system-ui, sans-serif", mono: "ui-monospace, SFMono-Regular, Menlo, monospace" },
-  /** System fonts (San Francisco, Roboto) also cover Albanian, and need no download. */
-  native: { sans: undefined, mono: "monospace" },
+  web: {
+    sans: "var(--font-sans), ui-sans-serif, system-ui, sans-serif",
+    display: "var(--font-display), Georgia, 'Times New Roman', serif",
+    mono: "ui-monospace, SFMono-Regular, Menlo, monospace",
+  },
+  native: {
+    sans: { 400: "PlusJakartaSans_400Regular", 500: "PlusJakartaSans_500Medium", 600: "PlusJakartaSans_600SemiBold", 700: "PlusJakartaSans_700Bold" },
+    display: "DMSerifDisplay_400Regular",
+    displayItalic: "DMSerifDisplay_400Regular_Italic",
+    mono: "monospace",
+  },
 } as const;
 
 export const TYPE_STYLES = [
@@ -147,12 +185,14 @@ export interface TypeToken {
   letterSpacing: number;
   /** Web only: a larger size from the `md` breakpoint up, for headlines that must still fit a 360 px phone. */
   wide?: { fontSize: number; lineHeight: number };
+  /** `display` uses the headline serif; everything else the sans. */
+  family?: "display";
 }
 
 export const typography: Record<TypeStyle, TypeToken> = {
-  hero: { fontSize: 44, lineHeight: 48, fontWeight: 700, letterSpacing: -0.03, wide: { fontSize: 76, lineHeight: 80 } },
-  display: { fontSize: 40, lineHeight: 48, fontWeight: 600, letterSpacing: -0.022 },
-  h1: { fontSize: 30, lineHeight: 38, fontWeight: 600, letterSpacing: -0.02 },
+  hero: { fontSize: 46, lineHeight: 52, fontWeight: 400, letterSpacing: -0.01, wide: { fontSize: 76, lineHeight: 82 }, family: "display" },
+  display: { fontSize: 40, lineHeight: 48, fontWeight: 400, letterSpacing: -0.01, family: "display" },
+  h1: { fontSize: 32, lineHeight: 40, fontWeight: 400, letterSpacing: -0.005, family: "display" },
   h2: { fontSize: 24, lineHeight: 32, fontWeight: 600, letterSpacing: -0.016 },
   h3: { fontSize: 20, lineHeight: 28, fontWeight: 600, letterSpacing: -0.012 },
   h4: { fontSize: 17, lineHeight: 24, fontWeight: 600, letterSpacing: -0.008 },
@@ -184,29 +224,31 @@ export const spacing = {
 export type SpacingStep = keyof typeof spacing;
 
 /** Restrained corners: controls use md, cards lg. Pills only for badges and avatars. */
-export const radius = { sm: 4, md: 6, lg: 8, xl: 12, full: 9999 } as const;
+export const radius = { sm: 6, md: 10, lg: 12, xl: 16, full: 9999 } as const;
 export type RadiusName = keyof typeof radius;
 
-export const SHADOW_NAMES = ["sm", "md", "lg"] as const;
+export const SHADOW_NAMES = ["sm", "md", "lg", "card"] as const;
 export type ShadowName = (typeof SHADOW_NAMES)[number];
 
 export interface ShadowToken {
   offsetY: number;
   blur: number;
-  /** 0 to 1, applied to black. */
+  /** 0 to 1, applied to `shadowColor`. */
   opacity: number;
   /** Android elevation, the closest equivalent. */
   elevation: number;
 }
 
 /** Shadows are black at varying opacity. React Native needs the colour spelled out. */
-export const shadowColor = "#000000";
+/** A navy tint, so shadows on the lavender page look soft rather than grey. */
+export const shadowColor = "#141a3d";
 
-/** Only for things that float above the page: menus, dialogs, tooltips. */
+/** `sm`, `md` and `lg` are for things that float (menus, dialogs, tooltips); `card` is the soft lift under cards. */
 export const shadows: Record<ShadowName, ShadowToken> = {
-  sm: { offsetY: 1, blur: 2, opacity: 0.06, elevation: 1 },
-  md: { offsetY: 4, blur: 12, opacity: 0.08, elevation: 4 },
-  lg: { offsetY: 12, blur: 32, opacity: 0.14, elevation: 12 },
+  sm: { offsetY: 1, blur: 3, opacity: 0.06, elevation: 1 },
+  md: { offsetY: 6, blur: 18, opacity: 0.09, elevation: 4 },
+  lg: { offsetY: 16, blur: 40, opacity: 0.14, elevation: 12 },
+  card: { offsetY: 8, blur: 28, opacity: 0.07, elevation: 2 },
 };
 
 /** Control heights. `touch` is the minimum tap target on mobile. */
@@ -221,6 +263,22 @@ export const breakpoints = { sm: 640, md: 768, lg: 1024, xl: 1280, "2xl": 1536 }
 /** Milliseconds. Motion is short and functional; both platforms skip it when reduced motion is on. */
 export const durations = { fast: 120, normal: 180, slow: 240 } as const;
 export const easing = { standard: "cubic-bezier(0.2, 0, 0, 1)" } as const;
+
+/**
+ * Strength of the decorative light, per theme: glows are softer on light backgrounds. Opacities
+ * from 0 to 1. `blur` is the glass blur radius in pixels or points.
+ */
+export const effects = {
+  light: { glowOpacity: 0.28, gridOpacity: 0.55 },
+  dark: { glowOpacity: 0.7, gridOpacity: 0.35 },
+  blur: 16,
+} as const;
+
+/**
+ * Slow, decorative motion (the drifting glow, the entrance fade), kept apart from `durations`,
+ * which are short and functional. Both platforms turn it off when reduced motion is on.
+ */
+export const ambientMotion = { driftMs: 24_000, revealMs: 700 } as const;
 
 export const zIndex = { base: 0, sticky: 20, overlay: 40, modal: 50, popover: 60, tooltip: 70 } as const;
 

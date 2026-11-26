@@ -15,14 +15,17 @@ const hexToRgb = (hex: string) => {
 const bodyBackground = (page: Page) => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
 
 test.describe("preferences", () => {
-  test("defaults to Albanian and the system theme", async ({ page }) => {
+  test("defaults to Albanian and the light theme, even on a device set to dark", async ({ page }) => {
+    await page.emulateMedia({ colorScheme: "dark" });
     await page.goto(URL);
     await expect(page.locator("html")).toHaveAttribute("lang", "sq");
-    await expect(page.locator("html")).toHaveAttribute("data-theme", "system");
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+    expect(await bodyBackground(page)).toBe(hexToRgb(colors.light.background));
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(sq("designSystem.title"));
   });
 
-  test("system follows the device setting with no script involved", async ({ page }) => {
+  test("system, once chosen, follows the device setting with no script involved", async ({ page }) => {
+    await page.context().addCookies([{ name: "sp-theme", value: "system", url: "http://localhost:3100" }]);
     await page.emulateMedia({ colorScheme: "dark" });
     await page.goto(URL);
     expect(await bodyBackground(page)).toBe(hexToRgb(colors.dark.background));
@@ -266,5 +269,29 @@ test.describe("application shell", () => {
     await expect(skip).toBeFocused();
     await page.keyboard.press("Enter");
     await expect(page.locator("#main")).toBeFocused();
+  });
+});
+
+test.describe("effects", () => {
+  test("shows every effect and fits a 360 px phone without horizontal scrolling", async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 800 });
+    await page.goto(URL);
+    const section = page.locator("section", { has: page.locator("#ds-effects") });
+    await expect(section.locator(".sp-glow-bg")).toHaveCount(1);
+    await expect(section.locator(".sp-glass").first()).toBeVisible();
+    await expect(section.locator(".sp-gradient-text").first()).toBeVisible();
+    await expect(section.locator(".sp-glow-button").first()).toBeVisible();
+    await expect(section.locator("svg.sp-light-mark").first()).toBeAttached();
+    // Decorative light is hidden from screen readers.
+    for (const svg of await section.locator("svg.sp-light-mark").all()) await expect(svg).toHaveAttribute("aria-hidden", "true");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+  });
+
+  test("animates the glow, and stops it when the user prefers reduced motion", async ({ page }) => {
+    const glowAnimation = () => page.evaluate(() => getComputedStyle(document.querySelector(".sp-glow-bg")!, "::before").animationName);
+    await page.goto(URL);
+    expect(await glowAnimation()).toBe("sp-drift");
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    expect(await glowAnimation()).toBe("none");
   });
 });

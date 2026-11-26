@@ -1,10 +1,12 @@
 import { Feather } from "@expo/vector-icons";
-import { durations, radius, spacing, type ColorTokens } from "@skillprove/shared/design";
+import { durations, effects, radius, spacing, type ColorTokens } from "@skillprove/shared/design";
+import { BlurView } from "expo-blur";
 import { initials } from "@skillprove/shared/i18n";
 import { useEffect, useRef, type ReactNode } from "react";
-import { ActivityIndicator, Animated, Image, StyleSheet, View, type ViewProps, type ViewStyle } from "react-native";
+import { ActivityIndicator, Animated, Image, Platform, StyleSheet, View, type ViewProps, type ViewStyle } from "react-native";
 import { useReducedMotion } from "../../lib/use-reduced-motion";
 import { useI18n, useTheme } from "../../theme/preferences-provider";
+import { shadowStyle } from "../../theme/styles";
 import type { IconName } from "./button";
 import { AppText } from "./text";
 
@@ -13,10 +15,23 @@ export function Separator({ vertical = false }: { vertical?: boolean }) {
   return <View accessibilityElementsHidden importantForAccessibility="no" style={[vertical ? styles.vertical : styles.horizontal, { backgroundColor: colors.border }]} />;
 }
 
-export function Card({ style, children, ...props }: ViewProps) {
-  const { colors } = useTheme();
+/**
+ * `solid` is the everyday card. `glass` is translucent with a thin glowing edge, for use over a
+ * GlowBackground; on iOS it also blurs what is behind it. Android gets the translucent fill only.
+ */
+export function Card({ style, children, variant = "solid", ...props }: ViewProps & { variant?: "solid" | "glass" }) {
+  const { colors, theme } = useTheme();
+  if (variant === "solid") {
+    return (
+      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }, shadowStyle("card", theme), style]} {...props}>
+        {children}
+      </View>
+    );
+  }
   return (
-    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }, style]} {...props}>
+    <View style={[styles.card, styles.glass, { borderColor: colors.glassBorder }, style]} {...props}>
+      {Platform.OS === "ios" && <BlurView intensity={Math.min(100, effects.blur * 2.5)} tint={theme} style={StyleSheet.absoluteFill} />}
+      <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: colors.glassSurface }]} />
       {children}
     </View>
   );
@@ -183,7 +198,8 @@ const styles = StyleSheet.create({
   center: { textAlign: "center" },
   horizontal: { height: StyleSheet.hairlineWidth, alignSelf: "stretch" },
   vertical: { width: StyleSheet.hairlineWidth, alignSelf: "stretch" },
-  card: { borderWidth: 1, borderRadius: radius.lg, padding: spacing[5], gap: spacing[4] },
+  card: { borderWidth: 1, borderRadius: radius.xl, padding: spacing[5], gap: spacing[4] },
+  glass: { borderRadius: radius.xl, overflow: "hidden" },
   cardHeader: { flexDirection: "row", alignItems: "flex-start", gap: spacing[3] },
   badge: { alignSelf: "flex-start", borderRadius: radius.full, paddingHorizontal: spacing[2], paddingVertical: spacing[0.5] },
   badgeText: { fontWeight: "500" },

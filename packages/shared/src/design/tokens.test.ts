@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
+  ambientMotion,
   breakpoints,
   colors,
   colorVariable,
   contrastRatio,
   controlHeights,
   designTokensCss,
+  effects,
   parseThemePreference,
   radius,
   resolveTheme,
@@ -41,6 +43,10 @@ const TEXT_PAIRS: [keyof ColorTokens, keyof ColorTokens, number][] = [
   ["info", "infoSubtle", 4.5],
   ["gradientFrom", "background", 4.5],
   ["gradientTo", "background", 4.5],
+  ["sidebarForeground", "sidebar", 4.5],
+  ["sidebarMuted", "sidebar", 4.5],
+  ["sidebarActiveForeground", "sidebarActive", 4.5],
+  ["primary", "background", 4.5],
   ["ring", "background", 3],
   ["ring", "surface", 3],
   ["input", "surface", 1.4],
@@ -59,6 +65,16 @@ describe.each(THEME_NAMES)("%s colours", (theme) => {
 });
 
 describe("token scales", () => {
+  it("keeps effect opacities between 0 and 1", () => {
+    for (const theme of THEME_NAMES) {
+      for (const value of [effects[theme].glowOpacity, effects[theme].gridOpacity]) {
+        expect(value).toBeGreaterThan(0);
+        expect(value).toBeLessThanOrEqual(1);
+      }
+    }
+    expect(effects.dark.glowOpacity).toBeGreaterThan(effects.light.glowOpacity);
+  });
+
   it("gives both themes the same tokens", () => {
     expect(Object.keys(colors.dark).sort()).toEqual(Object.keys(colors.light).sort());
   });
@@ -98,22 +114,35 @@ describe("designTokensCss", () => {
   });
 
   it("generates a class per type style", () => {
-    expect(css).toContain(".type-h1{font-size:1.875rem;");
+    expect(css).toContain(".type-h1{font-family:var(--sp-font-display);font-size:2rem;");
+    expect(css).toContain(".type-body{font-size:");
     expect(css).toContain(".type-body-small{");
   });
 
+  it("tints shadows navy and gives cards a soft lift", () => {
+    expect(css).toContain("--sp-shadow-card:0 1px 2px rgba(20,26,61,0.05),0 8px 28px rgba(20,26,61,0.07);");
+  });
+
+  it("emits the effect strengths per theme and the ambient motion", () => {
+    expect(css).toContain(`--sp-glow-opacity:${effects.light.glowOpacity};`);
+    expect(css).toContain(`--sp-glow-opacity:${effects.dark.glowOpacity};`);
+    expect(css).toContain(`--sp-ambient-drift:${ambientMotion.driftMs}ms;`);
+    expect(css).toContain(`--sp-glass-blur:${effects.blur}px;`);
+  });
+
   it("gives the hero headline a larger size from the md breakpoint only", () => {
-    expect(css).toContain(".type-hero{font-size:2.75rem;");
+    expect(css).toContain(".type-hero{font-family:var(--sp-font-display);font-size:2.875rem;");
     expect(css).toContain("@media (min-width:48rem){.type-hero{font-size:4.75rem;");
     expect(typography.hero.wide!.lineHeight).toBeGreaterThan(typography.hero.wide!.fontSize);
   });
 });
 
 describe("theme preference", () => {
-  it("parses stored values and falls back to system", () => {
+  it("parses stored values and falls back to light, the default", () => {
     expect(parseThemePreference("dark")).toBe("dark");
-    expect(parseThemePreference("blue")).toBe("system");
-    expect(parseThemePreference(null)).toBe("system");
+    expect(parseThemePreference("system")).toBe("system");
+    expect(parseThemePreference("blue")).toBe("light");
+    expect(parseThemePreference(null)).toBe("light");
   });
 
   it("resolves system from the device setting", () => {
