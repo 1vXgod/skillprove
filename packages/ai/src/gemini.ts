@@ -8,6 +8,11 @@ export interface GeminiOptions {
    * answers much faster. A model that rejects the level gets the request again without it.
    */
   thinkingLevel?: string;
+  /**
+   * Tried in order when a model answers 503 (busy), each at most once per call and all within
+   * the call's one timeout. Duplicates of `model` are ignored.
+   */
+  fallbackModels?: readonly string[];
   /** Overridable for tests. */
   baseUrl?: string;
   fetch?: typeof fetch;
@@ -29,6 +34,7 @@ export class GeminiProvider implements AiProvider {
   private readonly apiKey: string;
   private readonly baseUrl: string;
   private readonly fetchImpl: typeof fetch;
+  private readonly fallbackModels: readonly string[];
   /** Cleared once the model rejects it, so later calls skip the rejected request. */
   private thinkingLevel: string | undefined;
 
@@ -39,14 +45,15 @@ export class GeminiProvider implements AiProvider {
     this.baseUrl = options.baseUrl ?? "https://generativelanguage.googleapis.com/v1beta";
     this.fetchImpl = options.fetch ?? fetch;
     this.thinkingLevel = options.thinkingLevel;
+    this.fallbackModels = [...new Set(options.fallbackModels ?? [])].filter((m) => m && m !== options.model);
   }
 
   async generateJson(request: AiJsonRequest): Promise<AiJsonResponse> {
     const timeout = AbortSignal.timeout(request.timeoutMs);
     const signal = request.signal ? AbortSignal.any([timeout, request.signal]) : timeout;
 
-    const send = (thinkingLevel: string | undefined) =>
-      this.fetchImpl(`${this.baseUrl}/models/${encodeURIComponent(this.model)}:generateContent`, {
+    const send = (model: string, thinkingLevel: string | undefined) =>
+      this.fetchImpl(`${this.baseUrl}/models/${encodeURIComponent(model)}:generateContent`, {
         method: "POST",
         headers: { "content-type": "application/json", "x-goog-api-key": this.apiKey },
         body: JSON.stringify({
@@ -61,21 +68,29 @@ export class GeminiProvider implements AiProvider {
         signal,
       });
 
-    let response: Response;
+    const models = [this.model, ...this.fallbackModels];
+    let response: Response | undefined;
+    let model = this.model;
     try {
-      const thinkingLevel = this.thinkingLevel;
-      response = await send(thinkingLevel);
-      // A 400 with a thinking level means the model does not support that level. Ask again
-      // without it, within the same timeout, and stop sending it.
-      if (response.status === 400 && thinkingLevel) {
-        this.thinkingLevel = undefined;
-        response = await send(undefined);
+      for (const [index, candidate] of models.entries()) {
+        model = candidate;
+        const thinkingLevel = this.thinkingLevel;
+        response = await send(model, thinkingLevel);
+        // A 400 with a thinking level means the model does not support that level. Ask again
+        // without it, within the same timeout, and stop sending it.
+        if (response.status === 400 && thinkingLevel) {
+          this.thinkingLevel = undefined;
+          response = await send(model, undefined);
+        }
+        // 503: this model is busy. Try the next one, if there is one.
+        if (response.status !== 503 || index === models.length - 1) break;
       }
     } catch {
       if (request.signal?.aborted) throw new AiProviderError("cancelled", false);
       if (timeout.aborted) throw new AiProviderError("timeout", true);
       throw new AiProviderError("unavailable", true);
     }
+    if (!response) throw new AiProviderError("unavailable", true);
 
     if (response.status === 429) throw new AiProviderError("rate_limited", true);
     if (response.status === 401 || response.status === 403) throw new AiProviderError("misconfigured", false);
@@ -94,6 +109,7 @@ export class GeminiProvider implements AiProvider {
     const text = candidate?.content?.parts?.map((part) => part.text ?? "").join("") ?? "";
     return {
       text,
+      model,
       usage: {
         inputTokens: body.usageMetadata?.promptTokenCount ?? null,
         outputTokens: body.usageMetadata?.candidatesTokenCount ?? null,

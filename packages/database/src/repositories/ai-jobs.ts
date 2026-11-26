@@ -148,6 +148,8 @@ export async function completeJob(
   jobId: string,
   usage: JobUsage,
   assessmentId: string | null,
+  /** The model that actually answered, when it was a fallback rather than the one the job started with. */
+  answeredBy: string | null = null,
   now = new Date(),
 ) {
   const { count } = await db.aIJob.updateMany({
@@ -155,6 +157,7 @@ export async function completeJob(
     data: {
       status: "SUCCEEDED",
       assessmentId,
+      ...(answeredBy ? { modelName: answeredBy } : {}),
       inputTokens: usage.inputTokens,
       outputTokens: usage.outputTokens,
       estimatedCost: usage.estimatedCost,

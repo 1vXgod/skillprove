@@ -34,6 +34,13 @@ describe("generateAssessment", () => {
     expect(result.value.questions).toHaveLength(4);
     expect(result.attempts).toBe(1);
     expect(result.usage).toEqual(MOCK_USAGE);
+    // No fallback happened, so the answer came from the provider's own model.
+    expect(result.model).toBe(provider.model);
+  });
+
+  it("reports the model that answered when the provider fell back", async () => {
+    const provider = new MockAiProvider([{ ...jsonResponse(buildValidGeneratedAssessment(request)), model: "fallback-model" }]);
+    expect((await generateAssessment({ ...run, provider }, request, skills)).model).toBe("fallback-model");
   });
 
   it("accepts a markdown-fenced answer", async () => {
@@ -202,6 +209,60 @@ describe("GeminiProvider", () => {
     expect((await call(provider)).text).toBe("{}");
     await call(provider);
     expect(sent).toEqual([{ thinkingLevel: "minimal" }, undefined, undefined]);
+  });
+
+  describe("fallback models", () => {
+    const modelOf = (url: string | URL | Request) => decodeURIComponent(String(url).split("/models/")[1]!.split(":")[0]!);
+    const busyUntil = (answering: string, asked: string[]) => async (url: string | URL | Request) => {
+      const model = modelOf(url);
+      asked.push(model);
+      return model === answering ? Response.json(body) : new Response("busy", { status: 503 });
+    };
+
+    it("asks the next model when one is busy, and says which model answered", async () => {
+      const asked: string[] = [];
+      const provider = new GeminiProvider({ apiKey: "KEY-123", model: "main", fallbackModels: ["second", "third"], fetch: busyUntil("third", asked) });
+      const result = await call(provider);
+      expect(asked).toEqual(["main", "second", "third"]);
+      expect(result.model).toBe("third");
+    });
+
+    it("tries each model once, then reports the service as busy", async () => {
+      const asked: string[] = [];
+      const provider = new GeminiProvider({ apiKey: "KEY-123", model: "main", fallbackModels: ["second", "main", "second"], fetch: busyUntil("none", asked) });
+      await expect(call(provider)).rejects.toMatchObject({ code: "unavailable", retryable: true });
+      expect(asked).toEqual(["main", "second"]);
+    });
+
+    it("does not fall back for other failures, or when none are configured", async () => {
+      const asked: string[] = [];
+      const limited = new GeminiProvider({
+        apiKey: "KEY-123",
+        model: "main",
+        fallbackModels: ["second"],
+        fetch: async (url) => {
+          asked.push(modelOf(url));
+          return new Response("x", { status: 429 });
+        },
+      });
+      await expect(call(limited)).rejects.toMatchObject({ code: "rate_limited" });
+      const alone: string[] = [];
+      await expect(call(new GeminiProvider({ apiKey: "KEY-123", model: "main", fetch: busyUntil("none", alone) }))).rejects.toMatchObject({ code: "unavailable" });
+      expect([asked, alone]).toEqual([["main"], ["main"]]);
+    });
+
+    it("gives every fallback the same overall timeout", async () => {
+      const provider = new GeminiProvider({
+        apiKey: "KEY-123",
+        model: "main",
+        fallbackModels: ["second"],
+        fetch: (url, init) =>
+          modelOf(url) === "main"
+            ? Promise.resolve(new Response("busy", { status: 503 }))
+            : new Promise((_resolve, reject) => init!.signal!.addEventListener("abort", () => reject(new Error("aborted")))),
+      });
+      await expect(call(provider)).rejects.toMatchObject({ code: "timeout" });
+    });
   });
 
   it("treats a 400 without a thinking level as a plain failure, with no second request", async () => {
