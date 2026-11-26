@@ -262,6 +262,33 @@ test.describe("application shell", () => {
     await expect(sidebar.getByText(sq("common.comingSoon")).first()).toBeVisible();
   });
 
+  for (const theme of ["light", "dark"] as const) {
+    test(`has a navy sidebar with the white logo in ${theme} mode, and marks the current page`, async ({ page }) => {
+      await page.context().addCookies([{ name: "sp-theme", value: theme, url: "http://localhost:3100" }]);
+      await page.setViewportSize({ width: 1280, height: 900 });
+      await page.goto(URL);
+      const aside = page.locator("aside");
+      expect(await aside.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(hexToRgb(colors[theme].sidebar));
+      await expect(aside.locator('img[src="/brand/skillprove-mark-inverse.svg"]')).toBeVisible();
+      await expect(aside.getByText("SkillProve", { exact: true })).toBeVisible();
+      // The current page stands out from the other items by its background, not only by aria-current.
+      const current = aside.getByRole("link", { name: sq("nav.designSystem") });
+      const other = aside.getByRole("link", { name: sq("nav.profile") });
+      const bg = (l: typeof current) => l.evaluate((el) => getComputedStyle(el).backgroundColor);
+      expect(await bg(current)).toBe(hexToRgb(colors[theme].sidebarActive));
+      expect(await bg(other)).not.toBe(await bg(current));
+    });
+  }
+
+  test("uses the same navy and white logo in the phone drawer", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(URL);
+    await page.getByRole("button", { name: sq("shell.openNavigation") }).click();
+    const drawer = page.getByRole("dialog", { name: sq("shell.mainNavigation") });
+    expect(await drawer.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(hexToRgb(colors.light.sidebar));
+    await expect(drawer.locator('img[src="/brand/skillprove-mark-inverse.svg"]')).toBeVisible();
+  });
+
   test("offers a skip link to the main content", async ({ page }) => {
     await page.goto(URL);
     await page.keyboard.press("Tab");

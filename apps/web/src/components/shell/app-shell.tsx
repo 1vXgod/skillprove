@@ -6,18 +6,16 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { cn } from "../../lib/cn";
 import { useI18n } from "../../lib/i18n";
 import { BriefcaseIcon, ClipboardIcon, CloseIcon, MenuIcon, PaletteIcon, SettingsIcon, SuccessIcon, UserIcon, UsersIcon } from "../icons";
-import { Badge, IconButton } from "../ui";
+import { GradientText, IconButton, Logo } from "../ui";
 import { navSections, type NavIcon, type NavItem, type NavSection } from "./nav";
 import { OfflineNotice } from "./offline-notice";
 import { LanguageMenu, ThemeMenu } from "./preference-menus";
 
-function Brand() {
+/** The logo, linking home. `inverse` is the white version for the navy sidebar. */
+function Brand({ inverse = false }: { inverse?: boolean }) {
   return (
-    <Link href="/" className="flex items-center gap-2 rounded-md">
-      <span aria-hidden="true" className="flex size-7 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground">
-        S
-      </span>
-      <span className="type-h4 tracking-tight text-foreground">SkillProve</span>
+    <Link href="/" className={cn("flex items-center rounded-md", inverse && "focus-visible:outline-sidebar-foreground")}>
+      <Logo size="sm" inverse={inverse} />
     </Link>
   );
 }
@@ -45,13 +43,13 @@ function NavList({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => v
             <span className="flex-1">{t(label)}</span>
           </>
         );
-        const base = "flex h-10 items-center gap-3 rounded-md px-3 type-label";
+        const base = "relative flex h-10 items-center gap-3 rounded-lg px-3 type-label";
         if (!href) {
           return (
             <li key={`${label}-soon`}>
-              <span aria-disabled="true" className={cn(base, "cursor-not-allowed text-muted-foreground/70")}>
+              <span aria-disabled="true" className={cn(base, "cursor-not-allowed text-sidebar-muted/70")}>
                 {content}
-                <Badge className="h-5 px-2">{t("common.comingSoon")}</Badge>
+                <span className="rounded-full bg-sidebar-active px-2 py-0.5 type-caption text-sidebar-muted">{t("common.comingSoon")}</span>
               </span>
             </li>
           );
@@ -63,8 +61,14 @@ function NavList({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => v
               href={href}
               onClick={onNavigate}
               aria-current={active ? "page" : undefined}
-              className={cn(base, "transition-colors duration-150", active ? "bg-secondary text-secondary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground")}
+              className={cn(
+                base,
+                "transition-colors duration-150 focus-visible:outline-sidebar-foreground",
+                active ? "bg-sidebar-active text-sidebar-active-foreground" : "text-sidebar-muted hover:bg-sidebar-active/60 hover:text-sidebar-foreground",
+              )}
             >
+              {/* A thin brand-blue bar marks the current page, besides aria-current and the colour. */}
+              {active && <span aria-hidden="true" className="absolute inset-y-2 left-0 w-1 rounded-full bg-glow-primary" />}
               {content}
             </Link>
           </li>
@@ -81,7 +85,7 @@ function NavSections({ sections, onNavigate }: { sections: NavSection[]; onNavig
       {sections.map((section, i) => (
         <div key={section.heading ?? i}>
           {section.heading && (
-            <h2 className="mb-1 px-3 type-caption uppercase tracking-wide text-muted-foreground">
+            <h2 className="mb-1 px-3 type-caption uppercase tracking-wide text-sidebar-muted">
               {t(section.heading)}
             </h2>
           )}
@@ -100,6 +104,18 @@ interface AppShellProps {
   /** Shows the Company section (assessment authoring). Only company members need it. */
   isCompanyMember?: boolean;
   children: ReactNode;
+}
+
+/** The brand line at the foot of the sidebar, as in the visual reference. Text only. */
+function SidebarTagline() {
+  const { t } = useI18n();
+  return (
+    <div className="m-3 rounded-xl bg-sidebar-active/70 p-4">
+      <p className="type-h4 font-display font-normal leading-snug text-sidebar-foreground">
+        {t("landing.heroTitleLead")} <GradientText className="sp-gradient-on-navy">{t("landing.heroTitleAccent")}</GradientText>
+      </p>
+    </div>
+  );
 }
 
 /**
@@ -128,13 +144,14 @@ export function AppShell({ account, showDesignSystem = false, isCompanyMember = 
         {t("shell.skipToContent")}
       </a>
 
-      <aside className="fixed inset-y-0 left-0 hidden w-[var(--sp-sidebar-width)] flex-col border-r border-border bg-surface lg:flex">
+      <aside className="fixed inset-y-0 left-0 hidden w-[var(--sp-sidebar-width)] flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:flex">
         <div className="flex h-[var(--sp-header-height)] items-center px-5">
-          <Brand />
+          <Brand inverse />
         </div>
         <nav aria-label={t("shell.mainNavigation")} className="flex-1 overflow-y-auto px-3 py-4">
           <NavSections sections={sections} />
         </nav>
+        <SidebarTagline />
       </aside>
 
       <dialog
@@ -142,11 +159,16 @@ export function AppShell({ account, showDesignSystem = false, isCompanyMember = 
         aria-label={t("shell.mainNavigation")}
         onClose={() => setDrawerOpen(false)}
         onClick={(event) => event.target === event.currentTarget && setDrawerOpen(false)}
-        className="sp-dialog m-0 h-dvh max-h-dvh w-[min(20rem,85vw)] max-w-none border-r border-border bg-surface p-0 text-foreground lg:hidden"
+        className="sp-dialog m-0 h-dvh max-h-dvh w-[min(20rem,85vw)] max-w-none border-r border-sidebar-border bg-sidebar p-0 text-sidebar-foreground lg:hidden"
       >
         <div className="flex h-[var(--sp-header-height)] items-center justify-between px-4">
-          <Brand />
-          <IconButton label={t("shell.closeNavigation")} icon={<CloseIcon size={20} />} onClick={() => setDrawerOpen(false)} />
+          <Brand inverse />
+          <IconButton
+            label={t("shell.closeNavigation")}
+            icon={<CloseIcon size={20} />}
+            onClick={() => setDrawerOpen(false)}
+            className="text-sidebar-foreground hover:bg-sidebar-active focus-visible:outline-sidebar-foreground"
+          />
         </div>
         <nav aria-label={t("shell.mainNavigation")} className="px-3 py-4">
           <NavSections sections={sections} onNavigate={() => setDrawerOpen(false)} />
@@ -154,7 +176,7 @@ export function AppShell({ account, showDesignSystem = false, isCompanyMember = 
       </dialog>
 
       <div className="flex min-h-dvh flex-col lg:pl-[var(--sp-sidebar-width)]">
-        <header className="sticky top-0 z-[var(--sp-z-sticky)] flex h-[var(--sp-header-height)] items-center gap-2 border-b border-border bg-surface/95 px-4 backdrop-blur-sm sm:px-6">
+        <header className="sticky top-0 z-[var(--sp-z-sticky)] flex h-[var(--sp-header-height)] items-center gap-2 border-b border-border/60 bg-surface/80 px-4 backdrop-blur-xl sm:px-6">
           <IconButton
             label={t("shell.openNavigation")}
             icon={<MenuIcon size={20} />}
