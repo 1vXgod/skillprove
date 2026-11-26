@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { cn } from "../../lib/cn";
 import { useI18n } from "../../lib/i18n";
-import { BriefcaseIcon, ClipboardIcon, CloseIcon, MenuIcon, PaletteIcon, SettingsIcon, SuccessIcon, UserIcon, UsersIcon } from "../icons";
+import { BriefcaseIcon, ClipboardIcon, CloseIcon, HomeIcon, MenuIcon, PaletteIcon, SettingsIcon, SuccessIcon, UserIcon, UsersIcon } from "../icons";
 import { GradientText, IconButton, Logo } from "../ui";
 import { navSections, type NavIcon, type NavItem, type NavSection } from "./nav";
 import { OfflineNotice } from "./offline-notice";
@@ -21,6 +21,7 @@ function Brand({ inverse = false }: { inverse?: boolean }) {
 }
 
 const ICONS: Record<NavIcon, typeof UserIcon> = {
+  home: HomeIcon,
   user: UserIcon,
   passport: SuccessIcon,
   assessments: ClipboardIcon,

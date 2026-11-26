@@ -52,6 +52,7 @@ export const SuccessIcon = icon(["M12 21a9 9 0 100-18 9 9 0 000 18z", "M8.5 12.5
 export const WarningIcon = icon(["M10.3 4.2L2.6 17.5A2 2 0 004.3 20.5h15.4a2 2 0 001.7-3L13.7 4.2a2 2 0 00-3.4 0z", "M12 10v4", "M12 17h.01"]);
 export const ErrorIcon = icon(["M12 21a9 9 0 100-18 9 9 0 000 18z", "M12 8v5", "M12 16h.01"]);
 export const InboxIcon = icon(["M3 13h5l1.5 3h5L16 13h5", "M5.5 5h13L21 13v6H3v-6z"]);
+export const HomeIcon = icon(["M4 11l8-7 8 7", "M6 9.5V20h12V9.5", "M10 20v-6h4v6"]);
 export const UserIcon = icon(["M12 12a4 4 0 100-8 4 4 0 000 8z", "M4 20a8 8 0 0116 0"]);
 export const UsersIcon = icon(["M9 11a4 4 0 100-8 4 4 0 000 8z", "M2 20a7 7 0 0114 0", "M16 3.5a4 4 0 010 7.5", "M18 14a6 6 0 014 6"]);
 export const ClipboardIcon = icon(["M9 4h6v3H9z", "M9 5H6v15h12V5h-3", "M9 13l2 2 4-4"]);

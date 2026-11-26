@@ -119,7 +119,7 @@ async function hydrated(page: Page) {
 }
 
 test.describe("signed-out access", () => {
-  for (const path of ["/profile", "/skill-passport", "/profile/privacy", "/take"]) {
+  for (const path of ["/home", "/profile", "/skill-passport", "/profile/privacy", "/take"]) {
     test(`${path} is not shown without a session`, async ({ page }) => {
       const response = await page.goto(path);
       const url = page.url();
@@ -301,6 +301,101 @@ test.describe("offline", () => {
     await expect(page.getByText(t("errors.offline"))).toHaveCount(0);
     await expect(page.getByText("SQL").first()).toBeVisible();
     expect(calls).toBe(2);
+  });
+});
+
+test.describe("home", () => {
+  const takeableItem = (overrides: Record<string, unknown>) => ({
+    assessmentId: "66666666-6666-4666-8666-666666666666",
+    versionId: "77777777-7777-4777-8777-777777777777",
+    title: "JavaScript basics",
+    description: null,
+    language: "sq",
+    difficulty: "BEGINNER",
+    durationMinutes: 10,
+    questionCount: 5,
+    skills: [],
+    maxAttempts: 3,
+    attemptsUsed: 0,
+    openAttemptId: null,
+    ...overrides,
+  });
+
+  test("greets by first name and shows real numbers, the Skill Passport, activity, completeness and the way to assessments", async ({ page }) => {
+    const openAttemptId = "99999999-9999-4999-8999-999999999999";
+    await mockApi(page, {
+      "GET /me/profile": () => okJson(ownProfile()),
+      "GET /me/skill-passport": () => okJson(passport),
+      "GET /me/assessments": () =>
+        okJson({ items: [takeableItem({}), takeableItem({ assessmentId: "88888888-8888-4888-8888-888888888888", title: "Pyetje SQL", attemptsUsed: 1, openAttemptId }), takeableItem({ assessmentId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", attemptsUsed: 3 })] }),
+    });
+    await page.goto(`${HARNESS}?screen=home`);
+    await hydrated(page);
+
+    await expect(page.getByRole("heading", { level: 1, name: t("home.greeting", { name: "Arta" }) })).toBeVisible();
+    // The attempt in progress, with a way back into it.
+    const banner = page.locator("section", { has: page.getByRole("heading", { name: t("home.continueTitle") }) });
+    await expect(banner.getByText(t("home.continueBody", { title: "Pyetje SQL" }))).toBeVisible();
+    await expect(banner.getByRole("link", { name: t("home.continueAction") })).toHaveAttribute("href", `/take/${openAttemptId}`);
+    // Real numbers: one verified skill, 5 of 9 profile items (56%), one assessment that can be started.
+    const stats = page.getByRole("region", { name: t("home.title") });
+    await expect(stats.getByText(t("home.statVerified"))).toBeVisible();
+    await expect(stats.getByText("56", { exact: false })).toBeVisible();
+    await expect(stats.getByText(t("home.statAvailable"))).toBeVisible();
+    // The Skill Passport row: score and the same level the Skill Passport shows.
+    const level = verifiedSkillLevel(72, 64);
+    await expect(page.getByText(`${t("passport.scoreOutOf", { score: "72" })} · ${level ? t(`passport.levels.${level}`) : t("passport.moreAssessmentsNeeded")}`)).toBeVisible();
+    // Activity: only real events. The SQL result was corrected (superseded), so only the submitted Python attempt shows.
+    await expect(page.getByText(t("home.activity.submitted", { title: "Python bazë" }))).toBeVisible();
+    await expect(page.getByText(t("home.activity.verified", { title: "Vlerësim SQL" }))).toHaveCount(0);
+    // Completeness points at the next missing item.
+    await expect(page.getByRole("link", { name: t("completeness.items.experience") })).toHaveAttribute("href", "/profile");
+    await expect(page.getByText(t("home.takeBody", { count: "1" }))).toBeVisible();
+  });
+
+  test("welcomes a new candidate with empty states and asks for a profile first", async ({ page }) => {
+    await mockApi(page, {
+      "GET /me/profile": () => ({ status: 404, json: { success: false, error: { code: "NOT_FOUND", message: "No profile." } } }),
+      "GET /me/skill-passport": () => okJson({ verified: [], inAssessment: [], selfReported: [] }),
+      "GET /me/assessments": () => okJson({ items: [] }),
+    });
+    await page.goto(`${HARNESS}?screen=home`);
+    await hydrated(page);
+    await expect(page.getByRole("heading", { level: 1, name: t("home.greetingNoName") })).toBeVisible();
+    await expect(page.getByRole("heading", { name: t("home.continueTitle") })).toHaveCount(0);
+    await expect(page.getByText(t("home.passportEmpty"))).toBeVisible();
+    await expect(page.getByText(t("home.activityEmpty"))).toBeVisible();
+    await expect(page.getByRole("link", { name: t("completeness.items.profile") })).toHaveAttribute("href", "/profile");
+    await expect(page.getByText(t("home.takeEmpty"))).toBeVisible();
+  });
+
+  test("keeps the other cards working when one request fails, and retries it", async ({ page }) => {
+    let passportCalls = 0;
+    await mockApi(page, {
+      "GET /me/profile": () => okJson(ownProfile()),
+      "GET /me/skill-passport": () => (passportCalls++ === 0 ? { status: 503, json: { success: false, error: { code: "SERVICE_UNAVAILABLE", message: "Down." } } } : okJson(passport)),
+      "GET /me/assessments": () => okJson({ items: [takeableItem({})] }),
+    });
+    await page.goto(`${HARNESS}?screen=home`);
+    await hydrated(page);
+    await expect(page.getByText(t("home.takeBody", { count: "1" }))).toBeVisible();
+    const retry = page.getByRole("button", { name: t("common.tryAgain") }).first();
+    await expect(retry).toBeVisible();
+    await retry.click();
+    await expect(page.getByText(t("home.activity.submitted", { title: "Python bazë" }))).toBeVisible();
+  });
+
+  test("fits a 360 px phone without horizontal scrolling", async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 800 });
+    await mockApi(page, {
+      "GET /me/profile": () => okJson(ownProfile()),
+      "GET /me/skill-passport": () => okJson(passport),
+      "GET /me/assessments": () => okJson({ items: [takeableItem({ openAttemptId: "99999999-9999-4999-8999-999999999999", attemptsUsed: 1 })] }),
+    });
+    await page.goto(`${HARNESS}?screen=home`);
+    await hydrated(page);
+    await page.waitForLoadState("networkidle");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
   });
 });
 
