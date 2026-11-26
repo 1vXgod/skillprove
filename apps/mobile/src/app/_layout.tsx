@@ -5,6 +5,7 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useState, type ReactNode } from "react";
 import { clerkPublishableKey } from "../lib/auth-config";
+import "../lib/online-manager";
 import { PreferencesProvider, useTheme } from "../theme/preferences-provider";
 
 function AuthProvider({ children }: { children: ReactNode }) {

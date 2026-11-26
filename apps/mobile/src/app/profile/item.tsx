@@ -17,10 +17,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { FormActions } from "../../components/profile/form-actions";
+import { ProfileLoadState } from "../../components/profile/profile-load-state";
 import { useForm } from "../../components/profile/use-form";
 import { Screen } from "../../components/shell/screen";
 import { SignedInGate } from "../../components/shell/signed-in-gate";
-import { Alert, AppText, Button, Checkbox, Input, Modal, Select, Spinner, Switch, Textarea } from "../../components/ui";
+import { Alert, AppText, Button, Checkbox, Input, Modal, Select, Switch, Textarea } from "../../components/ui";
 import { errorMessage, joinList, orNull, queryKeys, splitList, useApiClient } from "../../lib/use-api";
 import { useI18n } from "../../theme/preferences-provider";
 
@@ -42,7 +43,7 @@ function Loader() {
   const profile = useQuery({ queryKey: queryKeys.ownProfile, queryFn: client.getOwnProfile, retry: false });
 
   if (!section) return <Alert tone="error" message={t("errors.loadFailed")} />;
-  if (profile.isPending) return <Spinner />;
+  if (!profile.isSuccess) return <ProfileLoadState profile={profile} />;
   if (!profile.data) return <AppText tone="mutedForeground">{t("profile.createDescription")}</AppText>;
   const item = params.id ? findItem(profile.data, section, params.id) : null;
   if (params.id && !item) return <Alert tone="error" message={t("errors.loadFailed")} />;

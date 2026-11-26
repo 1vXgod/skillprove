@@ -2,10 +2,11 @@ import { PROFILE_COUNTRY_CODES } from "@skillprove/shared";
 import { profileInputSchema, profileUpdateSchema, type OwnProfile } from "@skillprove/validation";
 import { useQuery } from "@tanstack/react-query";
 import { FormActions } from "../../components/profile/form-actions";
+import { ProfileLoadState } from "../../components/profile/profile-load-state";
 import { useForm } from "../../components/profile/use-form";
 import { Screen } from "../../components/shell/screen";
 import { SignedInGate } from "../../components/shell/signed-in-gate";
-import { AppText, Input, Select, Spinner, Textarea } from "../../components/ui";
+import { AppText, Input, Select, Textarea } from "../../components/ui";
 import { joinList, queryKeys, splitList, useApiClient } from "../../lib/use-api";
 import { useI18n } from "../../theme/preferences-provider";
 
@@ -23,7 +24,7 @@ export default function EditProfileScreen() {
 function Loader() {
   const client = useApiClient();
   const profile = useQuery({ queryKey: queryKeys.ownProfile, queryFn: client.getOwnProfile, retry: false });
-  if (profile.isPending) return <Spinner />;
+  if (!profile.isSuccess) return <ProfileLoadState profile={profile} />;
   return <BasicsForm profile={profile.data ?? null} />;
 }
 

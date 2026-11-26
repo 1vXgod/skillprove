@@ -52,6 +52,7 @@ export const en = {
     conflict: "This was changed somewhere else. Reload to see the latest version, then try again.",
     generic: "Something went wrong. Please try again.",
     network: "SkillProve could not be reached. Check your connection and try again.",
+    offline: "No connection. Check your internet.",
     loadFailed: "This could not be loaded.",
     rateLimited: "You have reached the generation limit. Try again later.",
     aiUnavailable: "AI generation is not available right now.",

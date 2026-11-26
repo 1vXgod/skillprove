@@ -280,6 +280,30 @@ test.describe("privacy settings", () => {
   });
 });
 
+test.describe("offline", () => {
+  test("says so while offline instead of loading forever, and loads by itself once back online", async ({ page, context }) => {
+    let calls = 0;
+    await mockApi(page, {
+      // The first load fails, so there is something to retry.
+      "GET /me/skill-passport": () => (calls++ === 0 ? { status: 503, json: { success: false, error: { code: "SERVICE_UNAVAILABLE", message: "Down." } } } : okJson(passport)),
+    });
+    await page.goto(`${HARNESS}?screen=passport`);
+    await hydrated(page);
+    await expect(page.getByRole("button", { name: t("common.tryAgain") })).toBeVisible();
+
+    await context.setOffline(true);
+    await expect(page.getByText(t("errors.offline"))).toBeVisible();
+    // Retrying offline waits instead of failing.
+    await page.getByRole("button", { name: t("common.tryAgain") }).click();
+    expect(calls).toBe(1);
+
+    await context.setOffline(false);
+    await expect(page.getByText(t("errors.offline"))).toHaveCount(0);
+    await expect(page.getByText("SQL").first()).toBeVisible();
+    expect(calls).toBe(2);
+  });
+});
+
 test.describe("assessments to take", () => {
   const choices = [
     { id: "A", text: "3" },

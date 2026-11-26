@@ -8,6 +8,7 @@ import { useI18n } from "../../lib/i18n";
 import { BriefcaseIcon, ClipboardIcon, CloseIcon, MenuIcon, PaletteIcon, SettingsIcon, SuccessIcon, UserIcon, UsersIcon } from "../icons";
 import { Badge, IconButton } from "../ui";
 import { navSections, type NavIcon, type NavItem, type NavSection } from "./nav";
+import { OfflineNotice } from "./offline-notice";
 import { LanguageMenu, ThemeMenu } from "./preference-menus";
 
 function Brand() {
@@ -171,6 +172,7 @@ export function AppShell({ account, showDesignSystem = false, isCompanyMember = 
           </div>
         </header>
         <main id="main" tabIndex={-1} className="mx-auto w-full max-w-[var(--sp-content-max-width)] flex-1 px-4 py-8 outline-none sm:px-6 lg:px-8 lg:py-10">
+          <OfflineNotice />
           {children}
         </main>
       </div>
