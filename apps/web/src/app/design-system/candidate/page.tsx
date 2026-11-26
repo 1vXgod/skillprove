@@ -7,6 +7,7 @@ import { PrivacySettings } from "../../../components/privacy/privacy-settings";
 import { ProfileOverview } from "../../../components/profile/profile-overview";
 import { AppShell } from "../../../components/shell/app-shell";
 import { PageHeader } from "../../../components/shell/page-header";
+import { TakeableList } from "../../../components/take/takeable-list";
 import { buttonClasses } from "../../../components/ui";
 import { isDesignSystemEnabled } from "../../../lib/design-system";
 import { getRequestPreferences } from "../../../lib/preferences-server";
@@ -38,6 +39,11 @@ export default async function CandidateScreensPage({ searchParams }: { searchPar
             <>
               <PageHeader title={t("passport.title")} description={t("passport.description")} />
               <SkillPassportView />
+            </>
+          ) : screen === "take" ? (
+            <>
+              <PageHeader title={t("take.title")} description={t("take.description")} />
+              <TakeableList />
             </>
           ) : screen === "privacy" ? (
             <>

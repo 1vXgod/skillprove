@@ -1,6 +1,6 @@
 "use client";
 
-import { SELF_REPORTED_LEVELS } from "@skillprove/shared";
+import { SELF_REPORTED_LEVELS, verifiedSkillLevel } from "@skillprove/shared";
 import { formatDate, formatNumber } from "@skillprove/shared/i18n";
 import {
   selfReportedSkillInputSchema,
@@ -103,13 +103,18 @@ function PassportSections({ passport }: { passport: Passport }) {
 function VerifiedSkillCard({ skill }: { skill: VerifiedSkillWithEvidence }) {
   const { t, locale } = useI18n();
   const outdated = skill.evidenceStatus === "OUTDATED";
+  const level = verifiedSkillLevel(skill.score, skill.confidence);
   return (
     <li className="flex flex-col gap-3 rounded-lg border border-border p-4">
       <div className="flex items-start justify-between gap-3">
         <p className="type-h4 text-foreground">{skill.skill.name}</p>
         <Badge tone={outdated ? "warning" : "success"}>{outdated ? t("passport.outdated") : t("passport.verified")}</Badge>
       </div>
-      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        <div>
+          <dt className="type-caption text-muted-foreground">{t("passport.verifiedLevel")}</dt>
+          <dd className="type-label text-foreground">{level ? t(`passport.levels.${level}`) : t("passport.moreAssessmentsNeeded")}</dd>
+        </div>
         <div>
           <dt className="type-caption text-muted-foreground">{t("passport.score")}</dt>
           <dd className="type-label text-foreground">{t("passport.scoreOutOf", { score: formatNumber(locale, skill.score, { maximumFractionDigits: 1 }) })}</dd>

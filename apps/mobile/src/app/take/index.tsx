@@ -7,7 +7,7 @@ import { Pressable, StyleSheet, View } from "react-native";
 import { Screen } from "../../components/shell/screen";
 import { SignedInGate } from "../../components/shell/signed-in-gate";
 import { Alert, AppText, Badge, Button, Card, EmptyState, Modal, Skeleton, type Tone } from "../../components/ui";
-import { takeableState, type TakeableState } from "../../lib/takeable";
+import { takeableState, type TakeableState } from "@skillprove/shared";
 import { errorMessage, queryKeys, useApiClient } from "../../lib/use-api";
 import { useI18n } from "../../theme/preferences-provider";
 
