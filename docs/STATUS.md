@@ -146,7 +146,7 @@ SkillProve helps people prove their skills instead of only claiming them. A cand
 | Passing score | ❌ | Not in the schema. Milestone 7 decided on no threshold (see disagreements) |
 | Difficulty levels Beginner, Intermediate, Advanced | ✅ | `ASSESSMENT_DIFFICULTIES` in `packages/shared`, validation tests ran |
 | Question types: multiple choice, true/false, short answer, scenario, practical | ✅ | Authoring only. Codec round-trip tests ran (`assessment-engine/src/engine.test.ts`). Multiple select is also supported |
-| AI generation | 🔄 | `packages/ai`, tests ran against a mock provider. **Real Gemini output has never been exercised** |
+| AI generation | ✅ | `packages/ai`, tests ran against a mock provider. Works for real on the website (2026-11-26) after three fixes: CORS allows `Idempotency-Key` (`4ec4444`), 90 s timeout with low thinking (`599f337`), and fallback models when one is busy (`3807875`). Default model `gemini-3.8-flash`; `gemini-2.5-flash` is closed to new API keys. Free-tier Flash models are often busy (503) |
 | Structured, validated AI output | ✅ | Zod schema plus request checks plus repair prompt, `packages/ai/src/ai.test.ts` ran |
 | Company reviews AI output before use | 🔄 | AI output is always a draft; a person must publish. There are no invitations to gate |
 | Candidates open, read, start, answer, submit, see status and results (web and mobile) | ❌ | Milestone 7 |
@@ -187,7 +187,7 @@ SkillProve helps people prove their skills instead of only claiming them. A cand
 | Social sign-in | ❓ | No code involved: Clerk's hosted pages show whichever providers are enabled in the Clerk dashboard. Check Clerk Dashboard > User & Authentication > Social connections |
 | Cloudflare R2 storage | ❌ | `FileAsset` model only |
 | Expo push, email | ❌ | |
-| Gemini first, OpenAI later | 🔄 | Gemini adapter built but never called for real. No OpenAI adapter; the abstraction allows one |
+| Gemini first, OpenAI later | 🔄 | Gemini adapter used for real since 2026-11-26, with fallback models on 503. No OpenAI adapter; the abstraction allows one |
 
 ### §10 Design system and user experience
 
@@ -269,7 +269,7 @@ M1–M7 stay as they are. M8 onward is reordered by dependency, core loop first.
 | # | Milestone | Unblocks | Status |
 |---|---|---|---|
 | 1–6 | Foundations, database, auth, profiles and Skill Passport, design system and i18n, assessment creation | | Built. Database, route and browser tests passed in CI #6 |
-| 7 | Candidates take assessments; **automatic** scoring of objective questions; verified scores | Loop steps 3–5 | In progress (slices 1–13 of 20 done) |
+| 7 | Candidates take assessments; **automatic** scoring of objective questions; verified scores | Loop steps 3–5 | In progress (slices 1–16 of 21 done) |
 | 8 | Company onboarding: create a company, profile, owner membership, team invitations | Loop step 1 for real companies | Not started |
 | 9 | Assessment invitations: invite a candidate, accept/decline, deadlines, optional company passing score, in-app notifications | Loop step 2 | Not started |
 | 10 | Company results: attempts and results through candidate privacy, evaluation reports, comparison | Loop step 6 | Not started |
@@ -314,8 +314,9 @@ Decisions (2026-11-25):
 | 13 | Mobile: browse assessments | ✅ `7e21dfd`, PR #11; checked on an Android phone with the demo data |
 | 14 | Mobile: take an assessment. Confirm before starting ("the timer starts now, this uses 1 of N attempts") | |
 | 15 | Mobile: result screen and Skill Passport changes | `5fb469b`. Checked on an Android phone 2026-11-26: JavaScript intermediate 10/10 answered, result shown; Skill Passport shows JavaScript level Intermediate (score 50/100, confidence 50%), TypeScript and React "More assessments needed". Combining checked the same day: JavaScript basics 60% (3/5, weight 1.0) plus the latest JavaScript intermediate retake 60% (6/10, weight 1.2) gave score 60, confidence 75% and 2 evidence items, as `auto-v1` predicts |
-| 16 | Navigation, mobile and web: show company authoring only to company members, under a "Company" section; for candidates, "Assessments" means browse and take. Today candidates who open "Assessments" see "You are not a member of a company yet." (found on the phone, 2026-11-26) | |
+| 16 | Navigation, mobile and web: show company authoring only to company members, under a "Company" section; for candidates, "Assessments" means browse and take. Today candidates who open "Assessments" see "You are not a member of a company yet." (found on the phone, 2026-11-26) | ✅ `c9e7960`, PR #16; the Company section was confirmed on a member account after the demo-member seed (`93718d8`) |
 | 17 | Web: browse assessments (as slice 13). Also add the "Level" row (or "More assessments needed") to the web Skill Passport, which mobile already has | |
 | 18 | Web: take an assessment, with the same confirmation (as slice 14), including "the timer keeps running" | |
 | 19 | Web: result screen with the Skill Passport level per skill (as slice 15) | |
-| 20 | Docs: `assessments.md`, `PROGRES.md`, this file | |
+| 20 | Authoring notice, web and mobile: when a company publishes (or views) an assessment that contains short-answer, scenario or practical questions, say that candidates cannot take it yet, because automatic scoring covers only multiple choice, true/false and multiple select until AI evaluation with human review (Milestone 12). Today such an assessment publishes without a warning and silently never appears to candidates | |
+| 21 | Docs: `assessments.md`, `PROGRES.md`, this file | |
