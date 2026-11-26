@@ -50,6 +50,7 @@ export const sq: Messages = {
     conflict: "Kjo u ndryshua diku tjetër. Ringarkoni për të parë versionin më të ri dhe provoni përsëri.",
     generic: "Diçka shkoi keq. Ju lutemi provoni përsëri.",
     network: "SkillProve nuk u arrit. Kontrolloni lidhjen dhe provoni përsëri.",
+    offline: "Nuk ka lidhje. Kontrolloni internetin.",
     loadFailed: "Kjo nuk mund të ngarkohej.",
     rateLimited: "Keni arritur kufirin e gjenerimit. Provoni përsëri më vonë.",
     aiUnavailable: "Gjenerimi me AI nuk është i disponueshëm tani.",
