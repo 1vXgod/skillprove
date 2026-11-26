@@ -269,6 +269,9 @@ importers:
       '@skillprove/api-client':
         specifier: workspace:*
         version: link:../../packages/api-client
+      '@skillprove/assessment-engine':
+        specifier: workspace:*
+        version: link:../../packages/assessment-engine
       '@skillprove/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -348,6 +351,9 @@ importers:
       '@skillprove/api-client':
         specifier: workspace:*
         version: link:../../packages/api-client
+      '@skillprove/assessment-engine':
+        specifier: workspace:*
+        version: link:../../packages/assessment-engine
       '@skillprove/permissions':
         specifier: workspace:*
         version: link:../../packages/permissions

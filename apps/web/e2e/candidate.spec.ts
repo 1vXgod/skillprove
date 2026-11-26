@@ -280,6 +280,31 @@ test.describe("privacy settings", () => {
 });
 
 test.describe("assessments to take", () => {
+  const choices = [
+    { id: "A", text: "3" },
+    { id: "B", text: "4" },
+    { id: "C", text: "5" },
+  ];
+  const attempt = (overrides: Record<string, unknown>) => ({
+    id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+    assessmentId: "66666666-6666-4666-8666-666666666666",
+    title: "JavaScript basics",
+    instructions: null,
+    language: "sq",
+    difficulty: "BEGINNER",
+    status: "IN_PROGRESS",
+    attemptNumber: 1,
+    maxAttempts: 3,
+    startedAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + 10 * 60_000).toISOString(),
+    submittedAt: null,
+    questions: [
+      { id: "dddddddd-dddd-4ddd-8ddd-ddddddddddd1", position: 1, kind: "multiple_choice", prompt: "Cili është rezultati i 2 + 2?", choices },
+      { id: "dddddddd-dddd-4ddd-8ddd-ddddddddddd2", position: 2, kind: "true_false", prompt: "JavaScript është i njëjtë me Java." },
+      { id: "dddddddd-dddd-4ddd-8ddd-ddddddddddd3", position: 3, kind: "multiple_select", prompt: "Cilat janë numra çift?", choices },
+    ],
+    ...overrides,
+  });
   const item = (overrides: Record<string, unknown>) => ({
     assessmentId: "66666666-6666-4666-8666-666666666666",
     versionId: "77777777-7777-4777-8777-777777777777",
@@ -317,8 +342,84 @@ test.describe("assessments to take", () => {
     await expect(card("Pyetje SQL").getByText(t("take.inProgress"))).toBeVisible();
     await expect(card("React").getByText(t("take.noAttemptsLeft"))).toBeVisible();
     await expect(card("React").getByText(t("take.noTimeLimit"), { exact: false })).toBeVisible();
-    // Browsing only for now: nothing here starts an attempt.
-    await expect(page.getByRole("main").getByRole("button")).toHaveCount(0);
+    // An open attempt continues, a used-up assessment offers nothing.
+    await expect(card("Pyetje SQL").getByRole("button", { name: new RegExp(t("take.continue")) })).toBeVisible();
+    await expect(card("React").getByRole("button")).toHaveCount(0);
+  });
+
+  test("asks before starting, then starts the attempt", async ({ page }) => {
+    const attemptId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+    const requests = await mockApi(page, {
+      "GET /me/assessments": () => okJson({ items: [item({})] }),
+      "POST /me/assessments/66666666-6666-4666-8666-666666666666/attempts": () => ({ status: 201, json: { success: true, data: attempt({ id: attemptId }) } }),
+    });
+    await page.goto(`${HARNESS}?screen=take`);
+    await hydrated(page);
+    await page.getByRole("button", { name: `${t("take.start")}: JavaScript basics` }).click();
+
+    const dialog = page.getByRole("dialog", { name: t("take.confirmTitle") });
+    await expect(dialog.getByText(t("take.confirmBody", { max: 3 }))).toBeVisible();
+    await expect(dialog.getByText(t("take.confirmDuration", { minutes: 10 }))).toBeVisible();
+    await expect(dialog.getByText(t("take.confirmKeepsRunning"))).toBeVisible();
+    // Cancelling starts nothing.
+    await dialog.getByRole("button", { name: t("common.cancel") }).click();
+    expect(requests.some((r) => r.method === "POST")).toBe(false);
+
+    await page.getByRole("button", { name: `${t("take.start")}: JavaScript basics` }).click();
+    // The attempt page needs a real session, so only the navigation to it is checked.
+    const opened = page.waitForRequest((request) => new URL(request.url()).pathname === `/take/${attemptId}`);
+    await dialog.getByRole("button", { name: t("take.start"), exact: true }).click();
+    await opened;
+    expect(requests.filter((r) => r.method === "POST")).toHaveLength(1);
+  });
+
+  test("takes an attempt one question at a time and submits with a warning", async ({ page }) => {
+    const id = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+    const requests = await mockApi(page, {
+      [`GET /me/attempts/${id}`]: () => okJson(attempt({ id })),
+      [`POST /me/attempts/${id}/submit`]: () => okJson(attempt({ id, status: "SUBMITTED", submittedAt: new Date().toISOString() })),
+    });
+    await page.goto(`${HARNESS}?screen=attempt&id=${id}`);
+    await hydrated(page);
+
+    await expect(page.getByRole("timer")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Cili është rezultati i 2 + 2?" })).toBeVisible();
+    await page.getByLabel("4", { exact: true }).check();
+    await page.getByRole("button", { name: t("take.next") }).click();
+    await page.getByLabel(t("take.answerFalse")).check();
+    await page.getByRole("button", { name: t("take.next") }).click();
+    // Answers survive a reload: they are kept in the browser until submit.
+    await page.reload();
+    await hydrated(page);
+    await page.getByRole("button", { name: t("take.next") }).click();
+    await expect(page.getByLabel(t("take.answerFalse"))).toBeChecked();
+    await page.getByRole("button", { name: t("take.next") }).click();
+    await page.getByRole("button", { name: t("take.review") }).click();
+
+    const rows = page.getByRole("main").getByRole("listitem");
+    await expect(rows.nth(0).getByText(t("take.answered"))).toBeVisible();
+    await expect(rows.nth(2).getByText(t("take.notAnswered"))).toBeVisible();
+    await page.getByRole("button", { name: t("take.submit") }).click();
+    const dialog = page.getByRole("dialog", { name: t("take.submitConfirmTitle") });
+    await expect(dialog.getByText(t("take.submitUnanswered", { count: 1 }))).toBeVisible();
+    await dialog.getByRole("button", { name: t("take.submit") }).click();
+
+    await expect(page.getByText(t("take.finishedTitle"))).toBeVisible();
+    const submit = requests.find((r) => r.method === "POST");
+    expect(submit?.body).toEqual({ answers: { "dddddddd-dddd-4ddd-8ddd-ddddddddddd1": "B", "dddddddd-dddd-4ddd-8ddd-ddddddddddd2": false } });
+    expect(await page.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith("sp-attempt-answers.")))).toEqual([]);
+  });
+
+  test("submits by itself when the time is up", async ({ page }) => {
+    const id = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
+    const requests = await mockApi(page, {
+      [`GET /me/attempts/${id}`]: () => okJson(attempt({ id, expiresAt: new Date(Date.now() + 2000).toISOString() })),
+      [`POST /me/attempts/${id}/submit`]: () => okJson(attempt({ id, status: "SUBMITTED", submittedAt: new Date().toISOString() })),
+    });
+    await page.goto(`${HARNESS}?screen=attempt&id=${id}`);
+    await hydrated(page);
+    await expect(page.getByText(t("take.finishedTitle"))).toBeVisible({ timeout: 10_000 });
+    expect(requests.filter((r) => r.method === "POST")).toHaveLength(1);
   });
 
   test("says so when there is nothing to take", async ({ page }) => {

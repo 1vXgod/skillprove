@@ -1,8 +1,8 @@
 import type { AttemptAnswer, AttemptQuestion } from "@skillprove/validation";
 
 /*
- * Pure helpers for taking an attempt on the phone (Milestone 7, slice 14). Answers stay on the
- * phone until submit; the server stores and scores them only then.
+ * Pure helpers for taking an attempt, shared by the phone and web apps (Milestone 7, slices 14
+ * and 18). Answers stay on the device until submit; the server stores and scores them only then.
  */
 
 /** Answers keyed by question ID, as the API expects them on submit. */
@@ -32,7 +32,7 @@ export function answersToSubmit(answers: Answers): Answers {
 }
 
 /*
- * Answers are saved on the phone by question position rather than ID, so they stay small: the
+ * Answers are saved on the device by question position rather than ID, so they stay small: the
  * phone's secure store warns above about 2 KB per value, and an assessment has at most 30
  * questions. Anything that does not fit its question is dropped when read back.
  */

@@ -9,7 +9,7 @@ import { Screen } from "../../components/shell/screen";
 import { SignedInGate } from "../../components/shell/signed-in-gate";
 import { ResultView } from "../../components/take/result-view";
 import { Alert, AppText, Badge, Button, Card, Checkbox, EmptyState, Modal, Progress, RadioGroup, Skeleton } from "../../components/ui";
-import { answersToSubmit, formatCountdown, isAnswered, secondsLeft, toggleChoice, unansweredCount, type Answers } from "../../lib/attempt";
+import { answersToSubmit, formatCountdown, isAnswered, secondsLeft, toggleChoice, unansweredCount, type Answers } from "@skillprove/assessment-engine";
 import { clearAnswers, loadAnswers, saveAnswers } from "../../lib/attempt-store";
 import { errorMessage, queryKeys, useApiClient } from "../../lib/use-api";
 import { useI18n } from "../../theme/preferences-provider";

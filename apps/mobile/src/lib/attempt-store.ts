@@ -1,5 +1,5 @@
 import type { AttemptQuestion } from "@skillprove/validation";
-import { fromStored, toStored, type Answers } from "./attempt";
+import { fromStored, toStored, type Answers } from "@skillprove/assessment-engine";
 import { readPreference, removePreference, writePreference } from "./preference-store";
 
 /*

@@ -7,6 +7,7 @@ import { PrivacySettings } from "../../../components/privacy/privacy-settings";
 import { ProfileOverview } from "../../../components/profile/profile-overview";
 import { AppShell } from "../../../components/shell/app-shell";
 import { PageHeader } from "../../../components/shell/page-header";
+import { AttemptView } from "../../../components/take/attempt-view";
 import { TakeableList } from "../../../components/take/takeable-list";
 import { buttonClasses } from "../../../components/ui";
 import { isDesignSystemEnabled } from "../../../lib/design-system";
@@ -20,10 +21,10 @@ export const metadata: Metadata = { title: "Candidate screens · SkillProve", ro
  * token. Against the real API every request is rejected, so it shows error states; browser
  * tests intercept the API to exercise each flow. It is not a way to use the product.
  */
-export default async function CandidateScreensPage({ searchParams }: { searchParams: Promise<{ screen?: string }> }) {
+export default async function CandidateScreensPage({ searchParams }: { searchParams: Promise<{ screen?: string; id?: string }> }) {
   if (!isDesignSystemEnabled()) notFound();
   const t = createTranslator((await getRequestPreferences()).locale);
-  const { screen } = await searchParams;
+  const { screen, id } = await searchParams;
   return (
     <PlaceholderTokenProvider>
       <AppShell
@@ -45,6 +46,8 @@ export default async function CandidateScreensPage({ searchParams }: { searchPar
               <PageHeader title={t("take.title")} description={t("take.description")} />
               <TakeableList />
             </>
+          ) : screen === "attempt" && id ? (
+            <AttemptView attemptId={id} />
           ) : screen === "privacy" ? (
             <>
               <PageHeader title={t("privacy.title")} description={t("privacy.description")} />
