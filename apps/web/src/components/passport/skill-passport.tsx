@@ -13,9 +13,9 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tansta
 import { useDeferredValue, useState } from "react";
 import { useI18n } from "../../lib/i18n";
 import { errorMessage, queryKeys, useApiClient } from "../../lib/use-api";
-import { ClipboardIcon, InboxIcon, SuccessIcon } from "../icons";
+import { ClipboardIcon, InboxIcon, SuccessIcon, UserIcon } from "../icons";
 import { FormDialog, useDialog } from "../profile/form-dialog";
-import { Alert, AlertDialog, Badge, Button, Card, CardContent, CardHeader, EmptyState, Input, Select, Skeleton } from "../ui";
+import { Alert, AlertDialog, Badge, Button, Card, CardContent, CardHeader, EmptyState, Input, Progress, Select, Skeleton, StatCard } from "../ui";
 
 export function SkillPassportView() {
   const { t, locale } = useI18n();
@@ -49,23 +49,35 @@ function PassportSections({ passport }: { passport: Passport }) {
   const { t, locale } = useI18n();
   const verifiedIds = new Set(passport.verified.map((v) => v.skill.id));
   const date = (iso: string) => formatDate(locale, new Date(iso));
+  const count = (n: number) => formatNumber(locale, n);
 
   return (
-    <div className="flex flex-col gap-6">
-      <Card data-testid="verified-skills">
-        <CardHeader title={t("passport.verifiedTitle")} />
-        <CardContent className="pt-4">
-          {passport.verified.length === 0 ? (
-            <EmptyState icon={<SuccessIcon size={20} />} title={t("passport.verifiedEmpty")} />
-          ) : (
-            <ul className="grid gap-4 lg:grid-cols-2">
-              {passport.verified.map((skill) => (
-                <VerifiedSkillCard key={skill.skill.id} skill={skill} />
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+    <div className="flex flex-col gap-8">
+      {/* Real counts, one per section below. */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <StatCard tone="success" icon={<SuccessIcon size={20} />} value={count(passport.verified.length)} label={t("passport.verifiedTitle")} />
+        <StatCard tone="info" icon={<ClipboardIcon size={20} />} value={count(passport.inAssessment.length)} label={t("passport.inAssessmentTitle")} />
+        <StatCard icon={<UserIcon size={20} />} value={count(passport.selfReported.length)} label={t("passport.selfReportedTitle")} />
+      </div>
+
+      <section data-testid="verified-skills" aria-labelledby="verified-title" className="flex flex-col gap-4">
+        <h2 id="verified-title" className="type-h3 text-foreground">
+          {t("passport.verifiedTitle")}
+        </h2>
+        {passport.verified.length === 0 ? (
+          <Card>
+            <CardContent className="pt-5">
+              <EmptyState icon={<SuccessIcon size={20} />} title={t("passport.verifiedEmpty")} />
+            </CardContent>
+          </Card>
+        ) : (
+          <ul className="grid gap-4 lg:grid-cols-2">
+            {passport.verified.map((skill) => (
+              <VerifiedSkillCard key={skill.skill.id} skill={skill} />
+            ))}
+          </ul>
+        )}
+      </section>
 
       <Card data-testid="skills-in-assessment">
         <CardHeader title={t("passport.inAssessmentTitle")} />
@@ -75,19 +87,24 @@ function PassportSections({ passport }: { passport: Passport }) {
           ) : (
             <ul className="flex flex-col divide-y divide-border">
               {passport.inAssessment.map((entry) => (
-                <li key={entry.skill.id} className="flex flex-col gap-2 py-3 first:pt-0 last:pb-0">
-                  <p className="type-label text-foreground">{entry.skill.name}</p>
-                  <ul className="flex flex-col gap-1">
-                    {entry.attempts.map((attempt) => (
-                      <li key={attempt.attemptId} className="flex flex-wrap items-center gap-2 type-body-small text-muted-foreground">
-                        <Badge tone="info">{t(`passport.stage.${attempt.stage}`)}</Badge>
-                        <span>{attempt.assessmentTitle}</span>
-                        <span>
-                          · {attempt.submittedAt ? `${t("passport.submitted")} ${date(attempt.submittedAt)}` : `${t("passport.started")} ${date(attempt.startedAt)}`}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
+                <li key={entry.skill.id} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
+                  <span aria-hidden="true" className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg bg-info-subtle text-info">
+                    <ClipboardIcon size={18} />
+                  </span>
+                  <div className="flex min-w-0 flex-col gap-1.5">
+                    <p className="type-label text-foreground">{entry.skill.name}</p>
+                    <ul className="flex flex-col gap-1">
+                      {entry.attempts.map((attempt) => (
+                        <li key={attempt.attemptId} className="flex flex-wrap items-center gap-2 type-body-small text-muted-foreground">
+                          <Badge tone="info">{t(`passport.stage.${attempt.stage}`)}</Badge>
+                          <span>{attempt.assessmentTitle}</span>
+                          <span>
+                            · {attempt.submittedAt ? `${t("passport.submitted")} ${date(attempt.submittedAt)}` : `${t("passport.started")} ${date(attempt.startedAt)}`}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -100,36 +117,48 @@ function PassportSections({ passport }: { passport: Passport }) {
   );
 }
 
+/** Read-only: there is no control to change a verified result. */
 function VerifiedSkillCard({ skill }: { skill: VerifiedSkillWithEvidence }) {
   const { t, locale } = useI18n();
   const outdated = skill.evidenceStatus === "OUTDATED";
   const level = verifiedSkillLevel(skill.score, skill.confidence);
+  const score = t("passport.scoreOutOf", { score: formatNumber(locale, skill.score, { maximumFractionDigits: 1 }) });
   return (
-    <li className="flex flex-col gap-3 rounded-lg border border-border p-4">
-      <div className="flex items-start justify-between gap-3">
-        <p className="type-h4 text-foreground">{skill.skill.name}</p>
+    <li className="flex flex-col gap-4 rounded-xl border border-border/70 bg-surface p-5 shadow-card">
+      <div className="flex items-start gap-3">
+        <span aria-hidden="true" className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg bg-success-subtle text-success">
+          <SuccessIcon size={18} />
+        </span>
+        <p className="min-w-0 flex-1 self-center type-h4 text-foreground">{skill.skill.name}</p>
         <Badge tone={outdated ? "warning" : "success"}>{outdated ? t("passport.outdated") : t("passport.verified")}</Badge>
       </div>
-      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <div>
-          <dt className="type-caption text-muted-foreground">{t("passport.verifiedLevel")}</dt>
-          <dd className="type-label text-foreground">{level ? t(`passport.levels.${level}`) : t("passport.moreAssessmentsNeeded")}</dd>
+      <dl className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <dt className="type-body-small text-muted-foreground">{t("passport.verifiedLevel")}</dt>
+          <dd>
+            <Badge tone={level ? "info" : "neutral"}>{level ? t(`passport.levels.${level}`) : t("passport.moreAssessmentsNeeded")}</Badge>
+          </dd>
         </div>
-        <div>
-          <dt className="type-caption text-muted-foreground">{t("passport.score")}</dt>
-          <dd className="type-label text-foreground">{t("passport.scoreOutOf", { score: formatNumber(locale, skill.score, { maximumFractionDigits: 1 }) })}</dd>
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-baseline justify-between gap-2">
+            <dt className="type-body-small text-muted-foreground">{t("passport.score")}</dt>
+            <dd className="type-label tabular-nums text-foreground">{score}</dd>
+          </div>
+          <Progress value={skill.score} label={`${t("passport.score")}: ${score}`} />
         </div>
-        <div>
-          <dt className="type-caption text-muted-foreground">{t("passport.confidence")}</dt>
-          <dd className="type-label text-foreground">{formatNumber(locale, skill.confidence / 100, { style: "percent" })}</dd>
-        </div>
-        <div>
-          <dt className="type-caption text-muted-foreground">{t("passport.highestDifficulty")}</dt>
-          <dd className="type-label text-foreground">{t(`passport.difficulty.${skill.highestDifficulty}`)}</dd>
-        </div>
-        <div>
-          <dt className="type-caption text-muted-foreground">{t("passport.lastVerified")}</dt>
-          <dd className="type-label text-foreground">{formatDate(locale, new Date(skill.lastVerifiedAt))}</dd>
+        <div className="grid grid-cols-3 gap-3 border-t border-border pt-3">
+          <div>
+            <dt className="type-caption text-muted-foreground">{t("passport.confidence")}</dt>
+            <dd className="type-label text-foreground">{formatNumber(locale, skill.confidence / 100, { style: "percent" })}</dd>
+          </div>
+          <div>
+            <dt className="type-caption text-muted-foreground">{t("passport.highestDifficulty")}</dt>
+            <dd className="type-label text-foreground">{t(`passport.difficulty.${skill.highestDifficulty}`)}</dd>
+          </div>
+          <div>
+            <dt className="type-caption text-muted-foreground">{t("passport.lastVerified")}</dt>
+            <dd className="type-label text-foreground">{formatDate(locale, new Date(skill.lastVerifiedAt))}</dd>
+          </div>
         </div>
       </dl>
       {outdated && <Alert tone="warning">{t("passport.outdatedBody")}</Alert>}
@@ -183,7 +212,11 @@ function SelfReportedSection({ skills, verifiedIds }: { skills: SelfReportedSkil
           <ul className="flex flex-col divide-y divide-border">
             {skills.map((item) => (
               <li key={item.skill.id} className="flex flex-col gap-2 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex min-w-0 flex-col gap-1">
+                <div className="flex min-w-0 items-start gap-3">
+                  <span aria-hidden="true" className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-primary">
+                    <UserIcon size={18} />
+                  </span>
+                  <div className="flex min-w-0 flex-col gap-1">
                   <p className="flex flex-wrap items-center gap-2 type-label text-foreground">
                     {item.skill.name}
                     <Badge>{t("passport.selfReported")}</Badge>
@@ -193,6 +226,7 @@ function SelfReportedSection({ skills, verifiedIds }: { skills: SelfReportedSkil
                     {t(`passport.levels.${item.level}`)}
                     {item.yearsOfExperience !== null && ` · ${t("passport.yearsValue", { years: formatNumber(locale, item.yearsOfExperience) })}`}
                   </p>
+                </div>
                 </div>
                 <div className="flex shrink-0 gap-1">
                   <Button size="sm" variant="ghost" aria-label={`${t("common.edit")}: ${item.skill.name}`} onClick={() => editing.open(item)}>
