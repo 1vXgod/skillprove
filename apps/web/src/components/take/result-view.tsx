@@ -9,6 +9,7 @@ import { useEffect } from "react";
 import { useI18n } from "../../lib/i18n";
 import { errorMessage, queryKeys, useApiClient } from "../../lib/use-api";
 import { WarningIcon } from "../icons";
+import { MedalFor } from "../passport/medal";
 import { Alert, Badge, Button, buttonClasses, Card, CardContent, CardHeader, EmptyState, Progress, Separator, Spinner } from "../ui";
 
 /**
@@ -124,9 +125,12 @@ function Scored({ result, passport }: { result: AttemptResult; passport: SkillPa
                   {standing && (
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <span className="type-body-small text-muted-foreground">{t("take.passportLevel")}</span>
-                      <Badge tone={standing.kind === "level" ? "success" : "neutral"}>
-                        {standing.kind === "level" ? t(`passport.levels.${standing.level}`) : t("passport.moreAssessmentsNeeded")}
-                      </Badge>
+                      <span className="flex items-center gap-2">
+                        {standing.kind === "level" && <MedalFor medal={standing.medal} outdated={standing.outdated} />}
+                        <Badge tone={standing.kind === "level" ? "success" : "neutral"}>
+                          {standing.kind === "level" ? t(`passport.levels.${standing.level}`) : t("passport.moreAssessmentsNeeded")}
+                        </Badge>
+                      </span>
                     </div>
                   )}
                 </li>

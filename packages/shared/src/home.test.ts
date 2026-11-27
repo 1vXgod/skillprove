@@ -22,9 +22,9 @@ const passport = {
 describe("topVerifiedSkills", () => {
   it("lists the highest scores first, ties by name, with the level or none when confidence is low", () => {
     expect(topVerifiedSkills(passport)).toEqual([
-      { skillId: "s2", name: "JavaScript", score: 80, level: expect.any(String) },
-      { skillId: "s3", name: "TypeScript", score: 80, level: expect.any(String) },
-      { skillId: "s1", name: "SQL", score: 64, level: null },
+      { skillId: "s2", name: "JavaScript", score: 80, level: expect.any(String), medal: expect.any(String), outdated: false },
+      { skillId: "s3", name: "TypeScript", score: 80, level: expect.any(String), medal: expect.any(String), outdated: false },
+      { skillId: "s1", name: "SQL", score: 64, level: null, medal: null, outdated: false },
     ]);
     expect(topVerifiedSkills(passport, 1)).toHaveLength(1);
   });

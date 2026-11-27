@@ -1,5 +1,6 @@
 "use client";
 
+import { SKILL_MEDALS } from "@skillprove/shared";
 import { colors, radius, spacing, TYPE_STYLES, typography, type ColorTokens, type ThemeName } from "@skillprove/shared/design";
 import { useState, type ReactNode } from "react";
 import { useI18n } from "../lib/i18n";
@@ -36,6 +37,7 @@ import {
   Radio,
   RadioGroup,
   Select,
+  SkillMedal,
   SkillRow,
   Separator,
   Skeleton,
@@ -174,6 +176,20 @@ export function DesignSystemShowcase({ formatting }: { formatting: FormattingSam
           <StatCard tone="success" icon={<SuccessIcon size={20} />} value="8" label={t("designSystem.brandItems.statVerified")} />
           <StatCard icon={<UserIcon size={20} />} value="78%" label={t("designSystem.brandItems.statComplete")} />
           <StatCard tone="info" icon={<ClipboardIcon size={20} />} value="5" label={t("designSystem.brandItems.statAvailable")} />
+        </div>
+
+        <EffectLabel title={t("designSystem.brandItems.medals")} help={t("designSystem.brandItems.medalsHelp")} />
+        <div className="flex flex-wrap items-end gap-6">
+          {SKILL_MEDALS.map((medal) => (
+            <span key={medal} className="flex flex-col items-center gap-2">
+              <span className="flex items-end gap-2">
+                <SkillMedal medal={medal} label={t(`medals.${medal}`)} size="md" />
+                <SkillMedal medal={medal} label={t(`medals.${medal}`)} />
+                <SkillMedal medal={medal} label={`${t(`medals.${medal}`)} · ${t("passport.outdated")}`} faded />
+              </span>
+              <span className="type-caption text-muted-foreground">{t(`medals.${medal}`)}</span>
+            </span>
+          ))}
         </div>
 
         <EffectLabel title={t("designSystem.brandItems.skillRows")} help={t("designSystem.brandItems.skillRowsHelp")} />

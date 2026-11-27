@@ -1,4 +1,4 @@
-import { PROFILE_VISIBILITIES } from "@skillprove/shared";
+import { PROFILE_VISIBILITIES, skillMedal } from "@skillprove/shared";
 import { formatNumber } from "@skillprove/shared/i18n";
 import type { OwnProfile } from "@skillprove/validation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -7,6 +7,7 @@ import { StyleSheet, View } from "react-native";
 import { Screen } from "../../components/shell/screen";
 import { SignedInGate } from "../../components/shell/signed-in-gate";
 import { Alert, AppText, Badge, Button, Card, CardHeader, RadioGroup, Separator, Switch } from "../../components/ui";
+import { MedalFor } from "../../components/medal-for";
 import { QueryState } from "../../components/query-state";
 import { errorMessage, queryKeys, useApiClient } from "../../lib/use-api";
 import { useI18n } from "../../theme/preferences-provider";
@@ -119,6 +120,14 @@ function Preview() {
               {value === null ? <Badge label={t("common.hidden")} /> : <AppText variant="bodySmall" tone="mutedForeground">{value}</AppText>}
             </View>
           ))}
+          {/* Companies see the medals only when verified skills are shown. */}
+          {preview.data.view.verifiedSkills && preview.data.view.verifiedSkills.length > 0 && (
+            <View style={styles.medals}>
+              {preview.data.view.verifiedSkills.map((v) => (
+                <MedalFor key={v.skill.id} medal={skillMedal(v.score, v.confidence)} outdated={v.evidenceStatus === "OUTDATED"} />
+              ))}
+            </View>
+          )}
         </View>
       )}
     </Card>
@@ -127,6 +136,7 @@ function Preview() {
 
 const styles = StyleSheet.create({
   rows: { gap: 10 },
+  medals: { flexDirection: "row", flexWrap: "wrap", justifyContent: "flex-end", gap: 6 },
   row: { flexDirection: "row", alignItems: "center", gap: 8, minHeight: 32 },
   flex: { flex: 1 },
 });

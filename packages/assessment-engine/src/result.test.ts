@@ -17,9 +17,15 @@ describe("result polling", () => {
 
 describe("skillStanding", () => {
   it("names a level only from confidence 50", () => {
-    expect(skillStanding(passportWith(85, 50), skillId)).toEqual({ kind: "level", level: "EXPERT" });
-    expect(skillStanding(passportWith(45, 60), skillId)).toEqual({ kind: "level", level: "INTERMEDIATE" });
+    expect(skillStanding(passportWith(85, 50), skillId)).toEqual({ kind: "level", level: "EXPERT", medal: "gold", outdated: false });
+    expect(skillStanding(passportWith(45, 60), skillId)).toEqual({ kind: "level", level: "INTERMEDIATE", medal: "bronze", outdated: false });
     expect(skillStanding(passportWith(85, 49), skillId)).toEqual({ kind: "moreNeeded" });
+  });
+
+  it("takes the medal from the Passport score and marks outdated evidence", () => {
+    const outdated = { verified: [{ skill: { id: skillId, name: "JavaScript" }, score: 65, confidence: 80, evidenceStatus: "OUTDATED" }] } as unknown as SkillPassport;
+    expect(skillStanding(outdated, skillId)).toEqual({ kind: "level", level: "ADVANCED", medal: "silver", outdated: true });
+    expect(skillStanding(passportWith(30, 80), skillId)).toEqual({ kind: "level", level: "BEGINNER", medal: null, outdated: false });
   });
 
   it("says nothing for a skill without a verified score", () => {

@@ -52,6 +52,13 @@ export interface ColorTokens {
   sidebarActive: string;
   sidebarActiveForeground: string;
   sidebarBorder: string;
+  /** Skill medals: a face and a deeper rim for each. Decorative, always with a text label. */
+  medalGold: string;
+  medalGoldRim: string;
+  medalSilver: string;
+  medalSilverRim: string;
+  medalBronze: string;
+  medalBronzeRim: string;
 }
 
 /**
@@ -98,6 +105,12 @@ export const colors: Record<ThemeName, ColorTokens> = {
     sidebarActive: "#2d3891",
     sidebarActiveForeground: "#ffffff",
     sidebarBorder: "#28317a",
+    medalGold: "#e8b730",
+    medalGoldRim: "#a8790c",
+    medalSilver: "#c9cfdb",
+    medalSilverRim: "#7c8597",
+    medalBronze: "#d08a4f",
+    medalBronzeRim: "#8f5326",
   },
   dark: {
     background: "#080b1a",
@@ -138,6 +151,12 @@ export const colors: Record<ThemeName, ColorTokens> = {
     sidebarActive: "#1c2456",
     sidebarActiveForeground: "#ffffff",
     sidebarBorder: "#1a2047",
+    medalGold: "#f0c44a",
+    medalGoldRim: "#b8871a",
+    medalSilver: "#d5dbe5",
+    medalSilverRim: "#8e97aa",
+    medalBronze: "#dd9a60",
+    medalBronzeRim: "#a2632f",
   },
 };
 

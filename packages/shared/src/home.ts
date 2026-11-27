@@ -1,5 +1,6 @@
 import { takeableState } from "./takeable";
 import type { DifficultyLevel } from "./candidate";
+import { skillMedal, type SkillMedal } from "./skill-medal";
 import { verifiedSkillLevel } from "./verified-score";
 
 /*
@@ -12,6 +13,7 @@ interface VerifiedInput {
   skill: { id: string; name: string };
   score: number;
   confidence: number;
+  evidenceStatus?: "CURRENT" | "OUTDATED";
   evidence: readonly { evaluationId: string; assessmentTitle: string; completedAt: string | null; superseded: boolean }[];
 }
 
@@ -28,6 +30,9 @@ export interface TopSkill {
   score: number;
   /** Null while confidence is too low: "more assessments needed". */
   level: DifficultyLevel | null;
+  /** Null for Beginner and while confidence is too low. */
+  medal: SkillMedal | null;
+  outdated: boolean;
 }
 
 /** The highest-scoring verified skills, with their Skill Passport level. */
@@ -35,7 +40,7 @@ export function topVerifiedSkills(passport: PassportInput, limit = 4): TopSkill[
   return [...passport.verified]
     .sort((a, b) => b.score - a.score || a.skill.name.localeCompare(b.skill.name))
     .slice(0, limit)
-    .map((v) => ({ skillId: v.skill.id, name: v.skill.name, score: v.score, level: verifiedSkillLevel(v.score, v.confidence) }));
+    .map((v) => ({ skillId: v.skill.id, name: v.skill.name, score: v.score, level: verifiedSkillLevel(v.score, v.confidence), medal: skillMedal(v.score, v.confidence), outdated: v.evidenceStatus === "OUTDATED" }));
 }
 
 export type ActivityKind = "verified" | "submitted" | "started";

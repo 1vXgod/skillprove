@@ -153,6 +153,8 @@ export const sq: Messages = {
   },
   profile: {
     title: "Profili yt",
+    verifiedHidden: "Kompanitë nuk i shohin. Ndryshoje te Privatësia.",
+    verifiedEmpty: "Ende nuk ke aftësi të verifikuara. Bëj një vlerësim për të fituar një.",
     description: "Profili yt profesional. Kompanitë shohin vetëm atë që lejon te Privatësia.",
     createTitle: "Krijo profilin tënd si kandidat",
     createDescription: "Fillo me emrin. Pjesën tjetër mund ta shtosh më vonë, dhe profili mbetet privat derisa ta ndryshosh.",
@@ -367,6 +369,11 @@ export const sq: Messages = {
       NATIVE: "Gjuhë amtare",
     },
   },
+  medals: {
+    gold: "Medalje ari",
+    silver: "Medalje argjendi",
+    bronze: "Medalje bronzi",
+  },
   passport: {
     title: "Pasaporta e aftësive",
     description: "Rezultatet e verifikuara vijnë vetëm nga vlerësime të përfunduara dhe të shqyrtuara. Aftësitë e tua mund t'i përshkruash vetë, por një rezultat të verifikuar nuk mund ta ndryshosh kurrë.",
@@ -490,6 +497,8 @@ export const sq: Messages = {
       statVerified: "Aftësi të verifikuara",
       statComplete: "Profili i plotësuar",
       statAvailable: "Vlerësime për t'u bërë",
+      medals: "Medaljet e aftësive",
+      medalsHelp: "Ari nga 80, argjendi nga 60, bronzi nga 40, vetëm kur besueshmëria është së paku 50. E zbehur kur dëshmia është e vjetruar. Gjithmonë me etiketë.",
       skillRows: "Rreshtat e aftësive",
       skillRowsHelp: "Rezultati dhe niveli, me etiketën E verifikuar për aftësitë e verifikuara. Shembuj.",
       heroCard: "Kartela kryesore",

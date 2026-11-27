@@ -214,6 +214,8 @@ test.describe("skill passport", () => {
     // Score 72 at confidence 64 is high enough to name a level.
     await expect(verified.getByText(t("passport.verifiedLevel"))).toBeVisible();
     await expect(verified.getByText(t("passport.levels.ADVANCED"))).toBeVisible();
+    // Score 72 at confidence 64 earns silver, faded because the evidence is outdated.
+    await expect(verified.getByRole("img", { name: `${t("medals.silver")}, ${t("passport.outdated")}` })).toBeVisible();
     // A verified result has no controls: it cannot be edited or removed by the candidate.
     await expect(verified.getByRole("button")).toHaveCount(0);
 
@@ -266,6 +268,37 @@ test.describe("privacy settings", () => {
     const sent = requests.find((r) => r.method === "PUT")?.body;
     expect(sent).toMatchObject({ visibility: "VERIFIED_COMPANIES", showExperience: true, showContactEmail: false, expectedUpdatedAt: NOW });
     await expect(previewCard.getByText(t("privacy.previewPrivate"))).toHaveCount(0);
+  });
+
+  test("shows medals on the owner's profile, and to companies only when verified skills are shown", async ({ page }) => {
+    let profile = ownProfile();
+    const verifiedView = passport.verified.map(({ evidence: _evidence, formulaVersion: _formula, ...v }) => v);
+    await mockApi(page, {
+      "GET /me/profile": () => okJson(profile),
+      "GET /me/skill-passport": () => okJson(passport),
+      "GET /me/profile/preview": () => okJson({ ...preview(profile), view: { ...preview(profile).view, verifiedSkills: profile.privacy.showVerifiedSkills ? verifiedView : null } }),
+    });
+    const medal = { name: `${t("medals.silver")}, ${t("passport.outdated")}` };
+
+    // The owner always sees their medals; the note says companies do not.
+    await page.goto(HARNESS);
+    await hydrated(page);
+    await expect(page.getByTestId("profile-verified-skills").getByRole("img", medal)).toBeVisible();
+    await expect(page.getByText(t("profile.verifiedHidden"))).toBeVisible();
+
+    // The company view has no verified skills, so no medals.
+    await page.goto(`${HARNESS}?screen=privacy`);
+    await hydrated(page);
+    await expect(page.getByTestId("privacy-preview").getByRole("img", medal)).toHaveCount(0);
+
+    profile = ownProfile({ privacy: { ...profile.privacy, showVerifiedSkills: true } });
+    await page.goto(`${HARNESS}?screen=privacy`);
+    await hydrated(page);
+    await expect(page.getByTestId("privacy-preview").getByRole("img", medal)).toBeVisible();
+    await page.goto(HARNESS);
+    await hydrated(page);
+    await expect(page.getByTestId("profile-verified-skills")).toBeVisible();
+    await expect(page.getByText(t("profile.verifiedHidden"))).toHaveCount(0);
   });
 
   test("candidate screens fit a phone without horizontal scrolling", async ({ page }) => {

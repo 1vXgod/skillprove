@@ -9,6 +9,7 @@ import { Screen } from "../../components/shell/screen";
 import { SignedInGate } from "../../components/shell/signed-in-gate";
 import { Alert, AppText, Avatar, Badge, Button, Card, CardHeader, EmptyState, Modal, Separator } from "../../components/ui";
 import { QueryState } from "../../components/query-state";
+import { VerifiedSkillsSection } from "../../components/verified-skills-section";
 import { errorMessage, queryKeys, useApiClient } from "../../lib/use-api";
 import { useI18n } from "../../theme/preferences-provider";
 import { spacing } from "@skillprove/shared/design";
@@ -127,6 +128,8 @@ function ProfileDetails({ profile }: { profile: OwnProfile }) {
         </AppText>
         <Button label={t("profile.editBasics")} variant="outline" icon="edit-2" onPress={() => router.push("/profile/edit")} fullWidth />
       </Card>
+
+      <VerifiedSkillsSection shownToCompanies={profile.privacy.showVerifiedSkills} />
 
       <View style={styles.buttons}>
         <Button label={t("nav.skillPassport")} variant="secondary" icon="award" onPress={() => router.push("/skill-passport")} fullWidth />

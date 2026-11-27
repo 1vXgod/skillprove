@@ -1,6 +1,6 @@
 "use client";
 
-import { SELF_REPORTED_LEVELS, verifiedSkillLevel } from "@skillprove/shared";
+import { SELF_REPORTED_LEVELS, skillMedal, verifiedSkillLevel } from "@skillprove/shared";
 import { formatDate, formatNumber } from "@skillprove/shared/i18n";
 import {
   selfReportedSkillInputSchema,
@@ -13,6 +13,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tansta
 import { useDeferredValue, useState } from "react";
 import { useI18n } from "../../lib/i18n";
 import { errorMessage, queryKeys, useApiClient } from "../../lib/use-api";
+import { MedalFor } from "./medal";
 import { ClipboardIcon, InboxIcon, SuccessIcon, UserIcon } from "../icons";
 import { FormDialog, useDialog } from "../profile/form-dialog";
 import { Alert, AlertDialog, Badge, Button, Card, CardContent, CardHeader, EmptyState, Input, Progress, Select, Skeleton, StatCard } from "../ui";
@@ -130,6 +131,7 @@ function VerifiedSkillCard({ skill }: { skill: VerifiedSkillWithEvidence }) {
           <SuccessIcon size={18} />
         </span>
         <p className="min-w-0 flex-1 self-center type-h4 text-foreground">{skill.skill.name}</p>
+        <MedalFor medal={skillMedal(skill.score, skill.confidence)} outdated={outdated} size="md" />
         <Badge tone={outdated ? "warning" : "success"}>{outdated ? t("passport.outdated") : t("passport.verified")}</Badge>
       </div>
       <dl className="flex flex-col gap-3">

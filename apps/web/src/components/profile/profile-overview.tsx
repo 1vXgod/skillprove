@@ -19,6 +19,7 @@ import { errorMessage, fieldErrorsOf, fieldMessage, queryKeys, useApiClient } fr
 import { InboxIcon, SettingsIcon } from "../icons";
 import { Alert, AlertDialog, Avatar, Badge, Button, Card, CardContent, CardHeader, EmptyState, Skeleton } from "../ui";
 import { useDialog } from "./form-dialog";
+import { VerifiedSkillsSection } from "./verified-skills-section";
 import {
   AvailabilityDialog,
   BasicsDialog,
@@ -219,6 +220,8 @@ function ProfileDetails({ profile }: { profile: OwnProfile }) {
           </dl>
         </CardContent>
       </Card>
+
+      <VerifiedSkillsSection shownToCompanies={profile.privacy.showVerifiedSkills} />
 
       <Card>
         <CardHeader title={t("availability.title")} action={<Button size="sm" variant="outline" onClick={() => availability.open(true)}>{t("common.edit")}</Button>} />

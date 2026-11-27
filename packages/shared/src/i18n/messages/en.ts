@@ -156,6 +156,8 @@ export const en = {
   },
   profile: {
     title: "Your profile",
+    verifiedHidden: "Companies don't see these. Change it in Privacy.",
+    verifiedEmpty: "No verified skills yet. Take an assessment to earn one.",
     description: "Your professional profile. Companies see only what you allow in Privacy.",
     createTitle: "Create your candidate profile",
     createDescription: "Start with your name. You can add everything else later, and your profile stays private until you change that.",
@@ -370,6 +372,11 @@ export const en = {
       NATIVE: "Native",
     },
   },
+  medals: {
+    gold: "Gold medal",
+    silver: "Silver medal",
+    bronze: "Bronze medal",
+  },
   passport: {
     title: "Skill Passport",
     description: "Verified results come only from completed, evaluated assessments. You can describe your own skills, but you can never edit a verified result.",
@@ -493,6 +500,8 @@ export const en = {
       statVerified: "Verified skills",
       statComplete: "Profile complete",
       statAvailable: "Assessments to take",
+      medals: "Skill medals",
+      medalsHelp: "Gold from 80, silver from 60, bronze from 40, only at confidence 50 or more. Faded when the evidence is outdated. Always labelled.",
       skillRows: "Skill rows",
       skillRowsHelp: "Score and level, with the Verified badge for verified skills. Examples.",
       heroCard: "Hero card",

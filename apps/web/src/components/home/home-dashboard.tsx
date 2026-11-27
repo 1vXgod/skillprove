@@ -8,6 +8,7 @@ import type { ReactNode } from "react";
 import { useI18n } from "../../lib/i18n";
 import { errorMessage, queryKeys, useApiClient } from "../../lib/use-api";
 import { ClipboardIcon, InboxIcon, SuccessIcon, UserIcon } from "../icons";
+import { MedalFor } from "../passport/medal";
 import { Alert, Badge, Button, buttonClasses, Card, CardContent, EmptyState, HeroCard, Progress, SkillRow, Skeleton, StatCard } from "../ui";
 
 /**
@@ -98,6 +99,7 @@ export function HomeDashboard() {
                             icon={<SuccessIcon size={18} />}
                             title={s.name}
                             detail={`${t("passport.scoreOutOf", { score: formatNumber(locale, s.score, { maximumFractionDigits: 1 }) })} · ${s.level ? t(`passport.levels.${s.level}`) : t("passport.moreAssessmentsNeeded")}`}
+                            medal={<MedalFor medal={s.medal} outdated={s.outdated} />}
                             badge={<Badge tone="success">{t("passport.verified")}</Badge>}
                             href="/skill-passport"
                           />

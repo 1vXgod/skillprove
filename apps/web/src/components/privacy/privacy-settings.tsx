@@ -1,11 +1,12 @@
 "use client";
 
-import { PROFILE_VISIBILITIES, type ProfileVisibility } from "@skillprove/shared";
+import { PROFILE_VISIBILITIES, skillMedal, type ProfileVisibility } from "@skillprove/shared";
+import { MedalFor } from "../passport/medal";
 import { formatNumber } from "@skillprove/shared/i18n";
 import type { CandidateView, OwnProfile, PrivacyInput } from "@skillprove/validation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useI18n } from "../../lib/i18n";
 import { errorMessage, queryKeys, useApiClient } from "../../lib/use-api";
 import { languageName } from "../profile/section-forms";
@@ -131,7 +132,7 @@ function PrivacyPreview() {
   );
 }
 
-function PreviewRow({ label, value }: { label: string; value: string | null }) {
+function PreviewRow({ label, value }: { label: string; value: ReactNode }) {
   const { t } = useI18n();
   return (
     <div className="flex flex-col gap-0.5 sm:flex-row sm:justify-between sm:gap-4">
@@ -156,7 +157,19 @@ function PreviewBody({ view }: { view: CandidateView }) {
       <PreviewRow label={t("portfolio.title")} value={formatNumber(locale, view.portfolio.length)} />
       <PreviewRow label={t("languages.title")} value={view.languages.map((l) => languageName(t, l.languageCode)).join(", ") || t("profile.notAdded")} />
       <PreviewRow label={t("passport.selfReportedTitle")} value={formatNumber(locale, view.selfReportedSkills.length)} />
-      <PreviewRow label={t("passport.verifiedTitle")} value={count(view.verifiedSkills)} />
+      <PreviewRow
+        label={t("passport.verifiedTitle")}
+        value={
+          view.verifiedSkills === null ? null : (
+            <span className="inline-flex flex-wrap items-center gap-1.5">
+              {count(view.verifiedSkills)}
+              {view.verifiedSkills.map((v) => (
+                <MedalFor key={v.skill.id} medal={skillMedal(v.score, v.confidence)} outdated={v.evidenceStatus === "OUTDATED"} />
+              ))}
+            </span>
+          )
+        }
+      />
     </dl>
   );
 }

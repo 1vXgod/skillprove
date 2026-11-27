@@ -9,6 +9,7 @@ import { resultPollInterval, skillStanding } from "@skillprove/assessment-engine
 import { queryKeys, useApiClient } from "../../lib/use-api";
 import { useI18n, useTheme } from "../../theme/preferences-provider";
 import { AppText, Badge, Button, Card, CardHeader, EmptyState, GradientPanel, Progress, Separator, Spinner } from "../ui";
+import { MedalFor } from "../medal-for";
 import { OfflineNotice, QueryState } from "../query-state";
 
 /**
@@ -121,6 +122,7 @@ function Scored({ result, passport }: { result: AttemptResult; passport: Paramet
                   <AppText variant="bodySmall" tone="mutedForeground" style={styles.flex}>
                     {t("take.passportLevel")}
                   </AppText>
+                  {standing.kind === "level" && <MedalFor medal={standing.medal} outdated={standing.outdated} />}
                   <Badge
                     tone={standing.kind === "level" ? "success" : "neutral"}
                     label={standing.kind === "level" ? t(`passport.levels.${standing.level}`) : t("passport.moreAssessmentsNeeded")}
