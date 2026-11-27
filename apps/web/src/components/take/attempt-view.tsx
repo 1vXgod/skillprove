@@ -9,7 +9,8 @@ import { useEffect, useState } from "react";
 import { clearAnswers, loadAnswers, saveAnswers } from "../../lib/attempt-store";
 import { useI18n } from "../../lib/i18n";
 import { errorMessage, queryKeys, useApiClient } from "../../lib/use-api";
-import { ChevronLeftIcon, ChevronRightIcon, ClipboardIcon } from "../icons";
+import { cn } from "../../lib/cn";
+import { ChevronLeftIcon, ChevronRightIcon, ClipboardIcon, ClockIcon } from "../icons";
 import { ResultView } from "./result-view";
 import { Alert, Badge, Button, buttonClasses, Card, CardContent, Checkbox, Dialog, EmptyState, Progress, Radio, RadioGroup, Skeleton } from "../ui";
 
@@ -138,10 +139,17 @@ function Taking({ attempt }: { attempt: CandidateAttempt }) {
       <div className="flex items-center justify-between gap-3">
         <h1 className="type-h2 text-foreground">{attempt.title}</h1>
         {left !== null && (
-          <div role="timer" aria-label={t("take.timeLeft", { time: formatCountdown(left) })} aria-live={left <= 60 ? "polite" : "off"}>
-            <Badge tone={left <= 60 ? "warning" : "neutral"} className="type-label tabular-nums">
-              {formatCountdown(left)}
-            </Badge>
+          <div
+            role="timer"
+            aria-label={t("take.timeLeft", { time: formatCountdown(left) })}
+            aria-live={left <= 60 ? "polite" : "off"}
+            className={cn(
+              "inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 type-label tabular-nums shadow-card",
+              left <= 60 ? "bg-warning-subtle text-warning" : "bg-surface text-foreground",
+            )}
+          >
+            <ClockIcon size={16} />
+            {formatCountdown(left)}
           </div>
         )}
       </div>
@@ -190,7 +198,7 @@ function Taking({ attempt }: { attempt: CandidateAttempt }) {
                     setIndex(i);
                     setReviewing(false);
                   }}
-                  className="flex w-full items-center gap-3 rounded-lg border border-border bg-surface p-4 text-left hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                  className="flex w-full items-center gap-3 rounded-xl border border-border/70 bg-surface p-4 text-left shadow-card transition-colors duration-150 ease-standard hover:border-primary/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                 >
                   <span className="flex min-w-0 flex-1 flex-col gap-1">
                     <span className="type-label text-foreground">{questionOf(i)}</span>
@@ -203,7 +211,7 @@ function Taking({ attempt }: { attempt: CandidateAttempt }) {
           })}
         </ol>
         <div>
-          <Button disabled={submit.isPending} onClick={() => setConfirming(true)}>
+          <Button variant="glow" disabled={submit.isPending} onClick={() => setConfirming(true)}>
             {t("take.submit")}
           </Button>
         </div>
@@ -220,7 +228,7 @@ function Taking({ attempt }: { attempt: CandidateAttempt }) {
       {header}
       <Progress value={((index + 1) / questions.length) * 100} label={questionOf(index)} />
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="pt-6 sm:p-8">
           <QuestionView key={question.id} question={question} value={answers[question.id]} label={questionOf(index)} onAnswer={(value) => answer(question.id, value)} />
         </CardContent>
       </Card>
@@ -229,7 +237,9 @@ function Taking({ attempt }: { attempt: CandidateAttempt }) {
           {t("take.previous")}
         </Button>
         {last ? (
-          <Button onClick={() => setReviewing(true)}>{t("take.review")}</Button>
+          <Button variant="glow" onClick={() => setReviewing(true)}>
+            {t("take.review")}
+          </Button>
         ) : (
           <Button onClick={() => setIndex(index + 1)}>
             {t("take.next")}
@@ -246,8 +256,8 @@ function QuestionView({ question, value, label, onAnswer }: { question: AttemptQ
   const { t } = useI18n();
   const name = `q-${question.id}`;
   const prompt = (
-    <div className="flex flex-col gap-1">
-      <p className="type-label text-muted-foreground">{label}</p>
+    <div className="flex flex-col gap-2">
+      <p className="type-label text-primary">{label}</p>
       <h2 className="type-h3 text-foreground">{question.prompt}</h2>
       <p className="type-body-small text-muted-foreground">{t(question.kind === "multiple_select" ? "take.selectAll" : "take.selectOne")}</p>
     </div>
@@ -259,7 +269,7 @@ function QuestionView({ question, value, label, onAnswer }: { question: AttemptQ
           {prompt}
           <RadioGroup legend={question.prompt} className="[&>legend]:sr-only">
             {question.choices.map((c) => (
-              <Radio key={c.id} name={name} label={c.text} checked={value === c.id} onChange={() => onAnswer(c.id)} />
+              <Radio key={c.id} card name={name} label={c.text} checked={value === c.id} onChange={() => onAnswer(c.id)} />
             ))}
           </RadioGroup>
         </div>
@@ -269,8 +279,8 @@ function QuestionView({ question, value, label, onAnswer }: { question: AttemptQ
         <div className="flex flex-col gap-4">
           {prompt}
           <RadioGroup legend={question.prompt} className="[&>legend]:sr-only">
-            <Radio name={name} label={t("take.answerTrue")} checked={value === true} onChange={() => onAnswer(true)} />
-            <Radio name={name} label={t("take.answerFalse")} checked={value === false} onChange={() => onAnswer(false)} />
+            <Radio card name={name} label={t("take.answerTrue")} checked={value === true} onChange={() => onAnswer(true)} />
+            <Radio card name={name} label={t("take.answerFalse")} checked={value === false} onChange={() => onAnswer(false)} />
           </RadioGroup>
         </div>
       );
@@ -283,6 +293,7 @@ function QuestionView({ question, value, label, onAnswer }: { question: AttemptQ
             {question.choices.map((c) => (
               <Checkbox
                 key={c.id}
+                card
                 label={c.text}
                 checked={Array.isArray(value) && value.includes(c.id)}
                 onChange={() => onAnswer(toggleChoice(question, value, c.id))}

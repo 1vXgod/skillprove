@@ -7,7 +7,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useI18n } from "../../lib/i18n";
 import { errorMessage, queryKeys, useApiClient } from "../../lib/use-api";
-import { ClipboardIcon } from "../icons";
+import type { ReactNode } from "react";
+import { BarChartIcon, ClipboardIcon, ClockIcon, HelpIcon } from "../icons";
 import { Alert, Badge, Button, Card, CardContent, Dialog, EmptyState, Skeleton, type Tone } from "../ui";
 
 /**
@@ -106,31 +107,48 @@ function TakeableCard({ item, onChoose }: { item: TakeableAssessment; onChoose: 
   const badge = STATE_BADGES[state];
   return (
     <Card className="h-full">
-      <CardContent className="flex h-full flex-col gap-3 pt-5">
-        <h2 className="type-h4 text-foreground">{item.title}</h2>
+      <CardContent className="flex h-full flex-col gap-4 pt-5">
+        <div className="flex items-start gap-3">
+          <span aria-hidden="true" className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-primary">
+            <ClipboardIcon size={18} />
+          </span>
+          <h2 className="min-w-0 flex-1 self-center type-h4 text-foreground">{item.title}</h2>
+          {badge && <Badge tone={badge.tone}>{t(badge.key)}</Badge>}
+        </div>
         {item.description && <p className="type-body-small text-muted-foreground">{item.description}</p>}
         <div className="flex flex-wrap gap-2">
-          <Badge>{t(`passport.difficulty.${item.difficulty}`)}</Badge>
           {item.skills.map((skill) => (
             <Badge key={skill.skillId} tone="info">
               {skill.name}
             </Badge>
           ))}
-          {badge && <Badge tone={badge.tone}>{t(badge.key)}</Badge>}
         </div>
-        <p className="mt-auto type-body-small text-muted-foreground">
-          {t("take.questions", { count: item.questionCount })} ·{" "}
-          {item.durationMinutes ? t("take.minutes", { minutes: item.durationMinutes }) : t("take.noTimeLimit")} ·{" "}
-          {t("take.attempts", { used: item.attemptsUsed, max: item.maxAttempts })}
-        </p>
-        {state !== "noAttemptsLeft" && (
-          <div>
-            <Button size="sm" variant={state === "inProgress" ? "outline" : "primary"} onClick={onChoose} aria-label={`${t(state === "inProgress" ? "take.continue" : "take.start")}: ${item.title}`}>
+        <ul className="flex flex-wrap gap-2 type-body-small text-muted-foreground">
+          <Chip icon={<BarChartIcon size={14} />}>{t(`passport.difficulty.${item.difficulty}`)}</Chip>
+          <Chip icon={<HelpIcon size={14} />}>{t("take.questions", { count: item.questionCount })}</Chip>
+          <Chip icon={<ClockIcon size={14} />}>{item.durationMinutes ? t("take.minutes", { minutes: item.durationMinutes }) : t("take.noTimeLimit")}</Chip>
+        </ul>
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+          <span className="type-body-small text-muted-foreground">{t("take.attempts", { used: item.attemptsUsed, max: item.maxAttempts })}</span>
+          {state !== "noAttemptsLeft" && (
+            <Button size="sm" variant={state === "inProgress" ? "outline" : "glow"} onClick={onChoose} aria-label={`${t(state === "inProgress" ? "take.continue" : "take.start")}: ${item.title}`}>
               {t(state === "inProgress" ? "take.continue" : "take.start")}
             </Button>
-          </div>
-        )}
+          )}
+        </div>
       </CardContent>
     </Card>
+  );
+}
+
+/** A fact about the assessment, with an icon. */
+function Chip({ icon, children }: { icon: ReactNode; children: ReactNode }) {
+  return (
+    <li className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1">
+      <span aria-hidden="true" className="text-primary">
+        {icon}
+      </span>
+      {children}
+    </li>
   );
 }

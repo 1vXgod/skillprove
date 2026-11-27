@@ -1,5 +1,6 @@
 import { ApiClientError } from "@skillprove/api-client";
-import { controlHeights, spacing } from "@skillprove/shared/design";
+import { Feather } from "@expo/vector-icons";
+import { controlHeights, radius, spacing } from "@skillprove/shared/design";
 import type { AttemptAnswer, AttemptQuestion, CandidateAttempt } from "@skillprove/validation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
@@ -13,7 +14,8 @@ import { OfflineNotice, QueryState } from "../../components/query-state";
 import { answersToSubmit, formatCountdown, isAnswered, secondsLeft, toggleChoice, unansweredCount, type Answers } from "@skillprove/assessment-engine";
 import { clearAnswers, loadAnswers, saveAnswers } from "../../lib/attempt-store";
 import { errorMessage, queryKeys, useApiClient } from "../../lib/use-api";
-import { useI18n } from "../../theme/preferences-provider";
+import { useI18n, useTheme } from "../../theme/preferences-provider";
+import { shadowStyle } from "../../theme/styles";
 
 export default function AttemptScreen() {
   return (
@@ -81,6 +83,7 @@ function useNow() {
  */
 function Taking({ attempt }: { attempt: CandidateAttempt }) {
   const { t, locale } = useI18n();
+  const { colors, theme } = useTheme();
   const client = useApiClient();
   const queryClient = useQueryClient();
   const questions = attempt.questions;
@@ -144,8 +147,16 @@ function Taking({ attempt }: { attempt: CandidateAttempt }) {
           {attempt.title}
         </AppText>
         {left !== null && (
-          <View accessibilityLabel={t("take.timeLeft", { time: formatCountdown(left) })} accessibilityLiveRegion={left <= 60 ? "polite" : "none"}>
-            <Badge tone={left <= 60 ? "warning" : "neutral"} label={formatCountdown(left)} />
+          <View
+            accessible
+            accessibilityLabel={t("take.timeLeft", { time: formatCountdown(left) })}
+            accessibilityLiveRegion={left <= 60 ? "polite" : "none"}
+            style={[styles.timer, { backgroundColor: left <= 60 ? colors.warningSubtle : colors.surface }, shadowStyle("card", theme)]}
+          >
+            <Feather name="clock" size={14} color={left <= 60 ? colors.warning : colors.foreground} />
+            <AppText variant="label" style={{ color: left <= 60 ? colors.warning : colors.foreground, fontVariant: ["tabular-nums"] }}>
+              {formatCountdown(left)}
+            </AppText>
           </View>
         )}
       </View>
@@ -206,7 +217,7 @@ function Taking({ attempt }: { attempt: CandidateAttempt }) {
             </Pressable>
           );
         })}
-        <Button label={t("take.submit")} disabled={submit.isPending} onPress={() => setConfirming(true)} fullWidth />
+        <Button label={t("take.submit")} variant="glow" disabled={submit.isPending} onPress={() => setConfirming(true)} fullWidth />
         {confirm}
       </View>
     );
@@ -218,18 +229,22 @@ function Taking({ attempt }: { attempt: CandidateAttempt }) {
   return (
     <View style={styles.gap}>
       {header}
-      <Progress value={((index + 1) / questions.length) * 100} label={t("take.questionOf", { current: index + 1, total: questions.length })} />
-      <AppText variant="label" tone="mutedForeground">
-        {t("take.questionOf", { current: index + 1, total: questions.length })}
-      </AppText>
-      <QuestionView question={question} value={answers[question.id]} onAnswer={(value) => answer(question.id, value)} />
+      <View style={styles.gapSmall}>
+        <AppText variant="label" tone="mutedForeground">
+          {t("take.questionOf", { current: index + 1, total: questions.length })}
+        </AppText>
+        <Progress value={((index + 1) / questions.length) * 100} label={t("take.questionOf", { current: index + 1, total: questions.length })} />
+      </View>
+      <Card>
+        <QuestionView question={question} value={answers[question.id]} onAnswer={(value) => answer(question.id, value)} />
+      </Card>
       <View style={styles.navRow}>
         <View style={styles.flex}>
           <Button label={t("take.previous")} variant="outline" icon="arrow-left" disabled={index === 0} onPress={() => setIndex(index - 1)} fullWidth />
         </View>
         <View style={styles.flex}>
           {last ? (
-            <Button label={t("take.review")} onPress={() => setReviewing(true)} fullWidth />
+            <Button label={t("take.review")} variant="glow" onPress={() => setReviewing(true)} fullWidth />
           ) : (
             <Button label={t("take.next")} icon="arrow-right" onPress={() => setIndex(index + 1)} fullWidth />
           )}
@@ -254,6 +269,7 @@ function QuestionView({ question, value, onAnswer }: { question: AttemptQuestion
           {prompt}
           <AppText tone="mutedForeground">{t("take.selectOne")}</AppText>
           <RadioGroup
+            card
             label={question.prompt}
             options={question.choices.map((c) => ({ value: c.id, label: c.text }))}
             value={typeof value === "string" ? value : ""}
@@ -267,6 +283,7 @@ function QuestionView({ question, value, onAnswer }: { question: AttemptQuestion
           {prompt}
           <AppText tone="mutedForeground">{t("take.selectOne")}</AppText>
           <RadioGroup
+            card
             label={question.prompt}
             options={[
               { value: "true", label: t("take.answerTrue") },
@@ -285,6 +302,7 @@ function QuestionView({ question, value, onAnswer }: { question: AttemptQuestion
           {question.choices.map((c) => (
             <Checkbox
               key={c.id}
+              card
               label={c.text}
               checked={Array.isArray(value) && value.includes(c.id)}
               onChange={() => onAnswer(toggleChoice(question, value, c.id))}
@@ -297,7 +315,16 @@ function QuestionView({ question, value, onAnswer }: { question: AttemptQuestion
 
 const styles = StyleSheet.create({
   gap: { gap: spacing[4] },
+  gapSmall: { gap: spacing[2] },
   flex: { flex: 1 },
+  timer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing[1.5],
+    borderRadius: radius.full,
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[1.5],
+  },
   headerRow: { flexDirection: "row", alignItems: "center", gap: spacing[3] },
   navRow: { flexDirection: "row", gap: spacing[3] },
   reviewRow: { flexDirection: "row", alignItems: "center", gap: spacing[3], minHeight: controlHeights.touch },

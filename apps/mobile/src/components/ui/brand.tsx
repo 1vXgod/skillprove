@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { fontFamilies, radius, spacing } from "@skillprove/shared/design";
-import { useId, type ReactNode } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { useId, useState, type ReactNode } from "react";
+import { Pressable, StyleSheet, View, type ViewProps } from "react-native";
 import { LOGO_MARK_DARK_SVG, LOGO_MARK_INVERSE_SVG, LOGO_MARK_SIZE, LOGO_MARK_SVG } from "@skillprove/shared/brand";
 import Svg, { Defs, LinearGradient, Rect, Stop, SvgXml } from "react-native-svg";
 import { useTheme } from "../../theme/preferences-provider";
@@ -91,20 +91,44 @@ export function SkillRow({ icon, title, detail, badge, onPress }: { icon?: IconN
 }
 
 /** The navy hero card: serif headline, one line, one action and the light mark. */
-export function HeroCard({ title, body, action }: { title: string; body?: string; action?: ReactNode }) {
+/** The navy-to-blue panel behind the hero and the result score. Content goes on top. */
+export function GradientPanel({ children, style, onLayout, ...props }: ViewProps) {
   const { colors, theme } = useTheme();
   const id = useId().replace(/:/g, "");
+  // The gradient is drawn at the panel's measured size, in points, with its own rounded corners.
+  // Percent sizes inside an absolutely placed Svg were taken from an early layout on iOS, so the
+  // gradient stopped short of the panel's final width and height.
+  const [size, setSize] = useState<{ width: number; height: number } | null>(null);
   return (
-    <View style={[styles.hero, shadowStyle("card", theme)]}>
-      <Svg style={StyleSheet.absoluteFill} width="100%" height="100%" preserveAspectRatio="none">
-        <Defs>
-          <LinearGradient id={id} x1="0" y1="0" x2="1" y2="1">
-            <Stop offset="0" stopColor={colors.sidebar} />
-            <Stop offset="1" stopColor={colors.glowPrimary} />
-          </LinearGradient>
-        </Defs>
-        <Rect width="100%" height="100%" fill={`url(#${id})`} />
-      </Svg>
+    <View
+      style={[styles.hero, shadowStyle("card", theme), style]}
+      onLayout={(event) => {
+        const { width, height } = event.nativeEvent.layout;
+        setSize((current) => (current && current.width === width && current.height === height ? current : { width, height }));
+        onLayout?.(event);
+      }}
+      {...props}
+    >
+      {size && (
+        <Svg style={styles.gradient} width={size.width} height={size.height} pointerEvents="none">
+          <Defs>
+            <LinearGradient id={id} x1="0" y1="0" x2={size.width} y2={size.height} gradientUnits="userSpaceOnUse">
+              <Stop offset="0" stopColor={colors.sidebar} />
+              <Stop offset="1" stopColor={colors.glowPrimary} />
+            </LinearGradient>
+          </Defs>
+          <Rect x={0} y={0} width={size.width} height={size.height} rx={radius.xl} ry={radius.xl} fill={`url(#${id})`} />
+        </Svg>
+      )}
+      {children}
+    </View>
+  );
+}
+
+export function HeroCard({ title, body, action }: { title: string; body?: string; action?: ReactNode }) {
+  const { colors } = useTheme();
+  return (
+    <GradientPanel>
       <View style={styles.heroContent}>
         <View style={styles.flex}>
           <AppText variant="h2" accessibilityRole="header" style={{ color: colors.sidebarForeground }}>
@@ -115,7 +139,7 @@ export function HeroCard({ title, body, action }: { title: string; body?: string
         </View>
         <LightMark size={96} />
       </View>
-    </View>
+    </GradientPanel>
   );
 }
 
@@ -126,7 +150,9 @@ const styles = StyleSheet.create({
   stat: { flex: 1, borderWidth: 1, borderRadius: radius.xl, padding: spacing[4], gap: spacing[1] },
   iconTile: { width: 40, height: 40, borderRadius: radius.lg, alignItems: "center", justifyContent: "center", marginBottom: spacing[1] },
   row: { flexDirection: "row", alignItems: "center", gap: spacing[3], paddingVertical: spacing[3], paddingHorizontal: spacing[3], borderRadius: radius.lg, minHeight: 56 },
-  hero: { borderRadius: radius.xl, overflow: "hidden" },
+  // No overflow clipping: on iOS it also removes the shadow. The gradient rounds its own corners.
+  hero: { borderRadius: radius.xl },
+  gradient: { position: "absolute", top: 0, left: 0 },
   heroContent: { flexDirection: "row", alignItems: "center", gap: spacing[3], padding: spacing[5] },
   heroAction: { marginTop: spacing[3] },
 });
