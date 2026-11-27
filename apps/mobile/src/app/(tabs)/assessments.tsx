@@ -12,7 +12,7 @@ import { controlHeights, spacing } from "@skillprove/shared/design";
 
 export default function AssessmentsScreen() {
   return (
-    <Screen showBack>
+    <Screen>
       <SignedInGate>
         <AssessmentsContent />
       </SignedInGate>

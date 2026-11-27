@@ -169,7 +169,7 @@ export function HomeDashboard() {
                 <HeroCard
                   mark={false}
                   title={t("home.takeTitle")}
-                  body={count > 0 ? t("home.takeBody", { count: formatNumber(locale, count) }) : t("home.takeEmpty")}
+                  body={count === 0 ? t("home.takeEmpty") : count === 1 ? t("home.availableOne") : t("home.availableMany", { count: formatNumber(locale, count) })}
                   action={
                     <Link href="/take" className={buttonClasses({ variant: "glow", className: "mt-1" })}>
                       {t("home.takeAction")}

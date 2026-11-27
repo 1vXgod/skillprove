@@ -350,7 +350,7 @@ test.describe("home", () => {
     await expect(page.getByText(t("home.activity.verified", { title: "Vlerësim SQL" }))).toHaveCount(0);
     // Completeness points at the next missing item.
     await expect(page.getByRole("link", { name: t("completeness.items.experience") })).toHaveAttribute("href", "/profile");
-    await expect(page.getByText(t("home.takeBody", { count: "1" }))).toBeVisible();
+    await expect(page.getByText(t("home.availableOne"))).toBeVisible();
   });
 
   test("welcomes a new candidate with empty states and asks for a profile first", async ({ page }) => {
@@ -378,7 +378,7 @@ test.describe("home", () => {
     });
     await page.goto(`${HARNESS}?screen=home`);
     await hydrated(page);
-    await expect(page.getByText(t("home.takeBody", { count: "1" }))).toBeVisible();
+    await expect(page.getByText(t("home.availableOne"))).toBeVisible();
     const retry = page.getByRole("button", { name: t("common.tryAgain") }).first();
     await expect(retry).toBeVisible();
     await retry.click();

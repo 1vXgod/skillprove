@@ -15,7 +15,7 @@ import { spacing } from "@skillprove/shared/design";
 
 export default function ProfileScreen() {
   return (
-    <Screen showBack>
+    <Screen settings>
       <SignedInGate>
         <ProfileContent />
       </SignedInGate>

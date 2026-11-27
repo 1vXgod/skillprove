@@ -2,7 +2,6 @@ import { useAuth } from "@clerk/expo";
 import { useHostedAuth } from "@clerk/expo/hosted-auth";
 import { createApiClient } from "@skillprove/api-client";
 import { useQuery } from "@tanstack/react-query";
-import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useMemo, useState } from "react";
 import { StyleSheet, View } from "react-native";
@@ -53,8 +52,8 @@ function AccountPanel() {
     return (
       <View style={styles.group}>
         {authFailed && <Alert tone="error" message={t("auth.signInFailed")} />}
-        <Button label={t("auth.signIn")} onPress={() => void openAuth("sign-in")} fullWidth />
-        <Button label={t("auth.createAccount")} variant="outline" onPress={() => void openAuth("sign-up")} fullWidth />
+        <Button label={t("auth.createAccount")} variant="glow" size="lg" onPress={() => void openAuth("sign-up")} fullWidth />
+        <Button label={t("auth.signIn")} variant="outline" size="lg" onPress={() => void openAuth("sign-in")} fullWidth />
       </View>
     );
   }
@@ -66,18 +65,7 @@ function AccountPanel() {
       {account.data && (
         <AppText>{t("account.signedInAs", { email: account.data.email ?? t("account.unverifiedEmail") })}</AppText>
       )}
-      <Button label={t("nav.profile")} icon="user" onPress={() => router.push("/profile")} fullWidth />
-      <Button label={t("nav.skillPassport")} variant="secondary" icon="award" onPress={() => router.push("/skill-passport")} fullWidth />
-      <Button label={t("nav.assessments")} variant="secondary" icon="edit-3" onPress={() => router.push("/take")} fullWidth />
-      {/* Company authoring only for company members; the API still checks membership itself. */}
-      {(account.data?.companies.length ?? 0) > 0 && (
-        <View style={styles.group}>
-          <AppText variant="label" tone="mutedForeground" accessibilityRole="header" style={styles.heading}>
-            {t("nav.company")}
-          </AppText>
-          <Button label={t("nav.assessments")} variant="secondary" icon="clipboard" onPress={() => router.push("/assessments")} fullWidth />
-        </View>
-      )}
+      {/* Navigation lives in the tab bar; here only the account itself. */}
       <Button label={t("auth.signOut")} variant="outline" icon="log-out" onPress={() => void signOut()} fullWidth />
     </View>
   );
@@ -85,5 +73,4 @@ function AccountPanel() {
 
 const styles = StyleSheet.create({
   group: { gap: spacing[2] },
-  heading: { marginTop: spacing[2] },
 });

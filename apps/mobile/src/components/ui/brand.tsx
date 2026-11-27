@@ -107,7 +107,7 @@ export function HeroCard({ title, body, action }: { title: string; body?: string
       </Svg>
       <View style={styles.heroContent}>
         <View style={styles.flex}>
-          <AppText variant="h1" accessibilityRole="header" style={{ color: colors.sidebarForeground }}>
+          <AppText variant="h2" accessibilityRole="header" style={{ color: colors.sidebarForeground }}>
             {title}
           </AppText>
           {body && <AppText style={{ color: colors.sidebarMuted }}>{body}</AppText>}

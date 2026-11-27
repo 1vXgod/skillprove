@@ -14,7 +14,7 @@ import { useI18n } from "../../theme/preferences-provider";
 
 export default function TakeAssessmentsScreen() {
   return (
-    <Screen showBack>
+    <Screen>
       <SignedInGate>
         <TakeableList />
       </SignedInGate>
