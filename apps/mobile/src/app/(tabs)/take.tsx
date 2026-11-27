@@ -1,16 +1,17 @@
-import { controlHeights, spacing } from "@skillprove/shared/design";
+import { Feather } from "@expo/vector-icons";
+import { radius, spacing } from "@skillprove/shared/design";
 import type { TakeableAssessment } from "@skillprove/validation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { Screen } from "../../components/shell/screen";
 import { SignedInGate } from "../../components/shell/signed-in-gate";
 import { Alert, AppText, Badge, Button, Card, EmptyState, Modal, type Tone } from "../../components/ui";
 import { QueryState } from "../../components/query-state";
 import { takeableState, type TakeableState } from "@skillprove/shared";
 import { errorMessage, queryKeys, useApiClient } from "../../lib/use-api";
-import { useI18n } from "../../theme/preferences-provider";
+import { useI18n, useTheme } from "../../theme/preferences-provider";
 
 export default function TakeAssessmentsScreen() {
   return (
@@ -103,39 +104,69 @@ function TakeableCard({ item, onPress }: { item: TakeableAssessment; onPress: ()
   const { t } = useI18n();
   const state = takeableState(item);
   const badge = stateBadge[state];
-  const card = (
+  const { colors } = useTheme();
+  return (
     <Card style={styles.card}>
-      <AppText variant="h4">{item.title}</AppText>
-      {item.description && <AppText tone="mutedForeground">{item.description}</AppText>}
-      <View style={styles.wrap}>
-        <Badge label={t(`passport.difficulty.${item.difficulty}`)} />
-        {item.skills.map((skill) => (
-          <Badge key={skill.skillId} tone="info" label={skill.name} />
-        ))}
+      <View style={styles.titleRow}>
+        <View style={[styles.tile, { backgroundColor: colors.secondary }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          <Feather name="clipboard" size={18} color={colors.primary} />
+        </View>
+        <AppText variant="h4" style={styles.flex}>
+          {item.title}
+        </AppText>
         {badge && <Badge tone={badge.tone} label={t(badge.key)} />}
       </View>
-      <AppText variant="bodySmall" tone="mutedForeground">
-        {t("take.questions", { count: item.questionCount })} ·{" "}
-        {item.durationMinutes ? t("take.minutes", { minutes: item.durationMinutes }) : t("take.noTimeLimit")} ·{" "}
-        {t("take.attempts", { used: item.attemptsUsed, max: item.maxAttempts })}
-      </AppText>
+      {item.description && <AppText tone="mutedForeground">{item.description}</AppText>}
+      {item.skills.length > 0 && (
+        <View style={styles.wrap}>
+          {item.skills.map((skill) => (
+            <Badge key={skill.skillId} tone="info" label={skill.name} />
+          ))}
+        </View>
+      )}
+      <View style={styles.wrap}>
+        <Chip icon="bar-chart-2" label={t(`passport.difficulty.${item.difficulty}`)} />
+        <Chip icon="help-circle" label={t("take.questions", { count: item.questionCount })} />
+        <Chip icon="clock" label={item.durationMinutes ? t("take.minutes", { minutes: item.durationMinutes }) : t("take.noTimeLimit")} />
+      </View>
+      <View style={[styles.footer, { borderTopColor: colors.border }]}>
+        <AppText variant="bodySmall" tone="mutedForeground">
+          {t("take.attempts", { used: item.attemptsUsed, max: item.maxAttempts })}
+        </AppText>
+        {state !== "noAttemptsLeft" && (
+          <Button
+            label={t(state === "inProgress" ? "take.continue" : "take.start")}
+            accessibilityLabel={`${t(state === "inProgress" ? "take.continue" : "take.start")}: ${item.title}`}
+            variant={state === "inProgress" ? "outline" : "glow"}
+            onPress={onPress}
+            fullWidth
+          />
+        )}
+      </View>
     </Card>
   );
-  if (state === "noAttemptsLeft") return <View accessibilityLabel={item.title}>{card}</View>;
+}
+
+/** A fact about the assessment, with an icon. */
+function Chip({ icon, label }: { icon: "bar-chart-2" | "help-circle" | "clock"; label: string }) {
+  const { colors } = useTheme();
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={item.title}
-      accessibilityHint={t(state === "inProgress" ? "take.continue" : "take.start")}
-      onPress={onPress}
-    >
-      {card}
-    </Pressable>
+    <View style={[styles.chip, { backgroundColor: colors.muted }]}>
+      <Feather name={icon} size={13} color={colors.primary} accessibilityElementsHidden importantForAccessibility="no" />
+      <AppText variant="caption" tone="mutedForeground">
+        {label}
+      </AppText>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   gap: { gap: spacing[4] },
-  card: { minHeight: controlHeights.touch, gap: spacing[2] },
+  card: { gap: spacing[3] },
+  flex: { flex: 1 },
+  titleRow: { flexDirection: "row", alignItems: "center", gap: spacing[3] },
+  tile: { width: 40, height: 40, borderRadius: radius.lg, alignItems: "center", justifyContent: "center" },
   wrap: { flexDirection: "row", flexWrap: "wrap", gap: spacing[2] },
+  chip: { flexDirection: "row", alignItems: "center", gap: spacing[1.5], borderRadius: radius.full, paddingHorizontal: spacing[3], paddingVertical: spacing[1] },
+  footer: { gap: spacing[3], borderTopWidth: StyleSheet.hairlineWidth, paddingTop: spacing[3] },
 });

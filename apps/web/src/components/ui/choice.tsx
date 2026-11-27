@@ -4,12 +4,29 @@ import { cn } from "../../lib/cn";
 type ChoiceProps = Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "id"> & {
   label: string;
   description?: string;
+  /** A large bordered row, all of it clickable, for answers. */
+  card?: boolean;
 };
+
+const CARD =
+  "rounded-lg border border-border bg-surface p-4 transition-colors duration-150 ease-standard hover:border-primary/50 hover:bg-muted has-checked:border-primary has-checked:bg-secondary has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ring";
 
 const BOX =
   "peer size-4 shrink-0 cursor-pointer appearance-none border border-input bg-surface transition-colors duration-150 ease-standard checked:border-primary checked:bg-primary disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
 
-function ChoiceRow({ id, label, description, control, disabled }: { id: string; label: string; description?: string; control: ReactNode; disabled?: boolean }) {
+function ChoiceRow({ id, label, description, control, disabled, card }: { id: string; label: string; description?: string; control: ReactNode; disabled?: boolean; card?: boolean }) {
+  if (card) {
+    // The whole row is the label, so a click anywhere on it chooses the answer.
+    return (
+      <label htmlFor={id} className={cn("flex items-start gap-3", CARD, disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer")}>
+        <span className="relative mt-0.5 flex size-5 items-center justify-center">{control}</span>
+        <span className="flex flex-col">
+          <span className="type-body text-foreground">{label}</span>
+          {description && <span className="type-body-small text-muted-foreground">{description}</span>}
+        </span>
+      </label>
+    );
+  }
   return (
     <div className={cn("flex items-start gap-3", disabled && "opacity-60")}>
       <span className="relative mt-0.5 flex size-5 items-center justify-center">{control}</span>
@@ -24,7 +41,7 @@ function ChoiceRow({ id, label, description, control, disabled }: { id: string; 
 }
 
 /** A native checkbox, styled. Space toggles it and the label is clickable. */
-export function Checkbox({ label, description, className, ...props }: ChoiceProps) {
+export function Checkbox({ label, description, card, className, ...props }: ChoiceProps) {
   const id = useId();
   return (
     <div className={className}>
@@ -33,6 +50,7 @@ export function Checkbox({ label, description, className, ...props }: ChoiceProp
         label={label}
         description={description}
         disabled={props.disabled}
+        card={card}
         control={
           <>
             <input id={id} type="checkbox" className={cn(BOX, "rounded-sm")} {...props} />
@@ -54,7 +72,7 @@ export function Checkbox({ label, description, className, ...props }: ChoiceProp
 }
 
 /** One radio button. Group them with RadioGroup so they share a name and a legend. */
-export function Radio({ label, description, className, ...props }: ChoiceProps) {
+export function Radio({ label, description, card, className, ...props }: ChoiceProps) {
   const id = useId();
   return (
     <div className={className}>
@@ -63,6 +81,7 @@ export function Radio({ label, description, className, ...props }: ChoiceProps) 
         label={label}
         description={description}
         disabled={props.disabled}
+        card={card}
         control={
           <>
             <input id={id} type="radio" className={cn(BOX, "rounded-full")} {...props} />

@@ -7,8 +7,8 @@ import { useEffect } from "react";
 import { StyleSheet, View } from "react-native";
 import { resultPollInterval, skillStanding } from "@skillprove/assessment-engine";
 import { queryKeys, useApiClient } from "../../lib/use-api";
-import { useI18n } from "../../theme/preferences-provider";
-import { AppText, Badge, Button, Card, CardHeader, EmptyState, Separator, Spinner } from "../ui";
+import { useI18n, useTheme } from "../../theme/preferences-provider";
+import { AppText, Badge, Button, Card, CardHeader, EmptyState, GradientPanel, Progress, Separator, Spinner } from "../ui";
 import { OfflineNotice, QueryState } from "../query-state";
 
 /**
@@ -84,18 +84,21 @@ export function ResultView({ attemptId, title }: { attemptId: string; title: str
 
 function Scored({ result, passport }: { result: AttemptResult; passport: Parameters<typeof skillStanding>[0] }) {
   const { t, locale } = useI18n();
+  const { colors } = useTheme();
   const percent = (value: number) => formatNumber(locale, value / 100, { style: "percent", maximumFractionDigits: 0 });
   return (
     <>
-      <Card style={styles.overall} accessibilityRole="summary">
-        <AppText variant="label" tone="mutedForeground">
+      <GradientPanel style={styles.overall} accessibilityRole="summary">
+        <AppText variant="label" style={{ color: colors.sidebarMuted }}>
           {t("take.overall")}
         </AppText>
-        <AppText variant="display">{percent(result.percent ?? 0)}</AppText>
-        <AppText variant="bodySmall" tone="mutedForeground">
+        <AppText variant="display" style={{ color: colors.sidebarForeground }}>
+          {percent(result.percent ?? 0)}
+        </AppText>
+        <AppText variant="bodySmall" style={{ color: colors.sidebarMuted }}>
           {t("take.questions", { count: result.questionCount })}
         </AppText>
-      </Card>
+      </GradientPanel>
       <Card>
         <CardHeader title={t("take.bySkill")} />
         {result.skills.map((skill, i) => {
@@ -109,6 +112,7 @@ function Scored({ result, passport }: { result: AttemptResult; passport: Paramet
                 </AppText>
                 <AppText variant="h4">{percent(skill.percent)}</AppText>
               </View>
+              <Progress value={skill.percent} label={`${skill.name}: ${percent(skill.percent)}`} />
               <AppText variant="bodySmall" tone="mutedForeground">
                 {t("take.answeredOf", { answered: skill.answeredCount, total: skill.questionCount })}
               </AppText>
@@ -136,6 +140,6 @@ const styles = StyleSheet.create({
   gapSmall: { gap: spacing[1.5] },
   flex: { flex: 1 },
   inline: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: spacing[2] },
-  overall: { alignItems: "center", gap: spacing[1] },
+  overall: { alignItems: "center", gap: spacing[1], padding: spacing[8] },
   calculating: { alignItems: "center", gap: spacing[3], paddingVertical: spacing[8] },
 });

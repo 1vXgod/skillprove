@@ -9,7 +9,7 @@ import { useEffect } from "react";
 import { useI18n } from "../../lib/i18n";
 import { errorMessage, queryKeys, useApiClient } from "../../lib/use-api";
 import { WarningIcon } from "../icons";
-import { Alert, Badge, Button, buttonClasses, Card, CardContent, CardHeader, EmptyState, Separator, Spinner } from "../ui";
+import { Alert, Badge, Button, buttonClasses, Card, CardContent, CardHeader, EmptyState, Progress, Separator, Spinner } from "../ui";
 
 /**
  * The result of a submitted attempt (Milestone 7, slice 19, as slice 15 on mobile). Polls while
@@ -99,13 +99,13 @@ function Scored({ result, passport }: { result: AttemptResult; passport: SkillPa
   const percent = (value: number) => formatNumber(locale, value / 100, { style: "percent", maximumFractionDigits: 0 });
   return (
     <>
-      <Card>
-        <CardContent className="flex flex-col items-center gap-1 py-8 text-center">
-          <h2 className="type-label text-muted-foreground">{t("take.overall")}</h2>
-          <p className="type-display text-foreground">{percent(result.percent ?? 0)}</p>
-          <p className="type-body-small text-muted-foreground">{t("take.questions", { count: result.questionCount })}</p>
-        </CardContent>
-      </Card>
+      <section className="relative isolate overflow-hidden rounded-xl bg-linear-to-br from-sidebar to-glow-primary p-8 text-center text-sidebar-foreground shadow-card">
+        <div className="flex flex-col items-center gap-1">
+          <h2 className="type-label text-sidebar-muted">{t("take.overall")}</h2>
+          <p className="type-display tabular-nums text-sidebar-foreground">{percent(result.percent ?? 0)}</p>
+          <p className="type-body-small text-sidebar-muted">{t("take.questions", { count: result.questionCount })}</p>
+        </div>
+      </section>
       <Card>
         <CardHeader title={t("take.bySkill")} />
         <CardContent>
@@ -119,6 +119,7 @@ function Scored({ result, passport }: { result: AttemptResult; passport: SkillPa
                     <h3 className="type-h4 text-foreground">{skill.name}</h3>
                     <span className="type-h4 tabular-nums text-foreground">{percent(skill.percent)}</span>
                   </div>
+                  <Progress value={skill.percent} label={`${skill.name}: ${percent(skill.percent)}`} />
                   <p className="type-body-small text-muted-foreground">{t("take.answeredOf", { answered: skill.answeredCount, total: skill.questionCount })}</p>
                   {standing && (
                     <div className="flex flex-wrap items-center justify-between gap-2">

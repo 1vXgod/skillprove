@@ -11,6 +11,13 @@ interface ChoiceProps {
   checked: boolean;
   onChange: (checked: boolean) => void;
   disabled?: boolean;
+  /** A large bordered row, for answers. */
+  card?: boolean;
+}
+
+/** The bordered look of a card row, highlighted when chosen. */
+function cardStyle(colors: ReturnType<typeof useTheme>["colors"], selected: boolean) {
+  return [styles.card, { borderColor: selected ? colors.primary : colors.border, backgroundColor: selected ? colors.secondary : colors.surface }];
 }
 
 function ChoiceRow({ label, description, control, disabled }: { label: string; description?: string; control: ReactNode; disabled?: boolean }) {
@@ -30,7 +37,7 @@ function ChoiceRow({ label, description, control, disabled }: { label: string; d
 }
 
 /** The whole row is the target, at least 44 points tall. */
-export function Checkbox({ label, description, checked, onChange, disabled }: ChoiceProps) {
+export function Checkbox({ label, description, checked, onChange, disabled, card }: ChoiceProps) {
   const { colors } = useTheme();
   return (
     <Pressable
@@ -40,7 +47,7 @@ export function Checkbox({ label, description, checked, onChange, disabled }: Ch
       accessibilityState={{ checked, disabled }}
       disabled={disabled}
       onPress={() => onChange(!checked)}
-      style={styles.target}
+      style={[styles.target, card && cardStyle(colors, checked)]}
     >
       <ChoiceRow
         label={label}
@@ -62,13 +69,15 @@ interface RadioGroupProps<T extends string> {
   value: T;
   onChange: (value: T) => void;
   disabled?: boolean;
+  /** Large bordered rows; the label is read out but not shown. */
+  card?: boolean;
 }
 
-export function RadioGroup<T extends string>({ label, options, value, onChange, disabled }: RadioGroupProps<T>) {
+export function RadioGroup<T extends string>({ label, options, value, onChange, disabled, card }: RadioGroupProps<T>) {
   const { colors } = useTheme();
   return (
-    <View accessibilityRole="radiogroup" accessibilityLabel={label} style={styles.group}>
-      <AppText variant="label">{label}</AppText>
+    <View accessibilityRole="radiogroup" accessibilityLabel={label} style={card ? styles.cardGroup : styles.group}>
+      {!card && <AppText variant="label">{label}</AppText>}
       {options.map((option) => {
         const selected = option.value === value;
         return (
@@ -79,7 +88,7 @@ export function RadioGroup<T extends string>({ label, options, value, onChange, 
             accessibilityState={{ checked: selected, disabled }}
             disabled={disabled}
             onPress={() => onChange(option.value)}
-            style={styles.target}
+            style={[styles.target, card && cardStyle(colors, selected)]}
           >
             <ChoiceRow
               label={option.label}
@@ -131,6 +140,8 @@ const styles = StyleSheet.create({
   text: { flex: 1, gap: 2 },
   disabled: { opacity: 0.5 },
   group: { gap: spacing[1] },
+  cardGroup: { gap: spacing[3] },
+  card: { borderWidth: 1, borderRadius: radius.lg, paddingHorizontal: spacing[4], paddingVertical: spacing[3] },
   box: { width: 20, height: 20, marginTop: 1, borderWidth: 1.5, borderRadius: radius.sm, alignItems: "center", justifyContent: "center" },
   radio: { borderRadius: radius.full },
   dot: { width: 8, height: 8, borderRadius: radius.full },
