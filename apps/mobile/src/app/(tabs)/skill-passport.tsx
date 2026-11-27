@@ -4,17 +4,17 @@ import type { SkillPassport, VerifiedSkillWithEvidence } from "@skillprove/valid
 import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { StyleSheet, View } from "react-native";
-import { Screen } from "../components/shell/screen";
-import { SignedInGate } from "../components/shell/signed-in-gate";
-import { Alert, AppText, Badge, Button, Card, CardHeader, EmptyState, Separator } from "../components/ui";
-import { QueryState } from "../components/query-state";
-import { queryKeys, useApiClient } from "../lib/use-api";
-import { useI18n } from "../theme/preferences-provider";
+import { Screen } from "../../components/shell/screen";
+import { SignedInGate } from "../../components/shell/signed-in-gate";
+import { Alert, AppText, Badge, Button, Card, CardHeader, EmptyState, Separator } from "../../components/ui";
+import { QueryState } from "../../components/query-state";
+import { queryKeys, useApiClient } from "../../lib/use-api";
+import { useI18n } from "../../theme/preferences-provider";
 import { spacing } from "@skillprove/shared/design";
 
 export default function SkillPassportScreen() {
   return (
-    <Screen showBack>
+    <Screen>
       <SignedInGate>
         <PassportContent />
       </SignedInGate>

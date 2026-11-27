@@ -5,9 +5,9 @@ import type { ReactNode } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { usePreferences } from "../../theme/preferences-provider";
-import { AppText, IconButton } from "../ui";
+import { AppText, IconButton, Logo } from "../ui";
 
-function AppHeader({ showBack }: { showBack: boolean }) {
+function AppHeader({ showBack, settings }: { showBack: boolean; settings: boolean }) {
   const { t, locale, setLocale, colors } = usePreferences();
   const nextLocale = LOCALES.find((l) => l !== locale) ?? locale;
   return (
@@ -16,14 +16,7 @@ function AppHeader({ showBack }: { showBack: boolean }) {
         <IconButton label={t("shell.back")} icon="arrow-left" onPress={() => router.back()} />
       ) : (
         <View style={styles.brand}>
-          <View style={[styles.mark, { backgroundColor: colors.primary }]}>
-            <AppText style={[styles.markText, { color: colors.primaryForeground }]} importantForAccessibility="no">
-              S
-            </AppText>
-          </View>
-          <AppText variant="h4" accessibilityRole="header">
-            SkillProve
-          </AppText>
+          <Logo size="sm" />
         </View>
       )}
       <View style={styles.actions}>
@@ -38,7 +31,7 @@ function AppHeader({ showBack }: { showBack: boolean }) {
             {locale.toUpperCase()}
           </AppText>
         </Pressable>
-        <IconButton label={t("shell.preferences")} icon="user" onPress={() => router.push("/settings")} />
+        {settings && <IconButton label={t("shell.preferences")} icon="settings" onPress={() => router.push("/settings")} />}
       </View>
     </View>
   );
@@ -46,13 +39,14 @@ function AppHeader({ showBack }: { showBack: boolean }) {
 
 /**
  * Every screen's frame: safe areas, the app header, keyboard avoidance and a scrolling body
- * capped at a readable width on tablets.
+ * capped at a readable width on tablets. Tab screens show the logo; pushed screens a back button.
+ * `settings` adds the gear that opens Settings (on the Profile tab).
  */
-export function Screen({ children, showBack = false }: { children: ReactNode; showBack?: boolean }) {
+export function Screen({ children, showBack = false, settings = false }: { children: ReactNode; showBack?: boolean; settings?: boolean }) {
   const { colors } = usePreferences();
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={[styles.flex, { backgroundColor: colors.surface }]}>
-      <AppHeader showBack={showBack} />
+      <AppHeader showBack={showBack} settings={settings} />
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={[styles.flex, { backgroundColor: colors.background }]}>
         <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
           <SafeAreaView edges={["bottom"]} style={styles.column}>
@@ -75,8 +69,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   brand: { flexDirection: "row", alignItems: "center", gap: spacing[2], paddingHorizontal: spacing[2] },
-  mark: { width: 28, height: 28, borderRadius: 6, alignItems: "center", justifyContent: "center" },
-  markText: { fontSize: 14, fontWeight: "700" },
   actions: { flexDirection: "row", alignItems: "center" },
   locale: { minWidth: controlHeights.touch, height: controlHeights.touch, alignItems: "center", justifyContent: "center" },
   body: { flexGrow: 1, paddingHorizontal: spacing[5], paddingVertical: spacing[6] },

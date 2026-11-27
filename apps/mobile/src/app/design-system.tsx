@@ -1,5 +1,5 @@
 import { colors, radius, spacing, TYPE_STYLES, type ColorTokens } from "@skillprove/shared/design";
-import { Redirect } from "expo-router";
+import { Redirect, type Href } from "expo-router";
 import { useState, type ReactNode } from "react";
 import { StyleSheet, View } from "react-native";
 import { Screen } from "../components/shell/screen";
@@ -60,7 +60,7 @@ function EffectLabel({ title, help }: { title: string; help: string }) {
 
 /** Development builds only: a production build redirects home. */
 export default function DesignSystemScreen() {
-  if (!__DEV__) return <Redirect href="/" />;
+  if (!__DEV__) return <Redirect href={"/" as Href} />;
   return <Showcase />;
 }
 
