@@ -5,6 +5,7 @@ import { formatDate, formatNumber } from "@skillprove/shared/i18n";
 import { useQuery } from "@tanstack/react-query";
 import { router, type Href } from "expo-router";
 import { StyleSheet, View } from "react-native";
+import { MedalFor } from "../../components/medal-for";
 import { QueryState } from "../../components/query-state";
 import { Screen } from "../../components/shell/screen";
 import { SignedInGate } from "../../components/shell/signed-in-gate";
@@ -115,6 +116,7 @@ function Home() {
               icon="check-circle"
               title={s.name}
               detail={`${t("passport.scoreOutOf", { score: formatNumber(locale, s.score, { maximumFractionDigits: 1 }) })} · ${s.level ? t(`passport.levels.${s.level}`) : t("passport.moreAssessmentsNeeded")}`}
+              medal={<MedalFor medal={s.medal} outdated={s.outdated} />}
               badge={<Badge tone="success" label={t("passport.verified")} />}
               onPress={() => router.push("/skill-passport")}
             />

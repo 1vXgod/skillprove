@@ -1,4 +1,4 @@
-import { verifiedSkillLevel } from "@skillprove/shared";
+import { skillMedal, verifiedSkillLevel } from "@skillprove/shared";
 import { formatDate, formatNumber } from "@skillprove/shared/i18n";
 import type { SkillPassport, VerifiedSkillWithEvidence } from "@skillprove/validation";
 import { useQuery } from "@tanstack/react-query";
@@ -7,6 +7,7 @@ import { StyleSheet, View } from "react-native";
 import { Screen } from "../../components/shell/screen";
 import { SignedInGate } from "../../components/shell/signed-in-gate";
 import { Alert, AppText, Badge, Button, Card, CardHeader, EmptyState, Progress, Separator, StatCard } from "../../components/ui";
+import { MedalFor } from "../../components/medal-for";
 import { QueryState } from "../../components/query-state";
 import { queryKeys, useApiClient } from "../../lib/use-api";
 import { useI18n, useTheme } from "../../theme/preferences-provider";
@@ -165,6 +166,7 @@ function VerifiedSkill({ skill }: { skill: VerifiedSkillWithEvidence }) {
         <AppText variant="h4" style={styles.flex}>
           {skill.skill.name}
         </AppText>
+        <MedalFor medal={skillMedal(skill.score, skill.confidence)} outdated={outdated} size="md" />
         <Badge tone={outdated ? "warning" : "success"} label={outdated ? t("passport.outdated") : t("passport.verified")} />
       </View>
       <View style={styles.between}>

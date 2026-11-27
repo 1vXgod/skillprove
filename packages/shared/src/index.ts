@@ -32,6 +32,7 @@ export type ApiErrorCode = (typeof API_ERROR_CODES)[number];
 export * from "./candidate";
 export * from "./assessment";
 export * from "./verified-score";
+export * from "./skill-medal";
 export * from "./takeable";
 export * from "./load-state";
 export * from "./profile-completeness";

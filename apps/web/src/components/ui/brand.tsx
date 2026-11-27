@@ -69,7 +69,7 @@ export function StatCard({ icon, value, label, tone = "primary", className }: { 
  * A skill in a list: name, a "score · level" line and an optional badge such as "Verified".
  * With `href` the whole row is a link and shows a chevron.
  */
-export function SkillRow({ icon, title, detail, badge, href }: { icon?: ReactNode; title: string; detail: string; badge?: ReactNode; href?: string }) {
+export function SkillRow({ icon, title, detail, medal, badge, href }: { icon?: ReactNode; title: string; detail: string; medal?: ReactNode; badge?: ReactNode; href?: string }) {
   const body = (
     <>
       {icon && (
@@ -81,6 +81,7 @@ export function SkillRow({ icon, title, detail, badge, href }: { icon?: ReactNod
         <span className="truncate type-label text-foreground">{title}</span>
         <span className="type-body-small text-muted-foreground">{detail}</span>
       </span>
+      {medal}
       {badge}
       {href && (
         <svg aria-hidden="true" viewBox="0 0 24 24" className="size-4 shrink-0 text-muted-foreground" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

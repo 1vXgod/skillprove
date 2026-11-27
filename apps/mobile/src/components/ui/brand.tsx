@@ -61,7 +61,7 @@ export function StatCard({ icon, value, label }: { icon: IconName; value: string
 }
 
 /** A skill in a list: name, a "score · level" line and an optional badge. With `onPress` it is a button. */
-export function SkillRow({ icon, title, detail, badge, onPress }: { icon?: IconName; title: string; detail: string; badge?: ReactNode; onPress?: () => void }) {
+export function SkillRow({ icon, title, detail, medal, badge, onPress }: { icon?: IconName; title: string; detail: string; medal?: ReactNode; badge?: ReactNode; onPress?: () => void }) {
   const { colors } = useTheme();
   const body = (
     <>
@@ -78,6 +78,7 @@ export function SkillRow({ icon, title, detail, badge, onPress }: { icon?: IconN
           {detail}
         </AppText>
       </View>
+      {medal}
       {badge}
       {onPress && <Feather name="chevron-right" size={18} color={colors.mutedForeground} />}
     </>
