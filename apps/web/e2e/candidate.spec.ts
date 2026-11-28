@@ -160,6 +160,31 @@ test.describe("profile screens", () => {
     await expect(page.getByText(t("profile.photoUnavailable"))).toBeVisible();
   });
 
+  test("edits and deletes entries from a keyboard menu, and still asks before deleting", async ({ page }) => {
+    const requests = await mockApi(page, {
+      "GET /me/profile": () =>
+        okJson(ownProfile({ languages: [{ id: "11111111-1111-4111-8111-111111111111", languageCode: "en", proficiency: "C1", updatedAt: NOW }] })),
+      "DELETE /me/profile/languages/11111111-1111-4111-8111-111111111111": () => okJson({ deleted: true }),
+    });
+    await page.goto(HARNESS);
+    await hydrated(page);
+    const language = t("languages.names.en");
+    // Edit and Delete are no longer loose buttons on the row.
+    await expect(page.getByRole("button", { name: `${t("common.delete")}: ${language}` })).toHaveCount(0);
+
+    const menu = page.getByRole("button", { name: t("profile.moreActions", { title: language }) });
+    await menu.focus();
+    await page.keyboard.press("ArrowDown");
+    await expect(page.getByRole("menuitem", { name: t("common.edit") })).toBeFocused();
+    await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("Enter");
+    const confirm = page.getByRole("alertdialog");
+    await expect(confirm).toBeVisible();
+    expect(requests.filter((r) => r.method === "DELETE")).toHaveLength(0);
+    await confirm.getByRole("button", { name: t("common.delete") }).click();
+    await expect.poll(() => requests.filter((r) => r.method === "DELETE").length).toBe(1);
+  });
+
   test("validates experience dates and reports a conflicting edit", async ({ page }) => {
     const requests = await mockApi(page, {
       "GET /me/profile": () => okJson(ownProfile()),
@@ -258,8 +283,16 @@ test.describe("privacy settings", () => {
     await expect(previewCard.getByText(t("privacy.previewPrivate"))).toBeVisible();
     await expect(previewCard.getByText(t("common.hidden")).first()).toBeVisible();
 
+    // The save bar appears only once something changed, and Discard puts the stored values back.
     const save = page.getByRole("button", { name: t("common.save") });
-    await expect(save).toBeDisabled();
+    await expect(save).toHaveCount(0);
+    await page.getByRole("switch", { name: t("privacy.showPhoneNumber") }).check();
+    await expect(page.getByText(t("privacy.unsaved"))).toBeVisible();
+    await page.getByRole("button", { name: t("privacy.discard") }).click();
+    await expect(page.getByRole("switch", { name: t("privacy.showPhoneNumber") })).not.toBeChecked();
+    await expect(save).toHaveCount(0);
+    expect(requests.filter((r) => r.method === "PUT")).toHaveLength(0);
+
     await page.getByRole("radio", { name: t("privacy.visibilities.VERIFIED_COMPANIES") }).check();
     await page.getByRole("switch", { name: t("privacy.showExperience") }).check();
     await save.click();

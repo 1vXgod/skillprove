@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { availableCount, continueAttempt, recentActivity, topVerifiedSkills } from "./home";
+import { availableCount, continueAttempt, earnedMedalCount, passportSkillCount, recentActivity, topVerifiedSkills } from "./home";
 
 const skill = (id: string, name: string) => ({ id, name });
 const evidence = (evaluationId: string, assessmentTitle: string, completedAt: string | null, superseded = false) => ({ evaluationId, assessmentTitle, completedAt, superseded });
@@ -58,5 +58,19 @@ describe("assessments to take", () => {
   });
   it("counts only assessments that can be started now", () => {
     expect(availableCount(items)).toBe(1);
+  });
+});
+
+describe("profile counts", () => {
+  it("counts a skill once when it is both verified and self-reported", () => {
+    expect(passportSkillCount({ verified: passport.verified, selfReported: [{ skill: skill("s1", "SQL") }, { skill: skill("s9", "Go") }] })).toBe(4);
+    expect(passportSkillCount({ verified: [], selfReported: [] })).toBe(0);
+  });
+
+  it("counts medals only where the skill earns one", () => {
+    // SQL is below the confidence floor; JavaScript and TypeScript are gold.
+    expect(earnedMedalCount(passport.verified)).toBe(2);
+    expect(earnedMedalCount([{ score: 39.9, confidence: 100 }, { score: 40, confidence: 50 }])).toBe(1);
+    expect(earnedMedalCount([])).toBe(0);
   });
 });

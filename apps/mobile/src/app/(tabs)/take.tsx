@@ -7,7 +7,7 @@ import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { Screen } from "../../components/shell/screen";
 import { SignedInGate } from "../../components/shell/signed-in-gate";
-import { Alert, AppText, Badge, Button, Card, EmptyState, Modal, type Tone } from "../../components/ui";
+import { Alert, AppText, Badge, Button, Card, Chip, EmptyState, Modal, type Tone } from "../../components/ui";
 import { QueryState } from "../../components/query-state";
 import { takeableState, type TakeableState } from "@skillprove/shared";
 import { errorMessage, queryKeys, useApiClient } from "../../lib/use-api";
@@ -147,18 +147,6 @@ function TakeableCard({ item, onPress }: { item: TakeableAssessment; onPress: ()
   );
 }
 
-/** A fact about the assessment, with an icon. */
-function Chip({ icon, label }: { icon: "bar-chart-2" | "help-circle" | "clock"; label: string }) {
-  const { colors } = useTheme();
-  return (
-    <View style={[styles.chip, { backgroundColor: colors.muted }]}>
-      <Feather name={icon} size={13} color={colors.primary} accessibilityElementsHidden importantForAccessibility="no" />
-      <AppText variant="caption" tone="mutedForeground">
-        {label}
-      </AppText>
-    </View>
-  );
-}
 
 const styles = StyleSheet.create({
   gap: { gap: spacing[4] },
@@ -167,6 +155,5 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: "row", alignItems: "center", gap: spacing[3] },
   tile: { width: 40, height: 40, borderRadius: radius.lg, alignItems: "center", justifyContent: "center" },
   wrap: { flexDirection: "row", flexWrap: "wrap", gap: spacing[2] },
-  chip: { flexDirection: "row", alignItems: "center", gap: spacing[1.5], borderRadius: radius.full, paddingHorizontal: spacing[3], paddingVertical: spacing[1] },
   footer: { gap: spacing[3], borderTopWidth: StyleSheet.hairlineWidth, paddingTop: spacing[3] },
 });

@@ -71,7 +71,44 @@ export function Badge({ tone = "neutral", children, className }: { tone?: Tone; 
   );
 }
 
-const AVATAR_SIZES = { sm: "size-8 text-xs", md: "size-10 text-sm", lg: "size-14 text-lg" } as const;
+/** A fact with an icon, such as a difficulty or a status. Render inside a list (`ul`). */
+export function Chip({ icon, inverse = false, children, className }: { icon?: ReactNode; inverse?: boolean; children: ReactNode; className?: string }) {
+  return (
+    <li
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 type-body-small",
+        // `inverse` sits on the navy panels.
+        inverse ? "bg-sidebar-foreground/15 text-sidebar-foreground" : "bg-muted text-muted-foreground",
+        className,
+      )}
+    >
+      {icon && (
+        <span aria-hidden="true" className={inverse ? "text-sidebar-foreground" : "text-primary"}>
+          {icon}
+        </span>
+      )}
+      {children}
+    </li>
+  );
+}
+
+const ICON_TILE_TONES = {
+  primary: "bg-secondary text-primary",
+  success: "bg-success-subtle text-success",
+  warning: "bg-warning-subtle text-warning",
+  error: "bg-destructive-subtle text-destructive",
+} as const;
+
+/** A decorative square holding an icon, beside a heading or a row. */
+export function IconTile({ icon, tone = "primary", size = "md", className }: { icon: ReactNode; tone?: keyof typeof ICON_TILE_TONES; size?: "sm" | "md"; className?: string }) {
+  return (
+    <span aria-hidden="true" className={cn("inline-flex shrink-0 items-center justify-center rounded-lg", size === "sm" ? "size-8" : "size-10", ICON_TILE_TONES[tone], className)}>
+      {icon}
+    </span>
+  );
+}
+
+const AVATAR_SIZES ={ sm: "size-8 text-xs", md: "size-10 text-sm", lg: "size-14 text-lg" } as const;
 
 /** Shows the picture when there is one, otherwise initials. Either way the name is the label. */
 export function Avatar({ name, src, size = "md", className }: { name: string; src?: string | null; size?: keyof typeof AVATAR_SIZES; className?: string }) {

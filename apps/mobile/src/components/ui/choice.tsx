@@ -3,6 +3,7 @@ import { controlHeights, radius, spacing } from "@skillprove/shared/design";
 import type { ReactNode } from "react";
 import { Pressable, StyleSheet, Switch as NativeSwitch, View } from "react-native";
 import { useTheme } from "../../theme/preferences-provider";
+import type { IconName } from "./button";
 import { AppText } from "./text";
 
 interface ChoiceProps {
@@ -13,6 +14,8 @@ interface ChoiceProps {
   disabled?: boolean;
   /** A large bordered row, for answers. */
   card?: boolean;
+  /** A decorative icon before the text. */
+  icon?: IconName;
 }
 
 /** The bordered look of a card row, highlighted when chosen. */
@@ -20,10 +23,12 @@ function cardStyle(colors: ReturnType<typeof useTheme>["colors"], selected: bool
   return [styles.card, { borderColor: selected ? colors.primary : colors.border, backgroundColor: selected ? colors.secondary : colors.surface }];
 }
 
-function ChoiceRow({ label, description, control, disabled }: { label: string; description?: string; control: ReactNode; disabled?: boolean }) {
+function ChoiceRow({ label, description, control, disabled, icon }: { label: string; description?: string; control: ReactNode; disabled?: boolean; icon?: IconName }) {
+  const { colors } = useTheme();
   return (
     <View style={[styles.row, disabled && styles.disabled]}>
       {control}
+      {icon && <Feather name={icon} size={18} color={colors.primary} style={styles.icon} accessibilityElementsHidden importantForAccessibility="no" />}
       <View style={styles.text}>
         <AppText variant="label">{label}</AppText>
         {description && (
@@ -65,7 +70,7 @@ export function Checkbox({ label, description, checked, onChange, disabled, card
 
 interface RadioGroupProps<T extends string> {
   label: string;
-  options: { value: T; label: string; description?: string }[];
+  options: { value: T; label: string; description?: string; icon?: IconName }[];
   value: T;
   onChange: (value: T) => void;
   disabled?: boolean;
@@ -93,6 +98,7 @@ export function RadioGroup<T extends string>({ label, options, value, onChange, 
             <ChoiceRow
               label={option.label}
               description={option.description}
+              icon={option.icon}
               disabled={disabled}
               control={
                 <View style={[styles.box, styles.radio, { borderColor: selected ? colors.primary : colors.input, backgroundColor: selected ? colors.primary : colors.surface }]}>
@@ -108,10 +114,16 @@ export function RadioGroup<T extends string>({ label, options, value, onChange, 
 }
 
 /** The platform switch, coloured from the tokens. */
-export function Switch({ label, description, checked, onChange, disabled }: ChoiceProps) {
+export function Switch({ label, description, checked, onChange, disabled, icon, leading }: ChoiceProps & { leading?: ReactNode }) {
   const { colors } = useTheme();
   return (
     <View style={[styles.switchRow, disabled && styles.disabled]}>
+      {icon && <Feather name={icon} size={18} color={colors.mutedForeground} accessibilityElementsHidden importantForAccessibility="no" />}
+      {leading && (
+        <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          {leading}
+        </View>
+      )}
       <View style={styles.text}>
         <AppText variant="label">{label}</AppText>
         {description && (
@@ -145,5 +157,6 @@ const styles = StyleSheet.create({
   box: { width: 20, height: 20, marginTop: 1, borderWidth: 1.5, borderRadius: radius.sm, alignItems: "center", justifyContent: "center" },
   radio: { borderRadius: radius.full },
   dot: { width: 8, height: 8, borderRadius: radius.full },
-  switchRow: { minHeight: controlHeights.touch, flexDirection: "row", alignItems: "center", gap: spacing[4] },
+  switchRow: { minHeight: controlHeights.touch, flexDirection: "row", alignItems: "center", gap: spacing[3] },
+  icon: { marginTop: 1 },
 });

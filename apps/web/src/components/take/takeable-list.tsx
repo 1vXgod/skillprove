@@ -7,9 +7,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useI18n } from "../../lib/i18n";
 import { errorMessage, queryKeys, useApiClient } from "../../lib/use-api";
-import type { ReactNode } from "react";
 import { BarChartIcon, ClipboardIcon, ClockIcon, HelpIcon } from "../icons";
-import { Alert, Badge, Button, Card, CardContent, Dialog, EmptyState, Skeleton, type Tone } from "../ui";
+import { Alert, Badge, Button, Card, CardContent, Chip, Dialog, EmptyState, Skeleton, type Tone } from "../ui";
 
 /**
  * Published public assessments the candidate can take (Milestone 7, slices 17 and 18, as slice 13
@@ -141,14 +140,3 @@ function TakeableCard({ item, onChoose }: { item: TakeableAssessment; onChoose: 
   );
 }
 
-/** A fact about the assessment, with an icon. */
-function Chip({ icon, children }: { icon: ReactNode; children: ReactNode }) {
-  return (
-    <li className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1">
-      <span aria-hidden="true" className="text-primary">
-        {icon}
-      </span>
-      {children}
-    </li>
-  );
-}

@@ -80,6 +80,39 @@ export function Badge({ tone = "neutral", label }: { tone?: Tone; label: string 
   );
 }
 
+/** A fact with an icon, such as a difficulty or a status. `inverse` sits on the navy panels. */
+export function Chip({ icon, label, inverse = false }: { icon?: IconName; label: string; inverse?: boolean }) {
+  const { colors } = useTheme();
+  const text = inverse ? colors.sidebarForeground : colors.mutedForeground;
+  return (
+    <View style={[styles.chip, inverse ? { borderWidth: StyleSheet.hairlineWidth, borderColor: colors.sidebarMuted } : { backgroundColor: colors.muted }]}>
+      {icon && <Feather name={icon} size={13} color={inverse ? colors.sidebarForeground : colors.primary} accessibilityElementsHidden importantForAccessibility="no" />}
+      <AppText variant="caption" style={{ color: text }}>
+        {label}
+      </AppText>
+    </View>
+  );
+}
+
+const ICON_TILE_SIZES = { sm: 32, md: 40 } as const;
+
+/** A decorative square holding an icon, beside a heading or a row. */
+export function IconTile({ icon, tone = "primary", size = "md" }: { icon: IconName; tone?: "primary" | "success" | "warning" | "error"; size?: keyof typeof ICON_TILE_SIZES }) {
+  const { colors } = useTheme();
+  const c = {
+    primary: { background: colors.secondary, icon: colors.primary },
+    success: { background: colors.successSubtle, icon: colors.success },
+    warning: { background: colors.warningSubtle, icon: colors.warning },
+    error: { background: colors.destructiveSubtle, icon: colors.destructive },
+  }[tone];
+  const box = ICON_TILE_SIZES[size];
+  return (
+    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[styles.iconTile, { width: box, height: box, backgroundColor: c.background }]}>
+      <Feather name={icon} size={size === "sm" ? 16 : 18} color={c.icon} />
+    </View>
+  );
+}
+
 const AVATAR_SIZES = { sm: 32, md: 40, lg: 56 } as const;
 
 export function Avatar({ name, uri, size = "md" }: { name: string; uri?: string | null; size?: keyof typeof AVATAR_SIZES }) {
@@ -209,5 +242,7 @@ const styles = StyleSheet.create({
   alert: { flexDirection: "row", gap: spacing[3], padding: spacing[4], borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth },
   alertIcon: { marginTop: 1 },
   empty: { alignItems: "center", gap: spacing[3], paddingHorizontal: spacing[6], paddingVertical: spacing[10], borderWidth: 1, borderStyle: "dashed", borderRadius: radius.lg },
+  chip: { flexDirection: "row", alignItems: "center", gap: spacing[1.5], borderRadius: radius.full, paddingHorizontal: spacing[3], paddingVertical: spacing[1] },
+  iconTile: { borderRadius: radius.lg, alignItems: "center", justifyContent: "center" },
   emptyIcon: { width: 48, height: 48, borderRadius: radius.full, alignItems: "center", justifyContent: "center" },
 });

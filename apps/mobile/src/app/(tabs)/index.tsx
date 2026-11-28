@@ -1,5 +1,5 @@
 import { Feather } from "@expo/vector-icons";
-import { availableCount, continueAttempt, profileCompleteness, recentActivity, topVerifiedSkills, type ActivityKind, type ProfileCompletenessItem } from "@skillprove/shared";
+import { availableCount, continueAttempt, passportSkillCount, profileCompleteness, recentActivity, topVerifiedSkills, type ActivityKind, type ProfileCompletenessItem } from "@skillprove/shared";
 import { radius, spacing } from "@skillprove/shared/design";
 import { formatDate, formatNumber } from "@skillprove/shared/i18n";
 import { useQuery } from "@tanstack/react-query";
@@ -49,7 +49,7 @@ function Home() {
   const takeable = useQuery({ queryKey: queryKeys.takeable(locale), queryFn: client.listTakeableAssessments, retry: false });
 
   const firstName = profile.data?.fullName.trim().split(/\s+/)[0];
-  const skillCount = passport.data ? new Set([...passport.data.verified.map((v) => v.skill.id), ...passport.data.selfReported.map((s) => s.skill.id)]).size : 0;
+  const skillCount = passport.data ? passportSkillCount(passport.data) : 0;
   const completeness = profile.isSuccess && passport.isSuccess ? profileCompleteness(profile.data, skillCount) : null;
 
   return (

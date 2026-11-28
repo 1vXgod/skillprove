@@ -53,13 +53,13 @@ const STAT_TONES = {
 /** One real number with its label, such as verified skills or profile completeness. */
 export function StatCard({ icon, value, label, tone = "primary", className }: { icon: ReactNode; value: string; label: string; tone?: keyof typeof STAT_TONES; className?: string }) {
   return (
-    <div className={cn("flex flex-col gap-3 rounded-xl border border-border/70 bg-surface p-5 shadow-card", className)}>
+    <div className={cn("flex min-w-0 flex-col gap-3 rounded-xl border border-border/70 bg-surface p-3 shadow-card sm:p-5", className)}>
       <span aria-hidden="true" className={cn("inline-flex size-10 items-center justify-center rounded-lg", STAT_TONES[tone])}>
         {icon}
       </span>
       <div className="flex flex-col">
         <span className="type-h2 tabular-nums text-foreground">{value}</span>
-        <span className="type-body-small text-muted-foreground">{label}</span>
+        <span className="break-words type-body-small text-muted-foreground">{label}</span>
       </div>
     </div>
   );
