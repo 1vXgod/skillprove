@@ -207,7 +207,7 @@ Prisma cannot express these, so they live at the end of migration `2026110310000
 
 ### Demo data (development only)
 
-`pnpm db:seed:demo` adds a demo company ("SkillProve Demo") and four published, public, fully objective assessments (JavaScript basics, Pyetje SQL, React with TypeScript, and JavaScript intermediate with 10 questions, enough for a Skill Passport level) so the candidate flow can be tried on a phone. Run `pnpm db:seed` first, since it uses those skills.
+`pnpm db:seed:demo` adds a demo company ("SkillProve Demo") and six published, public, fully objective assessments (JavaScript basics, Pyetje SQL, React with TypeScript, JavaScript intermediate with 10 questions, and SQL në praktikë and TypeScript in practice with 12 questions of mixed difficulty each). Answering 10 or more questions for one skill reaches confidence 50, so a good result shows a Skill Passport level and a medal so the candidate flow can be tried on a phone. Run `pnpm db:seed` first, since it uses those skills.
 
 - Dev database: run with `DEMO_ALLOW_DEV_DATABASE=1`; future production will be listed in `PRODUCTION_DATABASE_HOSTS` and always refused.
 - With the opt-in and no `DEMO_DATABASE_URL`, it seeds the configured development database (`DIRECT_URL`, else `DATABASE_URL`, which is Neon `main`). It prints the host only, never the URL.

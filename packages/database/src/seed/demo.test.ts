@@ -66,6 +66,16 @@ describe("demo assessments", () => {
     expect(Math.max(...perSkill)).toBeGreaterThanOrEqual(needed);
   });
 
+  it("let SQL and TypeScript each reach a medal in one attempt, with questions of mixed difficulty", () => {
+    const needed = VERIFIED_LEVEL_MIN_CONFIDENCE / CONFIDENCE_PER_ANSWERED_QUESTION;
+    for (const skill of ["sql", "typescript"]) {
+      const demo = DEMO_ASSESSMENTS.find((d) => Object.keys(d.skills).length === 1 && skill in d.skills && d.questions.length >= needed);
+      expect(demo, skill).toBeDefined();
+      const levels = new Set(demo!.questions.map((q) => q.difficulty ?? demo!.difficulty));
+      expect(levels.size).toBeGreaterThanOrEqual(3);
+    }
+  });
+
   it("are valid authoring content that scoring can read back, with weights totalling 100", () => {
     for (const demo of DEMO_ASSESSMENTS) {
       expect(Object.values(demo.skills).reduce((a, b) => a + b, 0)).toBe(100);

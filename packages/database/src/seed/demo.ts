@@ -6,7 +6,7 @@ import type { QuestionRow } from "../repositories/assessments";
 import { assertExpectedBranch, checkTestDatabaseUrl, UnsafeTestDatabaseError } from "../test-database-guard";
 
 /*
- * Development-only demo data (Milestone 7): a demo company and four published, public, fully
+ * Development-only demo data (Milestone 7): a demo company and six published, public, fully
  * objective assessments, so the candidate flow can be tried on a phone. Never run against
  * production. Accepted targets: a local database; a named, server-confirmed Neon branch that is
  * not an application database (the database-test rules); or the configured development
@@ -79,10 +79,12 @@ export async function assertDemoBranch(client: PrismaClient, expected: string) {
 export const DEMO_COMPANY_SLUG = "skillprove-demo";
 
 type Choice = { id: string; text: string };
+/** `difficulty` overrides the assessment's for one question, for assessments of mixed difficulty. */
+type QuestionBase = { explanation: string; skill: string; difficulty?: DemoAssessment["difficulty"] };
 type DemoQuestion =
-  | { kind: "multiple_choice"; prompt: string; choices: Choice[]; correctChoiceId: string; explanation: string; skill: string }
-  | { kind: "multiple_select"; prompt: string; choices: Choice[]; correctChoiceIds: string[]; explanation: string; skill: string }
-  | { kind: "true_false"; prompt: string; correct: boolean; explanation: string; skill: string };
+  | (QuestionBase & { kind: "multiple_choice"; prompt: string; choices: Choice[]; correctChoiceId: string })
+  | (QuestionBase & { kind: "multiple_select"; prompt: string; choices: Choice[]; correctChoiceIds: string[] })
+  | (QuestionBase & { kind: "true_false"; prompt: string; correct: boolean });
 
 interface DemoAssessment {
   /** Fixed, so a second run finds the first one's rows instead of adding new ones. */
@@ -179,11 +181,61 @@ export const DEMO_ASSESSMENTS: readonly DemoAssessment[] = [
       { kind: "true_false", skill: "javascript", prompt: "Object keys declared with `const obj = {}` cannot be changed.", correct: false, explanation: "const stops reassigning the variable, not changing the object it points to." },
     ],
   },
+  {
+    // Twelve questions for one skill, of mixed difficulty: answering all of them gives confidence
+    // 60, so a good result shows a Skill Passport level and a medal in demos.
+    id: "de300000-0000-4000-8000-000000000005",
+    title: "SQL në praktikë",
+    description: "Filtrim, JOIN, grupim, nënpyetje dhe indekse, nga më e lehta te më e vështira.",
+    language: "sq",
+    difficulty: "INTERMEDIATE",
+    durationMinutes: 20,
+    maxAttempts: 3,
+    skills: { sql: 100 },
+    questions: [
+      { kind: "multiple_choice", skill: "sql", difficulty: "BEGINNER", prompt: "Cila komandë lexon të dhëna nga një tabelë?", choices: abc("SELECT", "INSERT", "UPDATE"), correctChoiceId: "A", explanation: "SELECT lexon; INSERT shton dhe UPDATE ndryshon rreshta." },
+      { kind: "true_false", skill: "sql", difficulty: "BEGINNER", prompt: "ORDER BY name DESC i rendit emrat nga Z në A.", correct: true, explanation: "DESC rendit në rend zbritës." },
+      { kind: "multiple_choice", skill: "sql", difficulty: "BEGINNER", prompt: "Si i merr vetëm 5 rreshtat e parë në PostgreSQL?", choices: abc("LIMIT 5", "TOP 5 pas FROM", "FIRST 5"), correctChoiceId: "A", explanation: "PostgreSQL përdor LIMIT; TOP është sintaksë e SQL Server." },
+      { kind: "multiple_select", skill: "sql", difficulty: "BEGINNER", prompt: "Cilat kushte gjejnë qytetet Prishtinë ose Prizren?", choices: abc("city IN ('Prishtinë', 'Prizren')", "city = 'Prishtinë' OR city = 'Prizren'", "city = 'Prishtinë' AND city = 'Prizren'"), correctChoiceIds: ["A", "B"], explanation: "IN dhe OR japin të njëjtin rezultat; AND nuk përputhet kurrë me dy vlera njëherësh." },
+      { kind: "multiple_choice", skill: "sql", prompt: "Çfarë kthen LEFT JOIN për një klient pa porosi?", choices: abc("Asnjë rresht për atë klient", "Klientin, me NULL në kolonat e porosisë", "Një gabim"), correctChoiceId: "B", explanation: "LEFT JOIN i mban të gjitha rreshtat e tabelës së majtë." },
+      { kind: "true_false", skill: "sql", prompt: "COUNT(email) i numëron edhe rreshtat ku email është NULL.", correct: false, explanation: "COUNT(kolona) i anashkalon NULL; COUNT(*) numëron të gjitha rreshtat." },
+      { kind: "multiple_choice", skill: "sql", prompt: "Si e gjen numrin e porosive për çdo klient?", choices: abc("SELECT customer_id, COUNT(*) FROM orders GROUP BY customer_id", "SELECT customer_id, COUNT(*) FROM orders", "SELECT COUNT(customer_id) FROM orders ORDER BY customer_id"), correctChoiceId: "A", explanation: "GROUP BY krijon një grup për çdo klient, dhe COUNT numëron brenda grupit." },
+      { kind: "multiple_select", skill: "sql", prompt: "Cilat nga këto mund të shkruhen në klauzolën HAVING?", choices: abc("COUNT(*) > 3", "SUM(total) >= 100", "Një kusht mbi kolonën e grupimit", "Një kusht mbi një kolonë që as grupohet, as agregohet"), correctChoiceIds: ["A", "B", "C"], explanation: "HAVING pranon agregate dhe kolonat e grupimit, por jo kolona të tjera të pa agreguara." },
+      { kind: "multiple_choice", skill: "sql", difficulty: "ADVANCED", prompt: "Cila pyetje gjen klientët që nuk kanë asnjë porosi?", choices: abc("... WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.id)", "... WHERE c.id NOT IN (SELECT customer_id FROM orders WHERE customer_id = NULL)", "... INNER JOIN orders o ON o.customer_id = c.id WHERE o.id IS NULL"), correctChoiceId: "A", explanation: "NOT EXISTS me nënpyetje të lidhur është mënyra e sigurt; = NULL nuk përputhet kurrë dhe INNER JOIN nuk kthen klientë pa porosi." },
+      { kind: "true_false", skill: "sql", difficulty: "ADVANCED", prompt: "Një indeks mbi (last_name, first_name) ndihmon edhe një kërkim vetëm sipas first_name.", correct: false, explanation: "Një indeks i përbërë ndihmon kryesisht kur kushti fillon me kolonën e parë." },
+      { kind: "multiple_choice", skill: "sql", difficulty: "ADVANCED", prompt: "Çfarë bën ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY created_at DESC)?", choices: abc("Numëron porositë e çdo klienti nga më e reja", "Fshin porositë e dyfishta", "Grupon të gjitha porositë në një rresht"), correctChoiceId: "A", explanation: "Funksioni i dritares e rinis numërimin për çdo klient, pa i bashkuar rreshtat." },
+      { kind: "multiple_select", skill: "sql", difficulty: "ADVANCED", prompt: "Cilat janë të vërteta për një transaksion?", choices: abc("ROLLBACK i anulon ndryshimet që nga BEGIN", "Ndryshimet bëhen të dukshme për të tjerët pas COMMIT", "Çdo SELECT brenda tij bllokon tabelën për të gjithë"), correctChoiceIds: ["A", "B"], explanation: "Një SELECT i zakonshëm nuk i bllokon lexuesit e tjerë." },
+    ],
+  },
+  {
+    id: "de300000-0000-4000-8000-000000000006",
+    title: "TypeScript in practice",
+    description: "Types, narrowing, generics and utility types, from basics to advanced.",
+    language: "en",
+    difficulty: "ADVANCED",
+    durationMinutes: 20,
+    maxAttempts: 3,
+    skills: { typescript: 100 },
+    questions: [
+      { kind: "multiple_choice", skill: "typescript", difficulty: "BEGINNER", prompt: "Which annotation declares a list of numbers?", choices: abc("number[]", "number", "[number]"), correctChoiceId: "A", explanation: "number[] (or Array<number>) is a list; [number] is a one-element tuple." },
+      { kind: "true_false", skill: "typescript", difficulty: "BEGINNER", prompt: "TypeScript can infer the type of `const n = 5` without an annotation.", correct: true, explanation: "Inference gives n the literal type 5." },
+      { kind: "multiple_choice", skill: "typescript", difficulty: "BEGINNER", prompt: "Which type allows a value to be a string or undefined?", choices: abc("string | undefined", "string & undefined", "string?"), correctChoiceId: "A", explanation: "A union with | allows either type." },
+      { kind: "multiple_select", skill: "typescript", difficulty: "BEGINNER", prompt: "Which of these can describe the shape of an object?", choices: abc("interface", "type alias", "enum"), correctChoiceIds: ["A", "B"], explanation: "Interfaces and type aliases describe shapes; an enum is a set of named constants." },
+      { kind: "multiple_choice", skill: "typescript", difficulty: "INTERMEDIATE", prompt: "After `if (typeof value === \"string\")`, what is value's type inside the block?", choices: abc("string", "unknown", "It stays unchanged"), correctChoiceId: "A", explanation: "typeof checks narrow the type inside the block." },
+      { kind: "true_false", skill: "typescript", difficulty: "INTERMEDIATE", prompt: "readonly on a property stops it from being reassigned through that type.", correct: true, explanation: "readonly is checked at compile time and prevents assignment." },
+      { kind: "multiple_choice", skill: "typescript", difficulty: "INTERMEDIATE", prompt: "What does Partial<User> produce?", choices: abc("User with every property optional", "User without its methods", "A copy of User that cannot change"), correctChoiceId: "A", explanation: "Partial makes each property optional; Readonly stops changes." },
+      { kind: "multiple_select", skill: "typescript", difficulty: "INTERMEDIATE", prompt: "Which of these narrow a union of { kind: \"a\" } | { kind: \"b\" }?", choices: abc("switch (x.kind)", "if (x.kind === \"a\")", "if (x instanceof Object)"), correctChoiceIds: ["A", "B"], explanation: "Checking the shared literal field narrows a discriminated union; instanceof Object does not." },
+      { kind: "multiple_choice", skill: "typescript", prompt: "What is T in `function first<T>(items: T[]): T`, called as first([1, 2])?", choices: abc("number", "number[]", "unknown"), correctChoiceId: "A", explanation: "T is inferred from the array's element type." },
+      { kind: "true_false", skill: "typescript", prompt: "A function whose return type is `never` can return normally.", correct: false, explanation: "never means the function never returns: it throws or loops forever." },
+      { kind: "multiple_choice", skill: "typescript", prompt: "What does `keyof { id: number; name: string }` give?", choices: abc("\"id\" | \"name\"", "number | string", "string[]"), correctChoiceId: "A", explanation: "keyof gives the union of the property names." },
+      { kind: "multiple_select", skill: "typescript", prompt: "Which are true of `satisfies`?", choices: abc("It checks a value against a type", "It keeps the value's more specific inferred type", "It converts the value at runtime"), correctChoiceIds: ["A", "B"], explanation: "satisfies only checks at compile time and keeps the narrower type." },
+    ],
+  },
 ];
 
 /** A demo question as authoring content, parsed by the same schema the authoring API uses. */
 export function demoQuestionContent(question: DemoQuestion, skillId: string, difficulty: DemoAssessment["difficulty"]): QuestionContent {
-  const content: Record<string, unknown> = { ...question, skillId, difficulty, estimatedMinutes: 2 };
+  const content: Record<string, unknown> = { ...question, skillId, difficulty: question.difficulty ?? difficulty, estimatedMinutes: 2 };
   delete content.skill;
   return questionContentSchema.parse(content);
 }
