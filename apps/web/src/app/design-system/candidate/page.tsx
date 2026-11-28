@@ -2,6 +2,7 @@ import { createTranslator } from "@skillprove/shared/i18n";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AccountSettings } from "../../../components/account/account-settings";
 import { SkillPassportView } from "../../../components/passport/skill-passport";
 import { HomeDashboard } from "../../../components/home/home-dashboard";
 import { PrivacySettings } from "../../../components/privacy/privacy-settings";
@@ -51,6 +52,11 @@ export default async function CandidateScreensPage({ searchParams }: { searchPar
             <HomeDashboard />
           ) : screen === "attempt" && id ? (
             <AttemptView attemptId={id} />
+          ) : screen === "account" ? (
+            <>
+              <PageHeader title={t("account.settingsTitle")} description={t("account.settingsDescription")} />
+              <AccountSettings identity={{ name: "Arta Krasniqi", imageUrl: null }} portalUrl="https://example.accounts.dev/user" onSignOut={null} />
+            </>
           ) : screen === "privacy" ? (
             <>
               <PageHeader title={t("privacy.title")} description={t("privacy.description")} />

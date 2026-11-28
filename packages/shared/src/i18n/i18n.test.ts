@@ -42,8 +42,8 @@ describe("translator", () => {
   });
 
   it("switches language and fills placeholders", () => {
-    expect(createTranslator("sq")("nav.account")).toBe("Llogaria");
-    expect(createTranslator("en")("nav.account")).toBe("Account");
+    expect(createTranslator("sq")("nav.account")).toBe("Llogaria dhe cilësimet");
+    expect(createTranslator("en")("nav.account")).toBe("Account and settings");
     expect(createTranslator("en")("components.page", { page: 3 })).toBe("Page 3");
     expect(createTranslator("sq")("components.page", { page: 3 })).toBe("Faqja 3");
   });
