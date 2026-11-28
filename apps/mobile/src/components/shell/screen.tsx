@@ -31,7 +31,7 @@ function AppHeader({ showBack, settings }: { showBack: boolean; settings: boolea
             {locale.toUpperCase()}
           </AppText>
         </Pressable>
-        {settings && <IconButton label={t("shell.preferences")} icon="settings" onPress={() => router.push("/settings")} />}
+        {settings && <IconButton label={t("nav.account")} icon="settings" onPress={() => router.push("/settings")} />}
       </View>
     </View>
   );

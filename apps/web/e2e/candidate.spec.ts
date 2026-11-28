@@ -669,3 +669,33 @@ test.describe("assessments to take", () => {
     await expect(page.getByText(t("take.empty"))).toBeVisible();
   });
 });
+
+test.describe("account and settings", () => {
+  const me = { id: "5a4b3c2d-1e0f-4a9b-8c7d-6e5f4a3b2c1d", email: "arta@example.com", status: "ACTIVE", locale: "sq", hasCandidateProfile: true, isPlatformAdmin: false, companies: [] };
+
+  test("shows the account from the API and changes theme and language in place", async ({ page }) => {
+    await mockApi(page, { "GET /me": () => okJson(me) });
+    await page.goto(`${HARNESS}?screen=account`);
+    await hydrated(page);
+    const settings = page.getByTestId("account-settings");
+    await expect(settings.getByRole("heading", { name: "Arta Krasniqi" })).toBeVisible();
+    await expect(settings.getByText(t("account.emailVerified"))).toBeVisible();
+    await expect(settings.getByText(t("account.userStatus.ACTIVE")).first()).toBeVisible();
+    await expect(settings.getByRole("link", { name: new RegExp(t("account.manageSecurity")) })).toHaveAttribute("target", "_blank");
+    await expect(settings.getByRole("link", { name: t("account.goToProfile") })).toHaveAttribute("href", "/profile");
+
+    await settings.getByRole("radio", { name: t("theme.dark") }).check();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+    expect((await page.context().cookies()).find((c) => c.name === "sp-theme")?.value).toBe("dark");
+
+    await // The language reloads the page in English, so click rather than check (which waits for the old radio).
+    await settings.getByRole("radio", { name: "English" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Account and settings" })).toBeVisible();
+  });
+
+  test("says when the API does not confirm the account", async ({ page }) => {
+    await mockApi(page, { "GET /me": () => ({ status: 500, json: { success: false, error: { code: "INTERNAL_ERROR", message: "Down." } } }) });
+    await page.goto(`${HARNESS}?screen=account`);
+    await expect(page.getByText(t("account.loadFailed"))).toBeVisible();
+  });
+});
