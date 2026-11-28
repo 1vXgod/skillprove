@@ -6,6 +6,8 @@ type ChoiceProps = Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "id"> & 
   description?: string;
   /** A large bordered row, all of it clickable, for answers. */
   card?: boolean;
+  /** A decorative icon before the text (card rows and switches). */
+  icon?: ReactNode;
 };
 
 const CARD =
@@ -14,12 +16,17 @@ const CARD =
 const BOX =
   "peer size-4 shrink-0 cursor-pointer appearance-none border border-input bg-surface transition-colors duration-150 ease-standard checked:border-primary checked:bg-primary disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
 
-function ChoiceRow({ id, label, description, control, disabled, card }: { id: string; label: string; description?: string; control: ReactNode; disabled?: boolean; card?: boolean }) {
+function ChoiceRow({ id, label, description, control, disabled, card, icon }: { id: string; label: string; description?: string; control: ReactNode; disabled?: boolean; card?: boolean; icon?: ReactNode }) {
   if (card) {
     // The whole row is the label, so a click anywhere on it chooses the answer.
     return (
       <label htmlFor={id} className={cn("flex items-start gap-3", CARD, disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer")}>
         <span className="relative mt-0.5 flex size-5 items-center justify-center">{control}</span>
+        {icon && (
+          <span aria-hidden="true" className="mt-px shrink-0 text-primary">
+            {icon}
+          </span>
+        )}
         <span className="flex flex-col">
           <span className="type-body text-foreground">{label}</span>
           {description && <span className="type-body-small text-muted-foreground">{description}</span>}
@@ -41,7 +48,7 @@ function ChoiceRow({ id, label, description, control, disabled, card }: { id: st
 }
 
 /** A native checkbox, styled. Space toggles it and the label is clickable. */
-export function Checkbox({ label, description, card, className, ...props }: ChoiceProps) {
+export function Checkbox({ label, description, card, icon, className, ...props }: ChoiceProps) {
   const id = useId();
   return (
     <div className={className}>
@@ -51,6 +58,7 @@ export function Checkbox({ label, description, card, className, ...props }: Choi
         description={description}
         disabled={props.disabled}
         card={card}
+        icon={icon}
         control={
           <>
             <input id={id} type="checkbox" className={cn(BOX, "rounded-sm")} {...props} />
@@ -72,7 +80,7 @@ export function Checkbox({ label, description, card, className, ...props }: Choi
 }
 
 /** One radio button. Group them with RadioGroup so they share a name and a legend. */
-export function Radio({ label, description, card, className, ...props }: ChoiceProps) {
+export function Radio({ label, description, card, icon, className, ...props }: ChoiceProps) {
   const id = useId();
   return (
     <div className={className}>
@@ -82,6 +90,7 @@ export function Radio({ label, description, card, className, ...props }: ChoiceP
         description={description}
         disabled={props.disabled}
         card={card}
+        icon={icon}
         control={
           <>
             <input id={id} type="radio" className={cn(BOX, "rounded-full")} {...props} />
@@ -104,11 +113,16 @@ export function RadioGroup({ legend, children, className }: { legend: string; ch
 }
 
 /** A native checkbox with the switch role, announced as on or off. */
-export function Switch({ label, description, className, ...props }: ChoiceProps) {
+export function Switch({ label, description, icon, card: _card, className, ...props }: ChoiceProps) {
   const id = useId();
   return (
     <div className={cn("flex items-start justify-between gap-4", props.disabled && "opacity-60", className)}>
-      <span className="flex flex-col">
+      {icon && (
+        <span aria-hidden="true" className="mt-px shrink-0 text-muted-foreground">
+          {icon}
+        </span>
+      )}
+      <span className="flex flex-1 flex-col">
         <label htmlFor={id} className={cn("type-label text-foreground", props.disabled ? "cursor-not-allowed" : "cursor-pointer")}>
           {label}
         </label>

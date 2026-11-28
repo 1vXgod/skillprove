@@ -1,7 +1,7 @@
 export { Button, buttonClasses, IconButton, type ButtonSize, type ButtonVariant } from "./button";
 export { Checkbox, Radio, RadioGroup, Switch } from "./choice";
 export { AlertDialog, Dialog } from "./dialog";
-export { Alert, Avatar, Badge, Card, CardContent, CardFooter, CardHeader, EmptyState, Progress, Separator, Skeleton, type Tone } from "./display";
+export { Alert, Avatar, Badge, Card, CardContent, CardFooter, CardHeader, Chip, EmptyState, IconTile, Progress, Separator, Skeleton, type Tone } from "./display";
 export { DropdownMenu, type MenuItem, type MenuLabelGroup, type TriggerProps } from "./dropdown-menu";
 export { Label } from "./field";
 export { Input, PasswordInput, Select, Textarea, type SelectOption } from "./input";

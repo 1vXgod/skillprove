@@ -1,6 +1,6 @@
 export { Button, IconButton, type ButtonVariant, type IconName } from "./button";
 export { Checkbox, RadioGroup, Switch } from "./choice";
-export { Alert, Avatar, Badge, Card, CardHeader, EmptyState, Progress, Separator, Skeleton, Spinner, type Tone } from "./display";
+export { Alert, Avatar, Badge, Card, CardHeader, Chip, EmptyState, IconTile, Progress, Separator, Skeleton, Spinner, type Tone } from "./display";
 export { GradientPanel, HeroCard, Logo, LogoMark, SkillRow, StatCard } from "./brand";
 export { SkillMedal } from "./medal";
 export { GlowBackground, GradientText, LightMark } from "./effects";

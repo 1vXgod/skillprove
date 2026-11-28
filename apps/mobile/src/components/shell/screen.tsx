@@ -40,9 +40,10 @@ function AppHeader({ showBack, settings }: { showBack: boolean; settings: boolea
 /**
  * Every screen's frame: safe areas, the app header, keyboard avoidance and a scrolling body
  * capped at a readable width on tablets. Tab screens show the logo; pushed screens a back button.
- * `settings` adds the gear that opens Settings (on the Profile tab).
+ * `settings` adds the gear that opens Settings (on the Profile tab). `footer` stays fixed below
+ * the scrolling body, above the keyboard, such as a save bar.
  */
-export function Screen({ children, showBack = false, settings = false }: { children: ReactNode; showBack?: boolean; settings?: boolean }) {
+export function Screen({ children, showBack = false, settings = false, footer }: { children: ReactNode; showBack?: boolean; settings?: boolean; footer?: ReactNode }) {
   const { colors } = usePreferences();
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={[styles.flex, { backgroundColor: colors.surface }]}>
@@ -53,6 +54,11 @@ export function Screen({ children, showBack = false, settings = false }: { child
             {children}
           </SafeAreaView>
         </ScrollView>
+        {footer && (
+          <SafeAreaView edges={["bottom"]} style={[styles.footer, { borderColor: colors.border, backgroundColor: colors.surface }]}>
+            <View style={styles.column}>{footer}</View>
+          </SafeAreaView>
+        )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -72,5 +78,6 @@ const styles = StyleSheet.create({
   actions: { flexDirection: "row", alignItems: "center" },
   locale: { minWidth: controlHeights.touch, height: controlHeights.touch, alignItems: "center", justifyContent: "center" },
   body: { flexGrow: 1, paddingHorizontal: spacing[5], paddingVertical: spacing[6] },
+  footer: { borderTopWidth: StyleSheet.hairlineWidth, paddingHorizontal: spacing[5], paddingTop: spacing[3], paddingBottom: spacing[3] },
   column: { width: "100%", maxWidth: breakpoints.sm, alignSelf: "center", gap: spacing[4] },
 });

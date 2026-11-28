@@ -1,6 +1,6 @@
 "use client";
 
-import { availableCount, continueAttempt, profileCompleteness, recentActivity, topVerifiedSkills, type ActivityKind, type ProfileCompletenessItem } from "@skillprove/shared";
+import { availableCount, continueAttempt, passportSkillCount, profileCompleteness, recentActivity, topVerifiedSkills, type ActivityKind, type ProfileCompletenessItem } from "@skillprove/shared";
 import { formatDate, formatNumber } from "@skillprove/shared/i18n";
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 import Link from "next/link";
@@ -24,7 +24,7 @@ export function HomeDashboard() {
   const takeable = useQuery({ queryKey: queryKeys.takeable(locale), queryFn: client.listTakeableAssessments, retry: false });
 
   const firstName = profile.data?.fullName.trim().split(/\s+/)[0];
-  const skillCount = passport.data ? new Set([...passport.data.verified.map((v) => v.skill.id), ...passport.data.selfReported.map((s) => s.skill.id)]).size : 0;
+  const skillCount = passport.data ? passportSkillCount(passport.data) : 0;
   const completeness = profile.isSuccess && passport.isSuccess ? profileCompleteness(profile.data, skillCount) : null;
   const open = takeable.data ? continueAttempt(takeable.data.items) : null;
   // Completeness needs both the profile and the Skill Passport; until then, show whichever is not ready.

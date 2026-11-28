@@ -62,8 +62,24 @@ export const SettingsIcon = icon([
   "M12 15a3 3 0 100-6 3 3 0 000 6z",
   "M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z",
 ]);
-export const MoreIcon =icon(["M6 12h.01", "M12 12h.01", "M18 12h.01"]);
+export const MoreIcon = icon(["M6 12h.01", "M12 12h.01", "M18 12h.01"]);
 export const ClockIcon = icon(["M12 21a9 9 0 100-18 9 9 0 000 18z", "M12 7v5l3 2"]);
 export const HelpIcon = icon(["M12 21a9 9 0 100-18 9 9 0 000 18z", "M9.5 9.5a2.5 2.5 0 114 2c-.9.6-1.5 1.1-1.5 2.2", "M12 17h.01"]);
 export const BarChartIcon = icon(["M5 20V11", "M12 20V5", "M19 20v-6"]);
 export const SignOutIcon = icon(["M15 4h4v16h-4", "M10 8l-4 4 4 4", "M6 12h10"]);
+export const MailIcon = icon(["M3 6h18v12H3z", "M3 7l9 6 9-6"]);
+export const PhoneIcon = icon(["M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z"]);
+export const LinkIcon = icon(["M10 13a5 5 0 007.5.5l3-3a5 5 0 00-7-7l-1.7 1.7", "M14 11a5 5 0 00-7.5-.5l-3 3a5 5 0 007 7l1.7-1.7"]);
+export const MapPinIcon = icon(["M12 21s-7-6.2-7-11a7 7 0 0114 0c0 4.8-7 11-7 11z", "M12 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"]);
+export const LockIcon = icon(["M5 11h14v10H5z", "M8 11V7a4 4 0 018 0v4"]);
+export const ShieldIcon = icon(["M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z", "M9 12l2 2 4-4"]);
+export const BuildingIcon = icon(["M4 21V4h11v17", "M15 9h5v12", "M8 8h3", "M8 12h3", "M8 16h3", "M2 21h20"]);
+export const AwardIcon = icon(["M12 15a6 6 0 100-12 6 6 0 000 12z", "M8.5 13.5L7 22l5-3 5 3-1.5-8.5"]);
+export const GraduationIcon = icon(["M2 9l10-5 10 5-10 5z", "M6 11v5c3 2.5 9 2.5 12 0v-5"]);
+export const CertificateIcon = icon(["M5 3h14v12H5z", "M8 7h8", "M8 10h5", "M10 15v6l2-1.5 2 1.5v-6"]);
+export const FolderIcon = icon(["M3 6h6l2 2h10v11H3z"]);
+export const LanguageIcon = icon(["M4 5h9", "M8.5 3v2", "M6 5c.5 3.5 2.5 6 5.5 7.5", "M11 5c-.5 3.5-2.5 6-6 7.5", "M12 21l4.5-10 4.5 10", "M13.5 18h6"]);
+export const PlusIcon = icon(["M12 5v14", "M5 12h14"]);
+export const EditIcon = icon(["M4 20h4L19 9l-4-4L4 16z", "M13.5 6.5l4 4"]);
+export const TrashIcon = icon(["M4 7h16", "M9 7V4h6v3", "M6 7l1 13h10l1-13"]);
+export const SearchIcon = icon(["M11 18a7 7 0 100-14 7 7 0 000 14z", "M20 20l-4-4"]);

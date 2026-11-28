@@ -35,6 +35,16 @@ export interface TopSkill {
   outdated: boolean;
 }
 
+/** Distinct skills on the Skill Passport, verified or self-reported. Profile completeness counts these. */
+export function passportSkillCount(passport: { verified: readonly { skill: { id: string } }[]; selfReported: readonly { skill: { id: string } }[] }): number {
+  return new Set([...passport.verified.map((v) => v.skill.id), ...passport.selfReported.map((s) => s.skill.id)]).size;
+}
+
+/** How many verified skills have earned a medal (any colour, current or outdated). */
+export function earnedMedalCount(verified: readonly { score: number; confidence: number }[]): number {
+  return verified.filter((v) => skillMedal(v.score, v.confidence) !== null).length;
+}
+
 /** The highest-scoring verified skills, with their Skill Passport level. */
 export function topVerifiedSkills(passport: PassportInput, limit = 4): TopSkill[] {
   return [...passport.verified]
