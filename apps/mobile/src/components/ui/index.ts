@@ -1,5 +1,5 @@
 export { Button, IconButton, type ButtonVariant, type IconName } from "./button";
-export { Checkbox, RadioGroup, Switch } from "./choice";
+export { Checkbox, ChipGroup, RadioGroup, Switch } from "./choice";
 export { Alert, Avatar, Badge, Card, CardHeader, Chip, EmptyState, IconTile, Progress, Separator, Skeleton, Spinner, type Tone } from "./display";
 export { GradientPanel, HeroCard, Logo, LogoMark, SkillRow, StatCard } from "./brand";
 export { SkillMedal } from "./medal";
@@ -7,3 +7,4 @@ export { GlowBackground, GradientText, LightMark } from "./effects";
 export { Input, PasswordInput, Select, Textarea, type SelectOption } from "./inputs";
 export { Modal, Tabs, type TabItem } from "./overlay";
 export { AppText } from "./text";
+export { Stepper, type StepState } from "./stepper";

@@ -97,6 +97,7 @@ const ICON_TILE_TONES = {
   success: "bg-success-subtle text-success",
   warning: "bg-warning-subtle text-warning",
   error: "bg-destructive-subtle text-destructive",
+  neutral: "bg-muted text-muted-foreground",
 } as const;
 
 /** A decorative square holding an icon, beside a heading or a row. */

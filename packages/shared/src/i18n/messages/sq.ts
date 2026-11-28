@@ -669,6 +669,7 @@ export const sq: Messages = {
       previous: "Faqja e mëparshme",
       next: "Faqja tjetër",
       pageOf: "Faqja {page} nga {pages}",
+      companyUnfinished: "E papërfunduar: emrat e kompanive vijnë me regjistrimin e kompanive. Tani për tani çdo kompani shfaqet me fillimin e ID-së dhe rolin tënd.",
     },
     status: {
       DRAFT: "Draft",
@@ -768,6 +769,18 @@ export const sq: Messages = {
         invalid_job: "Puna nuk mund të përfundonte.",
       },
       tokens: "{input} tokena hyrës dhe {output} dalës",
+      steps: {
+        queued: "Në radhë",
+        generating: "Duke u krijuar",
+        ready: "Gati",
+        failed: "Dështoi",
+        cancelled: "U anulua",
+      },
+      stepState: {
+        done: "përfunduar",
+        active: "në vazhdim",
+        pending: "ende jo",
+      },
     },
     editor: {
       title: "Ndrysho vlerësimin",
@@ -889,6 +902,7 @@ export const sq: Messages = {
     mobile: {
       readOnlyNotice: "Vlerësimet krijohen dhe ndryshohen në faqen e SkillProve. Këtu mund të ndjekësh gjendjen e tyre.",
       jobs: "Gjendja e gjenerimit",
+      readOnlyShort: "Vlerësimet i ndryshon në uebfaqe.",
     },
   },
   take: {

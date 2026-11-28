@@ -3,6 +3,7 @@
 import {
   ASSESSMENT_DIFFICULTIES,
   ASSESSMENT_LANGUAGES,
+  ASSESSMENT_STATUS_TONE,
   ASSESSMENT_TYPES,
   QUESTION_KINDS,
 } from "@skillprove/shared";
@@ -46,7 +47,8 @@ export function useOptions() {
   };
 }
 
-export const statusTone = { DRAFT: "warning", PUBLISHED: "success", ARCHIVED: "neutral" } as const;
+/** Kept for the editor until 5f; the tones live in shared. */
+export const statusTone = ASSESSMENT_STATUS_TONE;
 
 /** One item per line, as the question forms edit lists. */
 export const splitLines = (text: string) => text.split("\n").map((line) => line.trim()).filter(Boolean);
