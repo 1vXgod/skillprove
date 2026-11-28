@@ -97,13 +97,14 @@ export function Chip({ icon, label, inverse = false }: { icon?: IconName; label:
 const ICON_TILE_SIZES = { sm: 32, md: 40 } as const;
 
 /** A decorative square holding an icon, beside a heading or a row. */
-export function IconTile({ icon, tone = "primary", size = "md" }: { icon: IconName; tone?: "primary" | "success" | "warning" | "error"; size?: keyof typeof ICON_TILE_SIZES }) {
+export function IconTile({ icon, tone = "primary", size = "md" }: { icon: IconName; tone?: "primary" | "success" | "warning" | "error" | "neutral"; size?: keyof typeof ICON_TILE_SIZES }) {
   const { colors } = useTheme();
   const c = {
     primary: { background: colors.secondary, icon: colors.primary },
     success: { background: colors.successSubtle, icon: colors.success },
     warning: { background: colors.warningSubtle, icon: colors.warning },
     error: { background: colors.destructiveSubtle, icon: colors.destructive },
+    neutral: { background: colors.muted, icon: colors.mutedForeground },
   }[tone];
   const box = ICON_TILE_SIZES[size];
   return (

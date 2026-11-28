@@ -144,3 +144,26 @@ export function Switch({ label, description, icon, card: _card, className, ...pr
     </div>
   );
 }
+
+/**
+ * A single choice shown as a row of pills, for filters. Native radios underneath, so arrow keys
+ * move between options and screen readers announce the group with its legend.
+ */
+export function ChipGroup<T extends string>({ legend, name, options, value, onChange, className }: { legend: string; name: string; options: { value: T; label: string }[]; value: T; onChange: (value: T) => void; className?: string }) {
+  return (
+    <fieldset className={cn("min-w-0", className)}>
+      <legend className="sr-only">{legend}</legend>
+      <div className="flex flex-wrap gap-2">
+        {options.map((option) => (
+          <label
+            key={option.value}
+            className="inline-flex h-9 cursor-pointer items-center rounded-full border border-border bg-surface px-3.5 type-label text-muted-foreground transition-colors duration-150 ease-standard hover:border-primary/50 hover:text-foreground has-checked:border-primary has-checked:bg-primary has-checked:text-primary-foreground has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ring"
+          >
+            <input type="radio" name={name} value={option.value} checked={value === option.value} onChange={() => onChange(option.value)} className="sr-only" />
+            {option.label}
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  );
+}

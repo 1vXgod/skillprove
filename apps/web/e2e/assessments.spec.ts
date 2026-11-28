@@ -54,14 +54,14 @@ const detail = (overrides: Partial<AssessmentDetail> = {}): AssessmentDetail => 
 const job = (overrides: Partial<AiJob> = {}): AiJob => ({ id: JOB, status: "QUEUED", assessmentId: null, retryCount: 0, errorCode: null, inputTokens: null, outputTokens: null, createdAt: NOW, startedAt: null, finishedAt: null, ...overrides });
 
 async function mockApi(page: Page, handlers: Record<string, (route: Route, body: unknown) => unknown>) {
-  const requests: { method: string; path: string; body: unknown; headers: Record<string, string> }[] = [];
+  const requests: { method: string; path: string; query?: string; body: unknown; headers: Record<string, string> }[] = [];
   await page.route("http://localhost:4100/api/v1/**", async (route) => {
     const request = route.request();
     const cors = { "access-control-allow-origin": "http://localhost:3100", "access-control-allow-headers": "Authorization, Content-Type, Accept, Idempotency-Key", "access-control-allow-methods": "GET, POST, PUT, DELETE" };
     if (request.method() === "OPTIONS") return route.fulfill({ status: 204, headers: cors });
     const path = new URL(request.url()).pathname.replace("/api/v1", "");
     const body: unknown = request.postData() ? JSON.parse(request.postData() ?? "null") : undefined;
-    requests.push({ method: request.method(), path, body, headers: request.headers() });
+    requests.push({ method: request.method(), path, query: new URL(request.url()).search, body, headers: request.headers() });
     const handler = handlers[`${request.method()} ${path}`];
     if (!handler) return route.fulfill({ status: 404, headers: cors, json: { success: false, error: { code: "NOT_FOUND", message: "Not found." } } });
     const result = (await handler(route, body)) as { status?: number; json: unknown } | undefined;
@@ -112,6 +112,32 @@ for (const locale of ["sq", "en"] as const) {
 
 test.describe("assessment workflows", () => {
   const t = createTranslator("sq");
+
+  test("filters the list by status with the chips", async ({ page }) => {
+    const requests = await mockApi(page, {
+      "GET /me": () => me("RECRUITER"),
+      ["GET /companies/" + COMPANY + "/assessments"]: () =>
+        okJson({ items: [{ id: ASSESSMENT, title: "Backend basics", language: "en", difficulty: "INTERMEDIATE", assessmentType: "KNOWLEDGE", status: "DRAFT", version: 1, creationSource: "AI_GENERATED", questionCount: 2, updatedAt: NOW }], page: 1, pageSize: 10, total: 1 }),
+    });
+    await page.goto(HARNESS);
+    await hydrated(page);
+    const filter = page.getByRole("group", { name: t("assessments.list.filterStatus") });
+    await expect(filter.getByRole("radio", { name: t("assessments.list.filterAll") })).toBeChecked();
+    await filter.getByText(t("assessments.status.DRAFT")).click();
+    await expect(filter.getByRole("radio", { name: t("assessments.status.DRAFT") })).toBeChecked();
+    await expect.poll(() => requests.some((r) => r.path.endsWith("/assessments") && r.query?.includes("status=DRAFT"))).toBe(true);
+    await expect(page.getByRole("link", { name: "Backend basics" }).first()).toBeVisible();
+  });
+
+  test("marks the company picker as unfinished until companies have names", async ({ page }) => {
+    await mockApi(page, {
+      "GET /me": () => okJson({ id: "11111111-2222-4333-8444-555555555555", email: "a@b.test", status: "ACTIVE", locale: "sq", hasCandidateProfile: false, isPlatformAdmin: false, companies: [{ companyId: COMPANY, role: "OWNER" }, { companyId: "ffffffff-ffff-4fff-8fff-ffffffffffff", role: "VIEWER" }] }),
+      ["GET /companies/" + COMPANY + "/assessments"]: () => okJson({ items: [], page: 1, pageSize: 10, total: 0 }),
+    });
+    await page.goto(HARNESS);
+    await expect(page.getByLabel(t("assessments.company"))).toBeVisible();
+    await expect(page.getByText(t("assessments.list.companyUnfinished"))).toBeVisible();
+  });
 
   test("hides authoring from viewers, who can still read", async ({ page }) => {
     await mockApi(page, {
@@ -192,7 +218,13 @@ test.describe("assessment workflows", () => {
     });
     await page.goto(`${HARNESS}?screen=progress&id=${JOB}`);
     await expect(page.getByText(t("assessments.generation.running"))).toBeVisible();
+    // An honest stepper, not a made-up percentage: queued is done, generating is current.
+    const progress = page.getByTestId("generation-progress");
+    await expect(progress.getByRole("progressbar")).toHaveCount(0);
+    await expect(progress.locator('li[aria-current="step"]')).toContainText(t("assessments.generation.steps.generating"));
+    await expect(progress.locator("li").first()).toContainText(t("assessments.generation.stepState.done"));
     await expect(page.getByTestId("generation-progress")).toHaveAttribute("data-status", "SUCCEEDED", { timeout: 10_000 });
+    await expect(progress.locator('li[aria-current="step"]')).toHaveCount(0);
     await expect(page.getByRole("link", { name: t("assessments.generation.openDraft") })).toHaveAttribute("href", `/assessments/${ASSESSMENT}`);
     const settled = polls;
     await page.waitForTimeout(2600);
@@ -211,6 +243,9 @@ test.describe("assessment workflows", () => {
     });
     await page.goto(`${HARNESS}?screen=progress&id=${JOB}`);
     await expect(page.getByTestId("generation-progress").getByRole("alert")).toContainText(t("assessments.generation.reason.provider_timeout"));
+    // A failed job does not claim the earlier steps were reached.
+    await expect(page.getByTestId("generation-progress").locator("li").last()).toContainText(t("assessments.generation.steps.failed"));
+    await expect(page.getByTestId("generation-progress").locator("li").first()).toContainText(t("assessments.generation.stepState.pending"));
     await page.getByRole("button", { name: t("assessments.generation.retry") }).click();
     await expect(page.getByText(t("assessments.generation.queued"))).toBeVisible();
     expect(requests.some((r) => r.path.endsWith("/retry"))).toBe(true);

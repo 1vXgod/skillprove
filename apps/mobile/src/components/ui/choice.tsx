@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { controlHeights, radius, spacing } from "@skillprove/shared/design";
 import type { ReactNode } from "react";
-import { Pressable, StyleSheet, Switch as NativeSwitch, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Switch as NativeSwitch, View } from "react-native";
 import { useTheme } from "../../theme/preferences-provider";
 import type { IconName } from "./button";
 import { AppText } from "./text";
@@ -159,4 +159,35 @@ const styles = StyleSheet.create({
   dot: { width: 8, height: 8, borderRadius: radius.full },
   switchRow: { minHeight: controlHeights.touch, flexDirection: "row", alignItems: "center", gap: spacing[3] },
   icon: { marginTop: 1 },
+});
+
+/** A single choice shown as a row of pills, for filters. It scrolls sideways when it overflows. */
+export function ChipGroup<T extends string>({ label, options, value, onChange }: { label: string; options: { value: T; label: string }[]; value: T; onChange: (value: T) => void }) {
+  const { colors } = useTheme();
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} accessibilityRole="radiogroup" accessibilityLabel={label} contentContainerStyle={chipStyles.row}>
+      {options.map((option) => {
+        const selected = option.value === value;
+        return (
+          <Pressable
+            key={option.value}
+            accessibilityRole="radio"
+            accessibilityLabel={option.label}
+            accessibilityState={{ checked: selected }}
+            onPress={() => onChange(option.value)}
+            style={[chipStyles.chip, { borderColor: selected ? colors.primary : colors.border, backgroundColor: selected ? colors.primary : colors.surface }]}
+          >
+            <AppText variant="label" style={{ color: selected ? colors.primaryForeground : colors.mutedForeground }}>
+              {option.label}
+            </AppText>
+          </Pressable>
+        );
+      })}
+    </ScrollView>
+  );
+}
+
+const chipStyles = StyleSheet.create({
+  row: { gap: spacing[2] },
+  chip: { minHeight: controlHeights.touch, justifyContent: "center", paddingHorizontal: spacing[4], borderWidth: 1, borderRadius: radius.full },
 });

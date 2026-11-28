@@ -672,6 +672,7 @@ export const en = {
       previous: "Previous page",
       next: "Next page",
       pageOf: "Page {page} of {pages}",
+      companyUnfinished: "Unfinished: company names arrive with company onboarding. For now each company shows the start of its ID and your role.",
     },
     status: {
       DRAFT: "Draft",
@@ -771,6 +772,18 @@ export const en = {
         invalid_job: "The job could not be completed.",
       },
       tokens: "{input} input and {output} output tokens",
+      steps: {
+        queued: "Queued",
+        generating: "Generating",
+        ready: "Ready",
+        failed: "Failed",
+        cancelled: "Cancelled",
+      },
+      stepState: {
+        done: "done",
+        active: "in progress",
+        pending: "not reached",
+      },
     },
     editor: {
       title: "Edit assessment",
@@ -892,6 +905,7 @@ export const en = {
     mobile: {
       readOnlyNotice: "Assessments are created and edited on the SkillProve website. Here you can follow their status.",
       jobs: "Generation status",
+      readOnlyShort: "Edit assessments on the website.",
     },
   },
   take: {

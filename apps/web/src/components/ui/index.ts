@@ -1,5 +1,5 @@
 export { Button, buttonClasses, IconButton, type ButtonSize, type ButtonVariant } from "./button";
-export { Checkbox, Radio, RadioGroup, Switch } from "./choice";
+export { Checkbox, ChipGroup, Radio, RadioGroup, Switch } from "./choice";
 export { AlertDialog, Dialog } from "./dialog";
 export { Alert, Avatar, Badge, Card, CardContent, CardFooter, CardHeader, Chip, EmptyState, IconTile, Progress, Separator, Skeleton, type Tone } from "./display";
 export { DropdownMenu, type MenuItem, type MenuLabelGroup, type TriggerProps } from "./dropdown-menu";
@@ -12,3 +12,4 @@ export { GlowBackground, GradientText, LightArcs, LightMark } from "./effects";
 export { Spinner } from "./spinner";
 export { Tabs, type TabItem } from "./tabs";
 export { Tooltip } from "./tooltip";
+export { Stepper, type StepState } from "./stepper";
